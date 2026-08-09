@@ -1,0 +1,20 @@
+# OS/editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.tmp
+
+# Local dependencies/build artifacts
+node_modules/
+dist/
+build/
+
+# Local test/runtime artifacts
+.tmp*/
+coverage/
+*.log
+
+# Local environment
+.env
+.env.*
