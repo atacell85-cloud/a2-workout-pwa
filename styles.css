@@ -358,6 +358,10 @@ main {
 }
 
 .last {
+  display: block;
+  width: 100%;
+  border: 0;
+  text-align: left;
   font-size: 13px;
   color: var(--muted);
   margin-top: 8px;
@@ -373,6 +377,18 @@ main {
 
 .last.empty {
   font-weight: 700;
+}
+
+.last-fill {
+  cursor: pointer;
+}
+
+.last-fill em {
+  display: block;
+  margin-top: 4px;
+  color: var(--brand);
+  font-style: normal;
+  font-weight: 850;
 }
 
 .progress-note {

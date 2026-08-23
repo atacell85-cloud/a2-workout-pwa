@@ -75,7 +75,7 @@ async function hydrateExecutionDay(workout) {
 }
 
 async function home() {
-  return programsView();
+  return todayView();
 }
 
 async function todayView() {
@@ -506,7 +506,7 @@ function exerciseCard(exercise, sectionType, images = new Map()) {
       ${exerciseHeader(exercise)}
       ${prescriptionHtml}
     </div>
-    <div data-last="${exercise.id}">${lastBlock(exercise.canonicalExerciseId || exercise.id)}</div>
+    <div data-last="${exercise.id}">${lastBlock(exercise.id, exercise.canonicalExerciseId || exercise.id)}</div>
     ${progressionText(exercise.id)}
     <div class="labels"><span>Set</span><span>KG</span><span>Tekrar</span><span>RIR</span><span></span></div>
     ${rows}
@@ -531,11 +531,27 @@ function setRow(exercise, setNumber, set) {
   </div>`;
 }
 
-function lastBlock(exerciseId) {
-  const last = lastFor(exerciseId);
+function lastBlock(exerciseId, lookupExerciseId = exerciseId) {
+  const last = lastFor(lookupExerciseId);
   if (!last) return '<div class="last empty">Geçen Antrenman: İlk kayıt</div>';
   const rows = last.sets.map(set => `<div>${escapeHtml(set.weight || '-')} kg × ${escapeHtml(set.reps || '-')} @ RIR ${escapeHtml(set.rir || '-')}</div>`).join('');
-  return `<div class="last"><b>Geçen Antrenman</b><span>${new Date(last.session.startedAt).toLocaleDateString('tr-TR')}</span>${rows}</div>`;
+  return `<button class="last last-fill" data-fill-last="${exerciseId}:${lookupExerciseId}"><b>Geçen Antrenman</b><span>${new Date(last.session.startedAt).toLocaleDateString('tr-TR')}</span>${rows}<em>Bu değerleri doldur</em></button>`;
+}
+
+function fillFromLastWorkout(exerciseId, lookupExerciseId) {
+  const last = lastFor(lookupExerciseId);
+  if (!last) return toast('Geçmiş kayıt bulunamadı');
+  if (!confirm('Geçen antrenmandaki değerler bu forma doldurulsun mu?')) return;
+  last.sets.forEach((set, index) => {
+    const setNumber = Number(set.setNumber) || index + 1;
+    const kg = document.querySelector(`#kg-${exerciseId}-${setNumber}`);
+    const reps = document.querySelector(`#rp-${exerciseId}-${setNumber}`);
+    const rir = document.querySelector(`#ri-${exerciseId}-${setNumber}`);
+    if (kg) kg.value = set.weight || '';
+    if (reps) reps.value = set.reps || '';
+    if (rir) rir.value = set.rir || '';
+  });
+  toast('Geçmiş değerler dolduruldu');
 }
 
 let cachedSessions = [];
@@ -986,6 +1002,7 @@ app.addEventListener('click', async event => {
   if (target.dataset.providerDisabled !== undefined) return toast('Bu giriş yöntemi yakında kullanılabilir olacak.');
   if (target.dataset.oauthProvider) return authService.startOAuth(target.dataset.oauthProvider, state.authMode);
   if (target.dataset.togglePassword !== undefined) { const input = document.querySelector('#authPassword'); if (input) { input.type = input.type === 'password' ? 'text' : 'password'; target.textContent = input.type === 'password' ? 'Göster' : 'Gizle'; } return; }
+  if (target.dataset.fillLast) { const [exerciseId, lookupExerciseId] = target.dataset.fillLast.split(':'); return fillFromLastWorkout(exerciseId, lookupExerciseId); }
   if (target.dataset.onboardingValue) { const [key, value] = target.dataset.onboardingValue.split(':'); state.onboarding[key] = value; return onboardingView(); }
   if (target.dataset.startDay) return startWorkout(target.dataset.startDay);
   if (target.dataset.resumeImport) return resumeImport(target.dataset.resumeImport);
