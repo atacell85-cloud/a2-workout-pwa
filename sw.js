@@ -1,9 +1,9 @@
-const CACHE_VERSION = 'a2-workout-v23-bottom-nav-nudge-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v24-bottom-nav-padding-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './app.js?v=bottom-nav-nudge-v2',
+  './app.js?v=bottom-nav-padding-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
