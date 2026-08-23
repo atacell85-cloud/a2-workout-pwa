@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v57-import-complete-notifications-2026-08-24';
+const CACHE_VERSION = 'a2-workout-v58-strict-ai-import-2026-08-24';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=import-complete-notifications-v1',
+  './app.js?v=strict-ai-import-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',

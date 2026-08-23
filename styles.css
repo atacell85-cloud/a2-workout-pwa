@@ -849,6 +849,7 @@ th, td {
 .unparsed button { min-height: 34px; margin-right: 5px; border: 1px solid var(--line); border-radius: 8px; background: #f8fafc; color: var(--brand); font-weight: 750; }
 .match-status { display: inline-block; padding: 3px 6px; border-radius: 8px; font-size: 11px; font-weight: 850; margin-bottom: 6px; background: #fef3c7; color: #92400e; }
 .match-status.matched { background: #dcfce7; color: #166534; }
+.match-status.custom { background: #e9eef8; color: #24385f; }
 .import-exercise > .small { margin: 3px 0 8px; }
 .program-card, .builder-row, .compact-fields, .builder-actions { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
 .program-card > div:first-child { min-width: 0; }

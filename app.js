@@ -530,15 +530,37 @@ async function renderImportPreview(importId) {
   state.importId = importId; state.view = 'import-preview'; title.textContent = 'Aktarım Önizlemesi'; nav('programs');
   const errors = validateImportPreview(preview, new Set((await loadExerciseDatabase()).map(item => item.id)));
   app.innerHTML = `<section class="builder-head"><input data-import-program-name value="${escapeHtml(preview.program.name)}" aria-label="Program adı"><div class="small muted">${escapeHtml(preview.source.fileName)} · ${escapeHtml(preview.source.fileType.toUpperCase())}</div></section>
-    ${preview.warnings.map(warning => `<div class="import-warning ${warning.severity}"><b>${escapeHtml(warning.severity)}</b> ${escapeHtml(warning.message)}</div>`).join('')}
     ${preview.program.days.map((day, dayIndex) => importDay(preview, day, dayIndex)).join('')}
-    <section class="summary-card"><h3>Dosyadan Anlaşılamayan İçerikler</h3>${preview.unparsedContent.length ? preview.unparsedContent.map((item, index) => `<div class="unparsed"><b>${escapeHtml(item.text)}</b><span>${escapeHtml(item.reason)}</span><div><button data-unparsed="${index}:instruction">Talimat</button><button data-unparsed="${index}:note">Nota ekle</button><button data-unparsed="${index}:dismissed">Yok say</button></div></div>`).join('') : '<div class="muted small">Yok</div>'}</section>
     ${errors.length ? `<div class="import-warning error">Çözüm bekleyen kayıtlar var: ${escapeHtml(errors.join(', '))}</div>` : ''}
     <div class="workout-toolbar"><button class="secondary-btn" data-action="programs">Sonra Devam Et</button><button class="primary-btn" data-action="finalize-import">Programı Oluştur</button></div>`;
 }
 
-function importDay(preview, day, dayIndex) { return `<article class="builder-day import-day"><input data-import-day="${dayIndex}" value="${escapeHtml(day.name)}" aria-label="Gün adı">${day.sections.map((section, sectionIndex) => `<section class="builder-section"><div class="builder-row"><input data-import-section="${dayIndex}:${sectionIndex}" value="${escapeHtml(section.title)}"><select data-import-section-type="${dayIndex}:${sectionIndex}">${['warmup','activation','strength','core','cardio','stretch','mobility','cooldown','custom'].map(type => `<option value="${type}" ${section.sectionType === type ? 'selected' : ''}>${sectionLabel(type)}</option>`).join('')}</select></div>${section.items.map((item, itemIndex) => item.itemType === 'instruction' ? `<div class="instruction-row">${escapeHtml(item.text)}</div>` : importExercise(dayIndex, sectionIndex, itemIndex, item)).join('')}</section>`).join('')}</article>`; }
-function importExercise(dayIndex, sectionIndex, itemIndex, item) { const p = item.prescription; const match = item.exerciseMatch; const status = item.resolutionStatus === 'accepted-canonical' ? 'Eşleşti' : match ? 'Kontrol gerekli' : 'Eşleşmedi'; const field = (label, key, value) => `<label>${label}<input data-import-field="${dayIndex}:${sectionIndex}:${itemIndex}:${key}" value="${escapeHtml(value || '')}"></label>`; return `<article class="builder-exercise import-exercise"><div class="match-status ${item.resolutionStatus === 'accepted-canonical' ? 'matched' : 'probable'}">${status}</div><b>${escapeHtml(item.sourceExerciseName)}</b><div class="small muted">${escapeHtml(match?.matchedName || item.normalizedExerciseName)}</div><div class="compact-fields"><label>Set<input data-import-field="${dayIndex}:${sectionIndex}:${itemIndex}:setsText" value="${escapeHtml(p.setsText || p.sets || '')}"></label><label>Tekrar<input data-import-field="${dayIndex}:${sectionIndex}:${itemIndex}:repsText" value="${escapeHtml(p.repsText || '')}"></label><button data-import-custom="${dayIndex}:${sectionIndex}:${itemIndex}">Özel Kullan</button></div><div class="details open"><div class="detail-grid">${field('Kilo','weightText',p.weightText)}${field('RIR','rirText',p.rirText)}${field('RPE','rpeText',p.rpeText)}${field('Dinlenme','restText',p.restText)}${field('Tempo','tempoText',p.tempoText)}${field('Süre','durationText',p.durationText)}${field('Mesafe','distanceText',p.distanceText)}${field('Not','notes',item.notes)}</div></div><input data-import-search="${dayIndex}:${sectionIndex}:${itemIndex}" placeholder="Başka hareket ara"><div class="search-results" id="import-search-${dayIndex}-${sectionIndex}-${itemIndex}"></div></article>`; }
+function importDay(preview, day, dayIndex) { return `<article class="builder-day import-day"><input data-import-day="${dayIndex}" value="${escapeHtml(day.name)}" aria-label="Gün adı">${day.sections.map((section, sectionIndex) => `<section class="builder-section import-simple-section">${section.items.filter(item => item.itemType === 'exercise').map((item, itemIndex) => importExercise(dayIndex, sectionIndex, itemIndex, item)).join('')}</section>`).join('')}</article>`; }
+function importExercise(dayIndex, sectionIndex, itemIndex, item) {
+  const p = item.prescription || {};
+  const match = item.exerciseMatch;
+  const status = item.resolutionStatus === 'accepted-canonical' ? 'Sistem hareketi' : 'Yeni hareket';
+  const extraFields = [
+    ['Kilo', 'weightText', p.weightText],
+    ['RIR', 'rirText', p.rirText],
+    ['RPE', 'rpeText', p.rpeText],
+    ['Dinlenme', 'restText', p.restText],
+    ['Tempo', 'tempoText', p.tempoText],
+    ['Süre', 'durationText', p.durationText],
+    ['Mesafe', 'distanceText', p.distanceText],
+    ['Not', 'notes', item.notes]
+  ].filter(([, , value]) => value !== undefined && value !== null && String(value).trim() !== '');
+  const field = (label, key, value) => `<label>${label}<input data-import-field="${dayIndex}:${sectionIndex}:${itemIndex}:${key}" value="${escapeHtml(value || '')}"></label>`;
+  return `<article class="builder-exercise import-exercise">
+    <div class="match-status ${item.resolutionStatus === 'accepted-canonical' ? 'matched' : 'custom'}">${status}</div>
+    <b>${itemIndex + 1}. ${escapeHtml(match?.matchedName || item.sourceExerciseName)}</b>
+    ${match ? `<div class="small muted">Dosyadaki ad: ${escapeHtml(item.sourceExerciseName)}</div>` : ''}
+    <div class="compact-fields"><label>Set<input data-import-field="${dayIndex}:${sectionIndex}:${itemIndex}:setsText" value="${escapeHtml(p.setsText || p.sets || '')}"></label><label>Tekrar<input data-import-field="${dayIndex}:${sectionIndex}:${itemIndex}:repsText" value="${escapeHtml(p.repsText || '')}"></label></div>
+    ${extraFields.length ? `<div class="details open"><div class="detail-grid">${extraFields.map(([label, key, value]) => field(label, key, value)).join('')}</div></div>` : ''}
+    <input data-import-search="${dayIndex}:${sectionIndex}:${itemIndex}" placeholder="Hareketi değiştir">
+    <div class="search-results" id="import-search-${dayIndex}-${sectionIndex}-${itemIndex}"></div>
+  </article>`;
+}
 
 function importErrorMessage(code) { return ({ UNSUPPORTED_FILE: 'PDF, DOCX veya XLSX dosyası seçin.', EMPTY_DOCUMENT: 'Dosya boş.', SCAN_ONLY_PDF: 'Bu PDF metin içermiyor. OCR desteği henüz eklenmedi.', CORRUPT_PDF: 'PDF okunamadı.', CORRUPT_DOCX: 'Word dosyası okunamadı.', CORRUPT_XLSX: 'Excel dosyası okunamadı.', UNSUPPORTED_BROWSER_COMPRESSION: 'Bu tarayıcı DOCX/XLSX dosyalarını açmak için gereken sıkıştırma desteğine sahip değil.', OPENAI_OFFLINE: 'Analiz için internet bağlantısı gerekiyor.', OPENAI_API_KEY_MISSING: 'Program analizi şu anda yapılandırılmadı.', OPENAI_RATE_LIMITED: 'Program analizi geçici olarak yoğun.', AI_IMPORT_RATE_LIMITED: 'Program analiz limiti doldu. Biraz sonra tekrar deneyin.', OPENAI_TIMEOUT: 'Program analizi beklenenden uzun sürdü.', OPENAI_REQUEST_FAILED: 'Program analiz edilirken bir sorun oluştu.', DOCUMENT_TOO_LARGE: 'Dosya analiz için çok büyük.', PARSER_FAILURE: 'Dosya içeriğinden güvenli bir program oluşturulamadı.' })[code] || 'Dosya işlenemedi.'; }
 

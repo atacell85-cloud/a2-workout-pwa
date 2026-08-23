@@ -7,9 +7,9 @@ export async function matchImportExercises(preview) {
     const candidates = await searchExercises(item.normalizedExerciseName || item.sourceExerciseName, 5);
     const name = normalize(item.normalizedExerciseName || item.sourceExerciseName);
     const exact = candidates.find(candidate => [candidate.nameTr, candidate.nameEn, ...(candidate.aliases || [])].some(value => normalize(value) === name));
-    const selected = exact || candidates[0] || null;
-    item.exerciseMatch = selected ? { status: exact ? 'matched' : 'probable', exerciseId: selected.id, matchedName: selected.nameTr, score: exact ? 1 : .65, candidates: candidates.map(candidate => ({ exerciseId: candidate.id, name: candidate.nameTr, score: candidate.id === selected.id ? (exact ? 1 : .65) : .35 })) } : null;
-    item.resolutionStatus = exact ? 'accepted-canonical' : 'unresolved'; item.userEditedExerciseName = null;
+    item.exerciseMatch = exact ? { status: 'matched', exerciseId: exact.id, matchedName: exact.nameTr, score: 1, candidates: candidates.map(candidate => ({ exerciseId: candidate.id, name: candidate.nameTr, score: candidate.id === exact.id ? 1 : .35 })) } : null;
+    item.resolutionStatus = exact ? 'accepted-canonical' : 'accepted-custom';
+    item.userEditedExerciseName = exact ? null : (item.sourceExerciseName || item.normalizedExerciseName || '').trim();
   }
   return preview;
 }
@@ -19,8 +19,6 @@ export function validateImportPreview(preview, canonicalIds) {
   if (!preview || preview.schemaVersion !== '1.1' || !preview.importId || !preview.program) errors.push('INVALID_IMPORT_SCHEMA');
   if (!preview?.program?.name?.trim()) errors.push('PROGRAM_NAME_MISSING');
   if (!preview?.program?.days?.length) errors.push('NO_WORKOUT_DAYS');
-  (preview?.warnings || []).filter(warning => warning.severity === 'error' && !warning.accepted).forEach(() => errors.push('BLOCKING_IMPORT_WARNING'));
-  (preview?.unparsedContent || []).filter(item => item.resolutionStatus !== 'assigned' && item.resolutionStatus !== 'instruction' && item.resolutionStatus !== 'dismissed').forEach(() => errors.push('UNRESOLVED_CONTENT'));
   preview?.program?.days?.forEach(day => day.sections?.forEach(section => section.items?.forEach(item => {
     if (item.itemType !== 'exercise') return;
     const status = item.resolutionStatus;

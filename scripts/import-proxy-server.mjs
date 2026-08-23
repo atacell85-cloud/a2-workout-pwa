@@ -79,7 +79,24 @@ function requestBody(model, input, requestId) { return { model, temperature: 0, 
 function retryable(error) { return error.code === 'OPENAI_RATE_LIMITED' || error.code === 'OPENAI_NETWORK_ERROR' || (error.code === 'OPENAI_REQUEST_FAILED' && error.status >= 500); }
 function retryAfter(value) { const seconds = Number(value); return Number.isFinite(seconds) && seconds >= 0 ? seconds * 1000 : null; }
 function observability({ requestId, config, payload, upstream, attempts, started, status }) { const usage = payload?.usage || {}; return { requestId, model: payload?.model || config.model, attemptCount: attempts, durationMs: Date.now() - started, status, inputTokens: usage.input_tokens ?? null, outputTokens: usage.output_tokens ?? null, totalTokens: usage.total_tokens ?? null, openaiRequestId: upstream?.headers?.get?.('x-request-id') || payload?.id || null }; }
-function prompt() { return 'Extract, do not coach. Convert only source evidence into the supplied JSON shape. Never add exercises, prescriptions, RIR, RPE, rest, tempo or advice. The product uses a simplified routine model: Program -> Day -> Exercise -> sets and reps. For every day, create exactly one section titled "Ana Antrenman" with sectionType "strength"; do not invent extra section headings. If the source clearly contains warmup, cardio, mobility or notes, preserve them as instructions or item notes inside the same "Ana Antrenman" section instead of creating additional sections. exerciseMatch must be null. Preserve free-form prescription text. Put ambiguous source content in unparsedContent.'; }
+function prompt() { return `You are a strict workout-program extractor, not a coach.
+
+Your only job:
+1. Determine how many workout days are in the uploaded program.
+2. Determine each day name exactly from the source when present. If a day has no clear name, use "Gün 1", "Gün 2", etc.
+3. For each day, list only exercise names in their original order.
+4. For each exercise, extract sets and reps when clearly stated.
+5. Extract optional fields only when explicitly stated next to that exercise: weight, RIR, RPE, rest, tempo, duration, distance, notes.
+
+Hard rules:
+- Do not create advice, coaching text, warmup suggestions, cooldowns, substitutions, explanations, goals, weekly plans, progression, volume comments, safety notes, or recommendations.
+- Do not infer missing exercises, missing sets, missing reps, missing rest, missing RIR/RPE, or missing weights.
+- Do not split a day into multiple sections. Every day must contain exactly one section titled "Ana Antrenman" with sectionType "strength".
+- Do not output instruction items. Every section item must be an exercise.
+- exerciseMatch must always be null. AKS will match exercise names against its own exercise database after extraction.
+- If an exercise is not clearly an exercise name, omit it.
+- Keep sourceExerciseName as written in the file. normalizedExerciseName may be a cleaned spelling of the same exercise, but must not be a different exercise.
+- warnings and unparsedContent must be empty arrays unless the file contains no usable workout days.`; }
 function sanitize(document) { return { fileName: document.fileName, fileType: document.fileType, language: document.language || null, blocks: document.blocks.filter(block => block?.type && (block.text || block.rows)).slice(0, 1000) }; }
 function validatePreview(value, importId, document) { if (!value || value.schemaVersion !== '1.1' || !value.program?.name || !Array.isArray(value.program.days)) throw coded('OPENAI_SCHEMA_VALIDATION_FAILED'); value.importId = importId; value.importedAt ||= new Date().toISOString(); value.source ||= { fileName: document.fileName, fileType: document.fileType, language: document.language || null, documentTitle: null }; value.warnings ||= []; value.unparsedContent ||= []; }
 function jsonBody(request, limit) { return new Promise((resolve, reject) => { let size = 0; const chunks = []; request.on('data', chunk => { size += chunk.length; if (size > limit * 2) reject(coded('DOCUMENT_TOO_LARGE')); else chunks.push(chunk); }); request.on('end', () => { try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))); } catch { reject(coded('OPENAI_INVALID_RESPONSE')); } }); request.on('error', () => reject(coded('OPENAI_NETWORK_ERROR'))); }); }

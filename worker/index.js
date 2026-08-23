@@ -52,7 +52,7 @@ async function parseImport(request, env) {
 
     const { payload, upstream, attempts } = await requestOpenAI({ apiKey: env.OPENAI_API_KEY, config, input: body, requestId });
     let preview;
-    try { preview = JSON.parse(extractStructuredOutput(payload)); } catch (error) { if (error.code) throw error; throw coded('OPENAI_INVALID_RESPONSE'); }
+    try { preview = normalizeImportedPreview(JSON.parse(extractStructuredOutput(payload))); } catch (error) { if (error.code) throw error; throw coded('OPENAI_INVALID_RESPONSE'); }
     validatePreview(preview, body.importId, body.normalizedDocument);
     return json({ preview, observability: observability({ requestId, config, payload, upstream, attempts, started, status: 'ok' }) }, 200, { 'X-Import-Request-Id': requestId });
   } catch (error) {
@@ -155,7 +155,7 @@ async function processImportJob(env, jobId) {
     const started = Date.now();
     const { payload, upstream, attempts: upstreamAttempts } = await requestOpenAI({ apiKey: env.OPENAI_API_KEY, config, input: { importId: job.id, normalizedDocument }, requestId });
     let preview;
-    try { preview = JSON.parse(extractStructuredOutput(payload)); } catch (error) { if (error.code) throw error; throw coded('OPENAI_INVALID_RESPONSE'); }
+    try { preview = normalizeImportedPreview(JSON.parse(extractStructuredOutput(payload))); } catch (error) { if (error.code) throw error; throw coded('OPENAI_INVALID_RESPONSE'); }
     validatePreview(preview, job.id, normalizedDocument);
     const metadata = observability({ requestId, config, payload, upstream, attempts: upstreamAttempts, started, status: 'ok' });
     await env.DB.prepare("UPDATE import_jobs SET status = 'done', preview_json = ?, observability_json = ?, error_code = NULL, updated_at = ?, completed_at = ? WHERE id = ?").bind(JSON.stringify(preview), JSON.stringify(metadata), new Date().toISOString(), new Date().toISOString(), job.id).run();
@@ -258,7 +258,7 @@ async function syncOpenAIBackgroundJob(env, row) {
     const normalizedDocument = parseJson(row.normalized_document_json);
     if (payload.status !== 'completed') throw coded(payload.error?.code || 'OPENAI_REQUEST_FAILED');
     let preview;
-    try { preview = JSON.parse(extractStructuredOutput(payload)); } catch (error) { if (error.code) throw error; throw coded('OPENAI_INVALID_RESPONSE'); }
+    try { preview = normalizeImportedPreview(JSON.parse(extractStructuredOutput(payload))); } catch (error) { if (error.code) throw error; throw coded('OPENAI_INVALID_RESPONSE'); }
     validatePreview(preview, row.id, normalizedDocument);
     const metadata = { ...(parseJson(row.observability_json) || {}), status: 'ok', model: payload.model || config.model, inputTokens: payload.usage?.input_tokens ?? null, outputTokens: payload.usage?.output_tokens ?? null, totalTokens: payload.usage?.total_tokens ?? null, openaiRequestId: upstream.headers?.get?.('x-request-id') || payload.id || row.openai_response_id };
     const now = new Date().toISOString();
@@ -290,14 +290,90 @@ export function mapOpenAIStatus(status) {
 function importConfig(env) { return { model: env.OPENAI_IMPORT_MODEL || 'gpt-4.1-mini', timeoutMs: positive(env.OPENAI_IMPORT_TIMEOUT_MS, 45000), maxRetries: nonNegative(env.OPENAI_IMPORT_MAX_RETRIES, 1), retryBaseMs: positive(env.OPENAI_IMPORT_RETRY_BASE_MS, 750), maxInputBytes: positive(env.OPENAI_IMPORT_MAX_INPUT_BYTES, 180000), maxFileBytes: positive(env.OPENAI_IMPORT_MAX_FILE_BYTES, 6000000) }; }
 function requestBody(model, input, requestId, options = {}) {
   const content = [
-    { type: 'input_text', text: JSON.stringify({ importId: input.importId, normalizedDocument: sanitize(input.normalizedDocument), note: input.rawFile ? 'The original uploaded file is attached as input_file. Use the original file as the primary source. Use normalizedDocument only as helper context.' : 'No original file is attached. Use normalizedDocument as the source.' }) }
+    { type: 'input_text', text: JSON.stringify({ importId: input.importId, normalizedDocument: sanitize(input.normalizedDocument), note: input.rawFile ? 'The original uploaded file is attached as input_file. Use the original file as the primary source. If file parsing is imperfect, use normalizedDocument as extracted text/table helper context.' : 'No original file is attached. Use normalizedDocument as the source.' }) }
   ];
   if (input.rawFile?.base64) content.push({ type: 'input_file', filename: input.rawFile.name, file_data: `data:${input.rawFile.type || 'application/octet-stream'};base64,${input.rawFile.base64}` });
   return { model, temperature: 0, metadata: { import_request_id: requestId }, background: Boolean(options.background), input: [{ role: 'developer', content: [{ type: 'input_text', text: prompt() }] }, { role: 'user', content }], text: { format: { type: 'json_schema', name: 'import_program_v1_1', strict: true, schema: responseSchema } } };
 }
-function prompt() { return 'Extract, do not coach. Convert only source evidence into the supplied JSON shape. Never add exercises, prescriptions, RIR, RPE, rest, tempo or advice. The product uses a simplified routine model: Program -> Day -> Exercise -> sets and reps. For every day, create exactly one section titled "Ana Antrenman" with sectionType "strength"; do not invent extra section headings. If the source clearly contains warmup, cardio, mobility or notes, preserve them as instructions or item notes inside the same "Ana Antrenman" section instead of creating additional sections. exerciseMatch must be null. Preserve free-form prescription text. Put ambiguous source content in unparsedContent.'; }
+function prompt() { return `You are a strict workout-program extractor, not a coach.
+
+Your only job:
+1. Determine how many workout days are in the uploaded program.
+2. Determine each day name exactly from the source when present. If a day has no clear name, use "Gün 1", "Gün 2", etc.
+3. For each day, list only exercise names in their original order.
+4. For each exercise, extract sets and reps when clearly stated.
+5. Extract optional fields only when explicitly stated next to that exercise: weight, RIR, RPE, rest, tempo, duration, distance, notes.
+
+Hard rules:
+- Do not create advice, coaching text, warmup suggestions, cooldowns, substitutions, explanations, goals, weekly plans, progression, volume comments, safety notes, or recommendations.
+- Do not infer missing exercises, missing sets, missing reps, missing rest, missing RIR/RPE, or missing weights.
+- Do not split a day into multiple sections. Every day must contain exactly one section titled "Ana Antrenman" with sectionType "strength".
+- Do not output instruction items. Every section item must be an exercise.
+- exerciseMatch must always be null. AKS will match exercise names against its own exercise database after extraction.
+- If an exercise is not clearly an exercise name, omit it.
+- Keep sourceExerciseName as written in the file. normalizedExerciseName may be a cleaned spelling of the same exercise, but must not be a different exercise.
+- warnings and unparsedContent must be empty arrays unless the file contains no usable workout days.`; }
 function sanitize(document) { return { fileName: document.fileName, fileType: document.fileType, language: document.language || null, blocks: document.blocks.filter(block => block?.type && (block.text || block.rows)).slice(0, 1000) }; }
-function validatePreview(value, importId, document) { if (!value || value.schemaVersion !== '1.1' || !value.program?.name || !Array.isArray(value.program.days)) throw coded('OPENAI_SCHEMA_VALIDATION_FAILED'); value.importId = importId; value.importedAt ||= new Date().toISOString(); value.source ||= { fileName: document.fileName, fileType: document.fileType, language: document.language || null, documentTitle: null }; value.warnings ||= []; value.unparsedContent ||= []; }
+function validatePreview(value, importId, document) { if (!value || value.schemaVersion !== '1.1' || !value.program?.name || !Array.isArray(value.program.days) || !value.program.days.length || !value.program.days.some(day => day.sections?.some(section => section.items?.some(item => item.itemType === 'exercise')))) throw coded('OPENAI_SCHEMA_VALIDATION_FAILED'); value.importId = importId; value.importedAt ||= new Date().toISOString(); value.source ||= { fileName: document.fileName, fileType: document.fileType, language: document.language || null, documentTitle: null }; value.warnings = []; value.unparsedContent = []; }
+function normalizeImportedPreview(value) {
+  if (!value?.program?.days) return value;
+  value.program.description = null;
+  value.program.notes = null;
+  value.warnings = [];
+  value.unparsedContent = [];
+  value.program.days = value.program.days.map((day, dayIndex) => {
+    const exercises = [];
+    for (const section of day.sections || []) for (const item of section.items || []) {
+      if (item.itemType !== 'exercise') continue;
+      const name = String(item.sourceExerciseName || item.normalizedExerciseName || '').trim();
+      if (!name) continue;
+      exercises.push(normalizeExerciseItem(item, exercises.length + 1));
+    }
+    return { ...day, name: String(day.name || `Gün ${dayIndex + 1}`).trim(), order: dayIndex + 1, notes: null, sections: [{ title: 'Ana Antrenman', sectionType: 'strength', order: 1, notes: null, sourceReference: day.sourceReference || nullRef(), items: exercises }] };
+  }).filter(day => day.sections[0].items.length);
+  return value;
+}
+function normalizeExerciseItem(item, order) {
+  const prescription = item.prescription || {};
+  const clean = value => {
+    const text = String(value || '').trim();
+    return text && text !== '-' ? text : null;
+  };
+  return {
+    itemType: 'exercise',
+    order,
+    sourceExerciseName: clean(item.sourceExerciseName || item.normalizedExerciseName) || 'Hareket',
+    normalizedExerciseName: clean(item.normalizedExerciseName || item.sourceExerciseName) || clean(item.sourceExerciseName) || 'Hareket',
+    exerciseMatch: null,
+    prescription: {
+      sets: Number.isInteger(Number(prescription.sets)) ? Number(prescription.sets) : null,
+      setsText: clean(prescription.setsText),
+      repsMin: Number.isInteger(Number(prescription.repsMin)) ? Number(prescription.repsMin) : null,
+      repsMax: Number.isInteger(Number(prescription.repsMax)) ? Number(prescription.repsMax) : null,
+      repsText: clean(prescription.repsText),
+      weight: Number.isFinite(Number(prescription.weight)) ? Number(prescription.weight) : null,
+      weightUnit: ['kg', 'lb'].includes(prescription.weightUnit) ? prescription.weightUnit : null,
+      weightText: clean(prescription.weightText),
+      rir: Number.isFinite(Number(prescription.rir)) ? Number(prescription.rir) : null,
+      rirText: clean(prescription.rirText),
+      rpe: Number.isFinite(Number(prescription.rpe)) ? Number(prescription.rpe) : null,
+      rpeText: clean(prescription.rpeText),
+      restSeconds: Number.isInteger(Number(prescription.restSeconds)) ? Number(prescription.restSeconds) : null,
+      restText: clean(prescription.restText),
+      tempo: clean(prescription.tempo),
+      tempoText: clean(prescription.tempoText),
+      durationSeconds: Number.isInteger(Number(prescription.durationSeconds)) ? Number(prescription.durationSeconds) : null,
+      durationText: clean(prescription.durationText),
+      distance: Number.isFinite(Number(prescription.distance)) ? Number(prescription.distance) : null,
+      distanceUnit: ['m', 'km', 'mi'].includes(prescription.distanceUnit) ? prescription.distanceUnit : null,
+      distanceText: clean(prescription.distanceText),
+      individualSets: Array.isArray(prescription.individualSets) ? prescription.individualSets : []
+    },
+    notes: clean(item.notes),
+    sourceReference: item.sourceReference || nullRef()
+  };
+}
+function nullRef() { return { page: null, sheet: null, cellRange: null, text: null }; }
 function retryable(error) { return error.code === 'OPENAI_RATE_LIMITED' || error.code === 'OPENAI_NETWORK_ERROR' || (error.code === 'OPENAI_REQUEST_FAILED' && error.status >= 500); }
 function retryAfter(value) { const seconds = Number(value); return Number.isFinite(seconds) && seconds >= 0 ? seconds * 1000 : null; }
 function observability({ requestId, config, payload, upstream, attempts, started, status }) { const usage = payload?.usage || {}; return { requestId, model: payload?.model || config.model, attemptCount: attempts, durationMs: Date.now() - started, status, inputTokens: usage.input_tokens ?? null, outputTokens: usage.output_tokens ?? null, totalTokens: usage.total_tokens ?? null, openaiRequestId: upstream?.headers?.get('x-request-id') || payload?.id || null }; }
