@@ -18,5 +18,8 @@
   },
   "devDependencies": {
     "wrangler": "^4.36.0"
+  },
+  "dependencies": {
+    "@repdb/exercises": "^2026.8.0"
   }
 }

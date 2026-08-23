@@ -206,7 +206,7 @@ function oauthErrorMessage(code) {
 
 function legacyMigrationView() { title.textContent = 'Mevcut Veriler'; nav('account'); app.innerHTML = `<section class="summary-card"><h2>Bu cihazda mevcut antrenman verileri bulundu.</h2><p class="muted">Veriler silinmez. İsterseniz bu hesabınıza aktarılır.</p><div class="builder-actions"><button class="secondary-btn" data-action="skip-legacy">Şimdilik Atla</button><button class="primary-btn" data-action="migrate-legacy">Bu verileri hesabıma aktar</button></div></section>`; }
 
-async function accountView() { title.textContent = 'Hesabım'; nav('account'); const legacy = await workoutRepository.hasLegacyDeviceData(); const installed = window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone; app.innerHTML = `<section class="summary-card"><h3>${escapeHtml(state.user?.email || '')}</h3><p id="syncStatus" class="muted">${syncLabel(state.syncStatus)}</p>${!installed ? `<button class="primary-btn full" data-action="install-app">AKS'yi Yükle</button><p class="small muted" id="installHelp" hidden>Safari'de Paylaş düğmesine dokunun → Ana Ekrana Ekle</p>` : ''}<button class="secondary-btn full" data-action="export-csv">CSV Log İndir</button><details><summary>Gelişmiş</summary>${legacy ? `<button class="secondary-btn full" data-action="migrate-legacy">Bu cihazdaki eski verileri içe aktar</button>` : ''}<button class="secondary-btn full" data-action="export-json">Veriyi Dışa Aktar</button><input type="file" id="restoreFile" accept="application/json"><button class="secondary-btn full" data-action="restore-json">JSON'dan Geri Yükle</button></details><button class="secondary-btn full" data-action="logout">Çıkış Yap</button><button class="danger-btn full" data-action="delete-account">Hesabımı Sil</button></section>`; }
+async function accountView() { title.textContent = 'Hesabım'; nav('account'); const legacy = await workoutRepository.hasLegacyDeviceData(); const installed = window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone; app.innerHTML = `<section class="summary-card"><h3>${escapeHtml(state.user?.email || '')}</h3><p id="syncStatus" class="muted">${syncLabel(state.syncStatus)}</p>${!installed ? `<button class="primary-btn full" data-action="install-app">AKS'yi Yükle</button><p class="small muted" id="installHelp" hidden>Safari'de Paylaş düğmesine dokunun → Ana Ekrana Ekle</p>` : ''}<button class="secondary-btn full" data-action="export-csv">CSV Log İndir</button><details><summary>Gelişmiş</summary>${legacy ? `<button class="secondary-btn full" data-action="migrate-legacy">Bu cihazdaki eski verileri içe aktar</button>` : ''}<button class="secondary-btn full" data-action="export-json">Veriyi Dışa Aktar</button><input type="file" id="restoreFile" accept="application/json"><button class="secondary-btn full" data-action="restore-json">JSON'dan Geri Yükle</button></details><p class="small muted">Exercise data by <a href="https://repdb.co" target="_blank" rel="noopener">RepDB (repdb.co)</a></p><button class="secondary-btn full" data-action="logout">Çıkış Yap</button><button class="danger-btn full" data-action="delete-account">Hesabımı Sil</button></section>`; }
 
 async function exercisesView(query = '') {
   state.view = 'exercises'; title.textContent = 'Hareketler'; nav('exercises');
@@ -217,7 +217,16 @@ async function exercisesView(query = '') {
 }
 
 function exerciseLibraryCard(item) {
-  return `<article class="exercise-card"><div class="exercise-head"><div><div class="exercise-name">${escapeHtml(item.nameTr || item.nameEn || item.id)}</div><div class="small muted">${escapeHtml(item.nameEn || '')}</div></div><div class="prescription">${escapeHtml((item.primaryMuscles || []).slice(0, 2).join(', ') || 'Hareket')}</div></div></article>`;
+  return `<article class="exercise-card exercise-library-card"><div class="exercise-head"><div class="exercise-summary">${exerciseThumb(item)}<div><div class="exercise-name">${escapeHtml(item.nameTr || item.nameEn || item.id)}</div><div class="small muted">${escapeHtml(exerciseMeta(item))}</div></div></div><div class="prescription">${escapeHtml((item.primaryMuscles || []).slice(0, 2).join(', ') || 'Hareket')}</div></div></article>`;
+}
+
+function exerciseThumb(item) {
+  const image = item?.media?.image || item?.imageUrl;
+  return image ? `<img class="exercise-thumb" src="${escapeHtml(image)}" alt="" loading="lazy">` : '<span class="exercise-thumb placeholder" aria-hidden="true"></span>';
+}
+
+function exerciseMeta(item) {
+  return [item.nameEn !== item.nameTr ? item.nameEn : '', ...(item.equipment || []).slice(0, 2)].filter(Boolean).join(' · ');
 }
 
 async function updateExerciseLibraryResults(query) {
@@ -795,7 +804,7 @@ function builderExercisePicker(section) {
   const picker = state.picker;
   const muscleFilters = [['','Tümü'],['chest','Göğüs'],['back','Sırt'],['shoulders','Omuz'],['arms','Kol'],['legs','Bacak'],['core','Core']];
   const equipmentFilters = [['','Tüm ekipman'],['dumbbell','Dumbbell'],['barbell','Barbell'],['cable','Cable'],['machine','Machine'],['bodyweight','Bodyweight']];
-  const result = (picker.results || []).map(item => `<button data-select-exercise="${section.id}:${item.id}"><b>${escapeHtml(item.nameTr)}</b><span>${escapeHtml(item.nameEn)} · ${(item.primaryMuscles || []).join(', ') || 'Diğer'} · ${(item.equipment || []).join(', ') || 'Diğer'}</span></button>`).join('');
+  const result = (picker.results || []).map(item => exerciseSearchResult(section.id, item)).join('');
   const custom = picker.query?.trim() ? `<button data-custom-exercise="${section.id}">"${escapeHtml(picker.query.trim())}" adlı özel hareket oluştur</button>` : '';
   return `<div class="exercise-picker" aria-label="Hareket seçici"><div class="builder-row"><b>Hareket Ekle</b><button data-close-picker>Kapalı</button></div><input data-exercise-search="${section.id}" value="${escapeHtml(picker.query || '')}" placeholder="Hareket ara veya yaz..." autocomplete="off"><div class="picker-filters" aria-label="Kas grubu filtresi">${muscleFilters.map(([value,label]) => `<button class="${picker.muscle === value ? 'active' : ''}" data-picker-muscle="${section.id}:${value}">${label}</button>`).join('')}</div><div class="picker-filters" aria-label="Ekipman filtresi">${equipmentFilters.map(([value,label]) => `<button class="${picker.equipment === value ? 'active' : ''}" data-picker-equipment="${section.id}:${value}">${label}</button>`).join('')}</div><div class="search-results" id="search-${section.id}">${result || '<span class="muted small">Bu filtrelerle hareket bulunamadı.</span>'}${custom}</div></div>`;
 }
@@ -803,8 +812,12 @@ function builderExercisePicker(section) {
 function builderInstruction(item) { return `<div class="instruction-row"><input data-instruction="${item.id}" value="${escapeHtml(item.text)}" placeholder="Talimat"></div>`; }
 function builderExercise(item, itemIndex) {
   const name = item.customExerciseName || item.displayName || item.exerciseId || 'Hareket';
-  return `<article class="builder-exercise simple-builder-exercise"><div class="builder-row"><b>${itemIndex + 1}. ${escapeHtml(name)}</b></div>
+  return `<article class="builder-exercise simple-builder-exercise"><div class="builder-row exercise-summary">${exerciseThumb(item)}<b>${itemIndex + 1}. ${escapeHtml(name)}</b></div>
     <div class="compact-fields"><label>Set<input data-field="${item.id}:setsText" inputmode="text" value="${escapeHtml(item.setsText ?? item.sets ?? '')}"></label><label>Tekrar<input data-field="${item.id}:repsText" inputmode="text" value="${escapeHtml(item.repsText ?? '')}"></label></div></article>`;
+}
+
+function exerciseSearchResult(sectionId, item) {
+  return `<button class="exercise-result" data-select-exercise="${sectionId}:${item.id}">${exerciseThumb(item)}<span><b>${escapeHtml(item.nameTr)}</b><small>${escapeHtml(exerciseMeta(item) || (item.primaryMuscles || []).join(', ') || 'Diğer')}</small></span></button>`;
 }
 
 function sectionLabel(type) { return ({warmup:'Isınma',activation:'Aktivasyon',strength:'Ana Antrenman',core:'Core',cardio:'Kardiyo',stretch:'Stretch',mobility:'Mobilite',cooldown:'Soğuma',custom:'Özel Bölüm'})[type]; }
@@ -849,7 +862,7 @@ app.addEventListener('click', async event => {
     state.picker.results = state.picker.query.trim() ? await searchExercises(state.picker.query, 24) : await browseExercises({ muscle: state.picker.muscle, equipment: state.picker.equipment });
     return renderBuilder();
   }
-  if (target.dataset.selectExercise) { const [sectionId, exerciseId] = target.dataset.selectExercise.split(':'); const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === sectionId); const item = blankExercise(section.id, section.items.length + 1, exerciseId); const canonical = await getCanonicalExercise(exerciseId); item.displayName = canonical?.nameTr || canonical?.nameEn || exerciseId; section.items.push(item); state.picker = null; await persistBuilder(); return renderBuilder(); }
+  if (target.dataset.selectExercise) { const [sectionId, exerciseId] = target.dataset.selectExercise.split(':'); const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === sectionId); const item = blankExercise(section.id, section.items.length + 1, exerciseId); const canonical = await getCanonicalExercise(exerciseId); item.displayName = canonical?.nameTr || canonical?.nameEn || exerciseId; item.imageUrl = canonical?.media?.image || null; section.items.push(item); state.picker = null; await persistBuilder(); return renderBuilder(); }
   if (target.dataset.customExercise) { const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === target.dataset.customExercise); const value = document.querySelector(`[data-exercise-search="${section.id}"]`).value.trim(); if (!value) return toast('Hareket adı yazın'); section.items.push(blankExercise(section.id, section.items.length + 1, null, value)); await persistBuilder(); return renderBuilder(); }
   if (target.dataset.startProgramDay) { const [programId, dayId] = target.dataset.startProgramDay.split(':'); return startProgramWorkout(programId, dayId); }
   if (target.dataset.setActiveProgram) { await workoutRepository.saveSettings({ activeProgramId: target.dataset.setActiveProgram }); toast('Aktif program değişti'); return programsView(); }
@@ -947,7 +960,7 @@ app.addEventListener('input', async event => {
   if (event.target.dataset.exerciseSearch) {
     const sectionId = event.target.dataset.exerciseSearch; const query = event.target.value; const results = await searchExercises(query, 24); const holder = document.querySelector(`#search-${sectionId}`);
     if (state.picker?.sectionId === sectionId) state.picker = { ...state.picker, query, results };
-    holder.innerHTML = query.trim() ? results.map(item => `<button data-select-exercise="${sectionId}:${item.id}"><b>${escapeHtml(item.nameTr)}</b><span>${escapeHtml(item.nameEn)} · ${(item.primaryMuscles || []).join(', ') || 'Diğer'}</span></button>`).join('') : '';
+    holder.innerHTML = query.trim() ? results.map(item => exerciseSearchResult(sectionId, item)).join('') : '';
   }
 });
 

@@ -306,6 +306,33 @@ main {
   gap: 10px;
 }
 
+.exercise-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.exercise-summary > div,
+.exercise-result > span {
+  min-width: 0;
+}
+
+.exercise-thumb {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
+  border: 1px solid var(--line);
+}
+
+.exercise-thumb.placeholder {
+  display: inline-block;
+  background: linear-gradient(135deg, #edf2f7, #f8fafc);
+}
+
 .exercise-name {
   font-size: 17px;
   line-height: 1.25;
@@ -778,6 +805,23 @@ th, td {
 .search-results { display: grid; gap: 5px; margin-top: 6px; }
 .search-results button { text-align: left; background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 9px; color: var(--ink); }
 .search-results span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.search-results .exercise-result {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.exercise-result b,
+.exercise-result small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.exercise-result small {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
 .exercise-picker { margin-top: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
 .exercise-picker > input { width: 100%; min-width: 0; margin: 8px 0; padding: 11px; border: 1px solid var(--line); border-radius: 8px; }
 .picker-filters { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 6px; scrollbar-width: thin; }

@@ -8,10 +8,10 @@ export async function loadExerciseDatabase() {
       return response.json();
     })
     .then(dataset => {
-      if (!Array.isArray(dataset.exercises) || dataset.exercises.length !== 250) {
+      if (!Array.isArray(dataset.exercises) || !dataset.exercises.length) {
         throw new Error('INVALID_EXERCISE_DATABASE');
       }
-      return dataset.exercises;
+      return isRepDbDataset(dataset) ? normalizeRepDbDataset(dataset) : dataset.exercises;
     });
   return databasePromise;
 }
@@ -85,4 +85,58 @@ function priorityRank(priority) {
 
 function typeRank(type) {
   return ({ strength: 0, bodyweight: 1, activation: 2, core: 3, plyometric: 4, conditioning: 5, cardio: 6, mobility: 7, stretch: 8, rehabilitation: 9 })[type] ?? 9;
+}
+
+function isRepDbDataset(dataset) {
+  return dataset.schema_version && dataset.exercises?.[0]?.name_en;
+}
+
+function normalizeRepDbDataset(dataset) {
+  return dataset.exercises.map(exercise => {
+    const image = repDbImage(exercise);
+    return {
+      schemaVersion: String(dataset.schema_version || 'repdb'),
+      source: 'repdb',
+      sourceVersion: dataset.name || dataset.schema_version || null,
+      id: exercise.id,
+      nameTr: exercise.name_en,
+      nameEn: exercise.name_en,
+      aliases: [exercise.name_de, exercise.name_es, exercise.body_part, exercise.equipment, ...(exercise.primary_muscles || [])].filter(Boolean),
+      exerciseType: mapCategory(exercise.category, exercise.is_bodyweight),
+      movementPattern: exercise.force_type || exercise.mechanic || 'general',
+      laterality: exercise.is_unilateral ? 'unilateral' : 'bilateral',
+      equipment: normalizeList([exercise.equipment || (exercise.is_bodyweight ? 'bodyweight' : null)]),
+      primaryMuscles: normalizeList(exercise.primary_muscles || [exercise.body_part]),
+      secondaryMuscles: normalizeList(exercise.secondary_muscles || []),
+      defaultSection: mapCategory(exercise.category, exercise.is_bodyweight) === 'stretch' ? 'stretch' : 'strength',
+      custom: false,
+      active: true,
+      variationOf: null,
+      priority: exercise.difficulty === 'beginner' ? 'core' : 'standard',
+      description: exercise.description_en || null,
+      instructions: exercise.instructions_en || [],
+      tips: exercise.tips_en || [],
+      media: {
+        image,
+        start: repDbImage(exercise, 'start'),
+        peak: repDbImage(exercise, 'peak'),
+        youtube: null
+      },
+      repdb: exercise
+    };
+  });
+}
+
+function repDbImage(exercise, preferred = 'peak') {
+  const flat = exercise.images?.flat || {};
+  return flat[preferred] || flat.main || flat.peak || flat.start || null;
+}
+
+function normalizeList(values) {
+  return values.filter(Boolean).map(value => normalize(value).replace(/\s+/g, '-'));
+}
+
+function mapCategory(category, bodyweight) {
+  if (bodyweight) return 'bodyweight';
+  return ({ stretching: 'stretch', stretch: 'stretch', cardio: 'cardio', mobility: 'mobility', plyometrics: 'plyometric' })[category] || category || 'strength';
 }
