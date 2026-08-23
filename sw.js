@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'a2-workout-v33-force-light-theme-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v34-exercise-curation-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',

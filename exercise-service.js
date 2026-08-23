@@ -27,7 +27,7 @@ export async function searchExercises(query, limit = 12) {
     .filter(item => item.active)
     .map(item => ({ item, score: score(item, normalized) }))
     .filter(result => result.score > 0)
-    .sort((a, b) => b.score - a.score || a.item.nameTr.localeCompare(b.item.nameTr, 'tr'))
+    .sort((a, b) => b.score - a.score || typeRank(a.item.exerciseType) - typeRank(b.item.exerciseType) || priorityRank(a.item.priority) - priorityRank(b.item.priority) || a.item.nameTr.localeCompare(b.item.nameTr, 'tr'))
     .slice(0, limit)
     .map(result => result.item);
 }
@@ -40,7 +40,7 @@ export async function browseExercises({ muscle = '', equipment = '', limit = 24 
     .filter(item => !normalizedMuscle || [...(item.primaryMuscles || []), ...(item.secondaryMuscles || [])]
       .some(value => normalize(value) === normalizedMuscle))
     .filter(item => !normalizedEquipment || (item.equipment || []).some(value => normalize(value) === normalizedEquipment))
-    .sort((a, b) => (a.priority || 999) - (b.priority || 999) || a.nameTr.localeCompare(b.nameTr, 'tr'))
+    .sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority) || a.nameTr.localeCompare(b.nameTr, 'tr'))
     .slice(0, limit);
 }
 
@@ -55,13 +55,34 @@ export function normalize(value) {
 }
 
 function score(item, query) {
-  const fields = [item.nameTr, item.nameEn, item.id, ...(item.aliases || [])].map(normalize);
   let best = 0;
-  fields.forEach((field, index) => {
-    if (field === query) best = Math.max(best, 100 - index);
-    else if (field.startsWith(query)) best = Math.max(best, 80 - index);
-    else if (field.includes(query)) best = Math.max(best, 60 - index);
-    else if (query.split(' ').every(token => field.includes(token))) best = Math.max(best, 40 - index);
+  best = Math.max(best, fieldScore(item.nameTr, query, 120, 104, 88, 78, 58, 68));
+  best = Math.max(best, fieldScore(item.nameEn, query, 112, 96, 82, 72, 52, 62));
+  best = Math.max(best, fieldScore(item.id, query, 92, 76, 66, 58, 40, 46));
+  (item.aliases || []).forEach(alias => {
+    best = Math.max(best, fieldScore(alias, query, 70, 56, 48, 42, 28, 32));
   });
   return best;
+}
+
+function fieldScore(value, query, exactScore, prefixScore, wordScore, wordPrefixScore, containsScore, tokenScore) {
+  const field = normalize(value);
+  if (!field) return 0;
+  const words = field.split(' ').filter(Boolean);
+  const queryWords = query.split(' ').filter(Boolean);
+  if (field === query) return exactScore;
+  if (queryWords.length > 1 && field.startsWith(query)) return prefixScore;
+  if (queryWords.length === 1 && words.includes(query)) return wordScore;
+  if (queryWords.length === 1 && words.some(word => word.startsWith(query))) return wordPrefixScore;
+  if (query.length >= 4 && field.includes(query)) return containsScore;
+  if (queryWords.length > 1 && queryWords.every(token => words.some(word => word === token || word.startsWith(token) || (token.length >= 4 && word.includes(token))))) return tokenScore;
+  return 0;
+}
+
+function priorityRank(priority) {
+  return ({ core: 0, standard: 1, specialist: 2 })[priority] ?? 9;
+}
+
+function typeRank(type) {
+  return ({ strength: 0, bodyweight: 1, activation: 2, core: 3, plyometric: 4, conditioning: 5, cardio: 6, mobility: 7, stretch: 8, rehabilitation: 9 })[type] ?? 9;
 }

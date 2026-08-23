@@ -1,6 +1,6 @@
 {
-  "datasetVersion": "1.1.0",
-  "status": "curated-draft",
+  "datasetVersion": "1.1.1",
+  "status": "curated",
   "exerciseCount": 250,
   "sourceBatches": [
     "exercises-upper-body-v1.json",
@@ -13,11 +13,12 @@
     {
       "schemaVersion": "1.0",
       "id": "barbell-bench-press",
-      "nameTr": "Barbell Bench Press",
+      "nameTr": "Düz Barbell Bench Press",
       "nameEn": "Barbell Bench Press",
       "aliases": [
         "Bench Press",
-        "Düz Bench Press"
+        "Düz Bench Press",
+        "Barbell Bench Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -48,10 +49,11 @@
     {
       "schemaVersion": "1.0",
       "id": "incline-barbell-bench-press",
-      "nameTr": "Incline Barbell Bench Press",
+      "nameTr": "Eğimli Barbell Bench Press",
       "nameEn": "Incline Barbell Bench Press",
       "aliases": [
-        "Incline Bench Press"
+        "Incline Bench Press",
+        "Incline Barbell Bench Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -82,11 +84,12 @@
     {
       "schemaVersion": "1.0",
       "id": "dumbbell-bench-press",
-      "nameTr": "Dumbbell Bench Press",
+      "nameTr": "Düz Dumbbell Bench Press",
       "nameEn": "Dumbbell Bench Press",
       "aliases": [
         "Dumbbell Chest Press",
-        "DB Bench Press"
+        "DB Bench Press",
+        "Dumbbell Bench Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -117,10 +120,11 @@
     {
       "schemaVersion": "1.0",
       "id": "incline-dumbbell-bench-press",
-      "nameTr": "Incline Dumbbell Bench Press",
+      "nameTr": "Eğimli Dumbbell Bench Press",
       "nameEn": "Incline Dumbbell Bench Press",
       "aliases": [
-        "Incline DB Press"
+        "Incline DB Press",
+        "Incline Dumbbell Bench Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -154,7 +158,8 @@
       "nameTr": "Smith Machine Bench Press",
       "nameEn": "Smith Machine Bench Press",
       "aliases": [
-        "Smith Bench Press"
+        "Smith Bench Press",
+        "Smith Machine Bench Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -185,11 +190,13 @@
     {
       "schemaVersion": "1.0",
       "id": "incline-smith-machine-press",
-      "nameTr": "Incline Smith Press",
+      "nameTr": "Eğimli Smith Machine Press",
       "nameEn": "Incline Smith Machine Press",
       "aliases": [
         "Incline Smith Bench Press",
-        "Smith Incline Press"
+        "Smith Incline Press",
+        "Incline Smith Press",
+        "Incline Smith Machine Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -220,10 +227,11 @@
     {
       "schemaVersion": "1.0",
       "id": "machine-chest-press",
-      "nameTr": "Machine Chest Press",
+      "nameTr": "Göğüs Press Makinesi",
       "nameEn": "Machine Chest Press",
       "aliases": [
-        "Chest Press Machine"
+        "Chest Press Machine",
+        "Machine Chest Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -253,10 +261,11 @@
     {
       "schemaVersion": "1.0",
       "id": "incline-machine-chest-press",
-      "nameTr": "Incline Machine Chest Press",
+      "nameTr": "Eğimli Göğüs Press Makinesi",
       "nameEn": "Incline Machine Chest Press",
       "aliases": [
-        "Incline Chest Press Machine"
+        "Incline Chest Press Machine",
+        "Incline Machine Chest Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -290,7 +299,9 @@
       "nameEn": "Push-Up",
       "aliases": [
         "Pushup",
-        "Push Up"
+        "Push Up",
+        "Şınav",
+        "Push-Up"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "horizontal-push",
@@ -321,10 +332,12 @@
     {
       "schemaVersion": "1.0",
       "id": "incline-push-up",
-      "nameTr": "Incline Şınav",
+      "nameTr": "Eğimli Şınav",
       "nameEn": "Incline Push-Up",
       "aliases": [
-        "Elevated Push-Up"
+        "Elevated Push-Up",
+        "Incline Şınav",
+        "Incline Push-Up"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "horizontal-push",
@@ -356,10 +369,12 @@
     {
       "schemaVersion": "1.0",
       "id": "decline-push-up",
-      "nameTr": "Decline Şınav",
+      "nameTr": "Ayak Yüksekte Şınav",
       "nameEn": "Decline Push-Up",
       "aliases": [
-        "Feet Elevated Push-Up"
+        "Feet Elevated Push-Up",
+        "Decline Şınav",
+        "Decline Push-Up"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "horizontal-push",
@@ -395,7 +410,9 @@
       "nameEn": "Chest Dip",
       "aliases": [
         "Chest Dips",
-        "Forward Lean Dip"
+        "Forward Lean Dip",
+        "Göğüs Dips",
+        "Chest Dip"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "horizontal-push",
@@ -425,11 +442,12 @@
     {
       "schemaVersion": "1.0",
       "id": "cable-chest-fly",
-      "nameTr": "Cable Chest Fly",
+      "nameTr": "Kablo Göğüs Fly",
       "nameEn": "Cable Chest Fly",
       "aliases": [
         "Cable Fly",
-        "Standing Cable Fly"
+        "Standing Cable Fly",
+        "Cable Chest Fly"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -458,10 +476,12 @@
     {
       "schemaVersion": "1.0",
       "id": "low-to-high-cable-fly",
-      "nameTr": "Low to High Cable Fly",
+      "nameTr": "Aşağıdan Yukarı Kablo Fly",
       "nameEn": "Low-to-High Cable Fly",
       "aliases": [
-        "Low Cable Fly"
+        "Low Cable Fly",
+        "Low to High Cable Fly",
+        "Low-to-High Cable Fly"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -490,10 +510,12 @@
     {
       "schemaVersion": "1.0",
       "id": "high-to-low-cable-fly",
-      "nameTr": "High to Low Cable Fly",
+      "nameTr": "Yukarıdan Aşağı Kablo Fly",
       "nameEn": "High-to-Low Cable Fly",
       "aliases": [
-        "Decline Cable Fly"
+        "Decline Cable Fly",
+        "High to Low Cable Fly",
+        "High-to-Low Cable Fly"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -522,10 +544,12 @@
     {
       "schemaVersion": "1.0",
       "id": "single-arm-cable-chest-fly",
-      "nameTr": "Tek Kol Cable Fly",
+      "nameTr": "Tek Kol Kablo Göğüs Fly",
       "nameEn": "Single-Arm Cable Chest Fly",
       "aliases": [
-        "One Arm Cable Fly"
+        "One Arm Cable Fly",
+        "Tek Kol Cable Fly",
+        "Single-Arm Cable Chest Fly"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -554,11 +578,13 @@
     {
       "schemaVersion": "1.0",
       "id": "dumbbell-chest-fly",
-      "nameTr": "Dumbbell Fly",
+      "nameTr": "Dumbbell Göğüs Fly",
       "nameEn": "Dumbbell Chest Fly",
       "aliases": [
         "DB Fly",
-        "Dumbbell Pec Fly"
+        "Dumbbell Pec Fly",
+        "Dumbbell Fly",
+        "Dumbbell Chest Fly"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -588,12 +614,14 @@
     {
       "schemaVersion": "1.0",
       "id": "machine-chest-fly",
-      "nameTr": "Machine Fly",
+      "nameTr": "Göğüs Fly Makinesi",
       "nameEn": "Machine Chest Fly",
       "aliases": [
         "Pec Deck",
         "Pec Fly",
-        "Machine Pec Fly"
+        "Machine Pec Fly",
+        "Machine Fly",
+        "Machine Chest Fly"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -625,7 +653,8 @@
       "nameTr": "Dumbbell Pullover",
       "nameEn": "Dumbbell Pullover",
       "aliases": [
-        "DB Pullover"
+        "DB Pullover",
+        "Dumbbell Pullover"
       ],
       "exerciseType": "strength",
       "movementPattern": "shoulder-flexion",
@@ -661,7 +690,8 @@
       "nameEn": "Pull-Up",
       "aliases": [
         "Pullup",
-        "Overhand Pull-Up"
+        "Overhand Pull-Up",
+        "Pull-Up"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "vertical-pull",
@@ -695,7 +725,8 @@
       "nameTr": "Chin-Up",
       "nameEn": "Chin-Up",
       "aliases": [
-        "Underhand Pull-Up"
+        "Underhand Pull-Up",
+        "Chin-Up"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "vertical-pull",
@@ -726,10 +757,12 @@
     {
       "schemaVersion": "1.0",
       "id": "neutral-grip-pull-up",
-      "nameTr": "Neutral Grip Pull-Up",
+      "nameTr": "Nötr Tutuş Pull-Up",
       "nameEn": "Neutral-Grip Pull-Up",
       "aliases": [
-        "Parallel Grip Pull-Up"
+        "Parallel Grip Pull-Up",
+        "Neutral Grip Pull-Up",
+        "Neutral-Grip Pull-Up"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "vertical-pull",
@@ -760,10 +793,11 @@
     {
       "schemaVersion": "1.0",
       "id": "assisted-pull-up",
-      "nameTr": "Assisted Pull-Up",
+      "nameTr": "Destekli Pull-Up",
       "nameEn": "Assisted Pull-Up",
       "aliases": [
-        "Machine Assisted Pull-Up"
+        "Machine Assisted Pull-Up",
+        "Assisted Pull-Up"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-pull",
@@ -797,7 +831,8 @@
       "nameEn": "Lat Pulldown",
       "aliases": [
         "Wide Grip Lat Pulldown",
-        "Cable Pulldown"
+        "Cable Pulldown",
+        "Lat Pulldown"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-pull",
@@ -827,10 +862,12 @@
     {
       "schemaVersion": "1.0",
       "id": "close-grip-lat-pulldown",
-      "nameTr": "Close Grip Lat Pulldown",
+      "nameTr": "Dar Tutuş Lat Pulldown",
       "nameEn": "Close-Grip Lat Pulldown",
       "aliases": [
-        "Narrow Grip Lat Pulldown"
+        "Narrow Grip Lat Pulldown",
+        "Close Grip Lat Pulldown",
+        "Close-Grip Lat Pulldown"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-pull",
@@ -860,10 +897,12 @@
     {
       "schemaVersion": "1.0",
       "id": "neutral-grip-lat-pulldown",
-      "nameTr": "Neutral Grip Lat Pulldown",
+      "nameTr": "Nötr Tutuş Lat Pulldown",
       "nameEn": "Neutral-Grip Lat Pulldown",
       "aliases": [
-        "Parallel Grip Lat Pulldown"
+        "Parallel Grip Lat Pulldown",
+        "Neutral Grip Lat Pulldown",
+        "Neutral-Grip Lat Pulldown"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-pull",
@@ -896,7 +935,9 @@
       "nameTr": "Ters Tutuş Lat Pulldown",
       "nameEn": "Underhand Lat Pulldown",
       "aliases": [
-        "Reverse Grip Lat Pulldown"
+        "Reverse Grip Lat Pulldown",
+        "Ters Tutuş Lat Pulldown",
+        "Underhand Lat Pulldown"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-pull",
@@ -929,7 +970,9 @@
       "nameTr": "Tek Kol Lat Pulldown",
       "nameEn": "Single-Arm Lat Pulldown",
       "aliases": [
-        "One Arm Lat Pulldown"
+        "One Arm Lat Pulldown",
+        "Tek Kol Lat Pulldown",
+        "Single-Arm Lat Pulldown"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-pull",
@@ -959,10 +1002,11 @@
     {
       "schemaVersion": "1.0",
       "id": "machine-lat-pulldown",
-      "nameTr": "Machine Lat Pulldown",
+      "nameTr": "Lat Pulldown Makinesi",
       "nameEn": "Machine Lat Pulldown",
       "aliases": [
-        "Pulldown Machine"
+        "Pulldown Machine",
+        "Machine Lat Pulldown"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-pull",
@@ -996,7 +1040,9 @@
       "nameEn": "Barbell Bent-Over Row",
       "aliases": [
         "Barbell Row",
-        "Bent Over Barbell Row"
+        "Bent Over Barbell Row",
+        "Barbell Bent Over Row",
+        "Barbell Bent-Over Row"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -1031,7 +1077,8 @@
       "nameTr": "Pendlay Row",
       "nameEn": "Pendlay Row",
       "aliases": [
-        "Dead Stop Barbell Row"
+        "Dead Stop Barbell Row",
+        "Pendlay Row"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -1067,7 +1114,9 @@
       "nameEn": "Single-Arm Dumbbell Row",
       "aliases": [
         "One Arm Dumbbell Row",
-        "DB Row"
+        "DB Row",
+        "Tek Kol Dumbbell Row",
+        "Single-Arm Dumbbell Row"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -1099,10 +1148,12 @@
     {
       "schemaVersion": "1.0",
       "id": "chest-supported-dumbbell-row",
-      "nameTr": "Chest Supported Dumbbell Row",
+      "nameTr": "Göğüs Destekli Dumbbell Row",
       "nameEn": "Chest-Supported Dumbbell Row",
       "aliases": [
-        "Incline Bench Dumbbell Row"
+        "Incline Bench Dumbbell Row",
+        "Chest Supported Dumbbell Row",
+        "Chest-Supported Dumbbell Row"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -1134,11 +1185,12 @@
     {
       "schemaVersion": "1.0",
       "id": "seated-cable-row",
-      "nameTr": "Seated Cable Row",
+      "nameTr": "Oturarak Kablo Row",
       "nameEn": "Seated Cable Row",
       "aliases": [
         "Cable Row",
-        "Low Cable Row"
+        "Low Cable Row",
+        "Seated Cable Row"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -1169,10 +1221,12 @@
     {
       "schemaVersion": "1.0",
       "id": "close-grip-seated-cable-row",
-      "nameTr": "Close Grip Seated Cable Row",
+      "nameTr": "Dar Tutuş Oturarak Kablo Row",
       "nameEn": "Close-Grip Seated Cable Row",
       "aliases": [
-        "V Bar Cable Row"
+        "V Bar Cable Row",
+        "Close Grip Seated Cable Row",
+        "Close-Grip Seated Cable Row"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -1203,10 +1257,12 @@
     {
       "schemaVersion": "1.0",
       "id": "wide-grip-seated-cable-row",
-      "nameTr": "Wide Grip Seated Cable Row",
+      "nameTr": "Geniş Tutuş Oturarak Kablo Row",
       "nameEn": "Wide-Grip Seated Cable Row",
       "aliases": [
-        "Wide Cable Row"
+        "Wide Cable Row",
+        "Wide Grip Seated Cable Row",
+        "Wide-Grip Seated Cable Row"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -1237,10 +1293,12 @@
     {
       "schemaVersion": "1.0",
       "id": "single-arm-seated-cable-row",
-      "nameTr": "Tek Kol Seated Cable Row",
+      "nameTr": "Tek Kol Oturarak Kablo Row",
       "nameEn": "Single-Arm Seated Cable Row",
       "aliases": [
-        "One Arm Cable Row"
+        "One Arm Cable Row",
+        "Tek Kol Seated Cable Row",
+        "Single-Arm Seated Cable Row"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -1271,10 +1329,11 @@
     {
       "schemaVersion": "1.0",
       "id": "machine-row",
-      "nameTr": "Machine Row",
+      "nameTr": "Row Makinesi",
       "nameEn": "Machine Row",
       "aliases": [
-        "Seated Row Machine"
+        "Seated Row Machine",
+        "Machine Row"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -1305,10 +1364,12 @@
     {
       "schemaVersion": "1.0",
       "id": "chest-supported-machine-row",
-      "nameTr": "Chest Supported Machine Row",
+      "nameTr": "Göğüs Destekli Row Makinesi",
       "nameEn": "Chest-Supported Machine Row",
       "aliases": [
-        "Chest Supported Row Machine"
+        "Chest Supported Row Machine",
+        "Chest Supported Machine Row",
+        "Chest-Supported Machine Row"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -1343,7 +1404,8 @@
       "nameEn": "T-Bar Row",
       "aliases": [
         "T Bar Row",
-        "Landmine T-Bar Row"
+        "Landmine T-Bar Row",
+        "T-Bar Row"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -1375,10 +1437,12 @@
     {
       "schemaVersion": "1.0",
       "id": "chest-supported-t-bar-row",
-      "nameTr": "Chest Supported T-Bar Row",
+      "nameTr": "Göğüs Destekli T-Bar Row",
       "nameEn": "Chest-Supported T-Bar Row",
       "aliases": [
-        "Supported T Bar Row"
+        "Supported T Bar Row",
+        "Chest Supported T-Bar Row",
+        "Chest-Supported T-Bar Row"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -1413,7 +1477,8 @@
       "nameEn": "Inverted Row",
       "aliases": [
         "Body Row",
-        "Australian Pull-Up"
+        "Australian Pull-Up",
+        "Inverted Row"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "horizontal-pull",
@@ -1444,10 +1509,12 @@
     {
       "schemaVersion": "1.0",
       "id": "straight-arm-pulldown",
-      "nameTr": "Straight Arm Pulldown",
+      "nameTr": "Düz Kol Pulldown",
       "nameEn": "Straight-Arm Pulldown",
       "aliases": [
-        "Straight Arm Lat Pulldown"
+        "Straight Arm Lat Pulldown",
+        "Straight Arm Pulldown",
+        "Straight-Arm Pulldown"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-pull",
@@ -1476,10 +1543,11 @@
     {
       "schemaVersion": "1.0",
       "id": "machine-pullover",
-      "nameTr": "Machine Pullover",
+      "nameTr": "Pullover Makinesi",
       "nameEn": "Machine Pullover",
       "aliases": [
-        "Pullover Machine"
+        "Pullover Machine",
+        "Machine Pullover"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-pull",
@@ -1512,7 +1580,8 @@
       "nameTr": "Barbell Shrug",
       "nameEn": "Barbell Shrug",
       "aliases": [
-        "BB Shrug"
+        "BB Shrug",
+        "Barbell Shrug"
       ],
       "exerciseType": "strength",
       "movementPattern": "scapular-retraction",
@@ -1544,7 +1613,8 @@
       "nameTr": "Dumbbell Shrug",
       "nameEn": "Dumbbell Shrug",
       "aliases": [
-        "DB Shrug"
+        "DB Shrug",
+        "Dumbbell Shrug"
       ],
       "exerciseType": "strength",
       "movementPattern": "scapular-retraction",
@@ -1577,7 +1647,8 @@
       "nameEn": "Barbell Overhead Press",
       "aliases": [
         "Military Press",
-        "OHP"
+        "OHP",
+        "Barbell Overhead Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-push",
@@ -1611,7 +1682,8 @@
       "nameEn": "Dumbbell Shoulder Press",
       "aliases": [
         "DB Shoulder Press",
-        "Dumbbell Overhead Press"
+        "Dumbbell Overhead Press",
+        "Dumbbell Shoulder Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-push",
@@ -1641,10 +1713,11 @@
     {
       "schemaVersion": "1.0",
       "id": "seated-dumbbell-shoulder-press",
-      "nameTr": "Seated Dumbbell Shoulder Press",
+      "nameTr": "Oturarak Dumbbell Shoulder Press",
       "nameEn": "Seated Dumbbell Shoulder Press",
       "aliases": [
-        "Seated DB Press"
+        "Seated DB Press",
+        "Seated Dumbbell Shoulder Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-push",
@@ -1678,7 +1751,8 @@
       "nameTr": "Arnold Press",
       "nameEn": "Arnold Press",
       "aliases": [
-        "Dumbbell Arnold Press"
+        "Dumbbell Arnold Press",
+        "Arnold Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-push",
@@ -1708,10 +1782,11 @@
     {
       "schemaVersion": "1.0",
       "id": "machine-shoulder-press",
-      "nameTr": "Machine Shoulder Press",
+      "nameTr": "Omuz Press Makinesi",
       "nameEn": "Machine Shoulder Press",
       "aliases": [
-        "Shoulder Press Machine"
+        "Shoulder Press Machine",
+        "Machine Shoulder Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-push",
@@ -1744,7 +1819,9 @@
       "nameTr": "Smith Shoulder Press",
       "nameEn": "Smith Machine Shoulder Press",
       "aliases": [
-        "Smith Overhead Press"
+        "Smith Overhead Press",
+        "Smith Shoulder Press",
+        "Smith Machine Shoulder Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-push",
@@ -1775,11 +1852,12 @@
     {
       "schemaVersion": "1.0",
       "id": "dumbbell-lateral-raise",
-      "nameTr": "Dumbbell Lateral Raise",
+      "nameTr": "Dumbbell Yana Açış",
       "nameEn": "Dumbbell Lateral Raise",
       "aliases": [
         "DB Lateral Raise",
-        "Side Lateral Raise"
+        "Side Lateral Raise",
+        "Dumbbell Lateral Raise"
       ],
       "exerciseType": "strength",
       "movementPattern": "shoulder-abduction",
@@ -1808,10 +1886,11 @@
     {
       "schemaVersion": "1.0",
       "id": "cable-lateral-raise",
-      "nameTr": "Cable Lateral Raise",
+      "nameTr": "Kablo Yana Açış",
       "nameEn": "Cable Lateral Raise",
       "aliases": [
-        "Cable Side Raise"
+        "Cable Side Raise",
+        "Cable Lateral Raise"
       ],
       "exerciseType": "strength",
       "movementPattern": "shoulder-abduction",
@@ -1840,10 +1919,12 @@
     {
       "schemaVersion": "1.0",
       "id": "behind-body-cable-lateral-raise",
-      "nameTr": "Behind Body Cable Lateral Raise",
+      "nameTr": "Vücut Arkasından Kablo Yana Açış",
       "nameEn": "Behind-the-Body Cable Lateral Raise",
       "aliases": [
-        "Bayesian Lateral Raise"
+        "Bayesian Lateral Raise",
+        "Behind Body Cable Lateral Raise",
+        "Behind-the-Body Cable Lateral Raise"
       ],
       "exerciseType": "strength",
       "movementPattern": "shoulder-abduction",
@@ -1872,10 +1953,11 @@
     {
       "schemaVersion": "1.0",
       "id": "machine-lateral-raise",
-      "nameTr": "Machine Lateral Raise",
+      "nameTr": "Yana Açış Makinesi",
       "nameEn": "Machine Lateral Raise",
       "aliases": [
-        "Lateral Raise Machine"
+        "Lateral Raise Machine",
+        "Machine Lateral Raise"
       ],
       "exerciseType": "strength",
       "movementPattern": "shoulder-abduction",
@@ -1904,10 +1986,11 @@
     {
       "schemaVersion": "1.0",
       "id": "dumbbell-front-raise",
-      "nameTr": "Dumbbell Front Raise",
+      "nameTr": "Dumbbell Öne Kaldırış",
       "nameEn": "Dumbbell Front Raise",
       "aliases": [
-        "DB Front Raise"
+        "DB Front Raise",
+        "Dumbbell Front Raise"
       ],
       "exerciseType": "strength",
       "movementPattern": "shoulder-flexion",
@@ -1940,7 +2023,8 @@
       "nameEn": "Reverse Pec Deck",
       "aliases": [
         "Rear Delt Machine Fly",
-        "Reverse Machine Fly"
+        "Reverse Machine Fly",
+        "Reverse Pec Deck"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -1969,10 +2053,12 @@
     {
       "schemaVersion": "1.0",
       "id": "bent-over-dumbbell-rear-delt-fly",
-      "nameTr": "Bent Over Dumbbell Rear Delt Fly",
+      "nameTr": "Bent Over Dumbbell Arka Omuz Fly",
       "nameEn": "Bent-Over Dumbbell Rear-Delt Fly",
       "aliases": [
-        "Bent Over Reverse Fly"
+        "Bent Over Reverse Fly",
+        "Bent Over Dumbbell Rear Delt Fly",
+        "Bent-Over Dumbbell Rear-Delt Fly"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -2001,10 +2087,12 @@
     {
       "schemaVersion": "1.0",
       "id": "cable-rear-delt-fly",
-      "nameTr": "Cable Rear Delt Fly",
+      "nameTr": "Kablo Arka Omuz Fly",
       "nameEn": "Cable Rear-Delt Fly",
       "aliases": [
-        "Cable Reverse Fly"
+        "Cable Reverse Fly",
+        "Cable Rear Delt Fly",
+        "Cable Rear-Delt Fly"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -2033,11 +2121,13 @@
     {
       "schemaVersion": "1.0",
       "id": "cable-rope-face-pull",
-      "nameTr": "Rope Face Pull",
+      "nameTr": "Kablo Rope Face Pull",
       "nameEn": "Cable Rope Face Pull",
       "aliases": [
         "Face Pull",
-        "Cable Face Pull"
+        "Cable Face Pull",
+        "Rope Face Pull",
+        "Cable Rope Face Pull"
       ],
       "exerciseType": "activation",
       "movementPattern": "scapular-retraction",
@@ -2072,7 +2162,8 @@
       "nameTr": "Band Face Pull",
       "nameEn": "Band Face Pull",
       "aliases": [
-        "Resistance Band Face Pull"
+        "Resistance Band Face Pull",
+        "Band Face Pull"
       ],
       "exerciseType": "activation",
       "movementPattern": "scapular-retraction",
@@ -2107,7 +2198,8 @@
       "nameEn": "Band External Rotation",
       "aliases": [
         "Resistance Band External Rotation",
-        "Rotator Cuff External Rotation"
+        "Rotator Cuff External Rotation",
+        "Band External Rotation"
       ],
       "exerciseType": "activation",
       "movementPattern": "shoulder-external-rotation",
@@ -2136,10 +2228,12 @@
     {
       "schemaVersion": "1.0",
       "id": "single-arm-cable-external-rotation",
-      "nameTr": "Tek Kol Cable External Rotation",
+      "nameTr": "Tek Kol Kablo External Rotation",
       "nameEn": "Single-Arm Cable External Rotation",
       "aliases": [
-        "Cable External Rotation"
+        "Cable External Rotation",
+        "Tek Kol Cable External Rotation",
+        "Single-Arm Cable External Rotation"
       ],
       "exerciseType": "activation",
       "movementPattern": "shoulder-external-rotation",
@@ -2168,11 +2262,12 @@
     {
       "schemaVersion": "1.0",
       "id": "scapular-push-up",
-      "nameTr": "Scapular Push-Up",
+      "nameTr": "Scapular Şınav",
       "nameEn": "Scapular Push-Up",
       "aliases": [
         "Push-Up Plus",
-        "Scap Push-Up"
+        "Scap Push-Up",
+        "Scapular Push-Up"
       ],
       "exerciseType": "activation",
       "movementPattern": "scapular-protraction",
@@ -2205,7 +2300,8 @@
       "nameEn": "Wall Slide",
       "aliases": [
         "Shoulder Wall Slide",
-        "Wall Angel Slide"
+        "Wall Angel Slide",
+        "Wall Slide"
       ],
       "exerciseType": "activation",
       "movementPattern": "scapular-upward-rotation",
@@ -2238,7 +2334,8 @@
       "nameTr": "Serratus Wall Slide",
       "nameEn": "Serratus Wall Slide",
       "aliases": [
-        "Wall Slide with Serratus"
+        "Wall Slide with Serratus",
+        "Serratus Wall Slide"
       ],
       "exerciseType": "activation",
       "movementPattern": "scapular-upward-rotation",
@@ -2268,11 +2365,12 @@
     {
       "schemaVersion": "1.0",
       "id": "prone-y-raise",
-      "nameTr": "Prone Y Raise",
+      "nameTr": "Y Raise",
       "nameEn": "Prone Y Raise",
       "aliases": [
         "Y Raise",
-        "Incline Y Raise"
+        "Incline Y Raise",
+        "Prone Y Raise"
       ],
       "exerciseType": "activation",
       "movementPattern": "scapular-upward-rotation",
@@ -2306,7 +2404,8 @@
       "nameTr": "Barbell Curl",
       "nameEn": "Barbell Curl",
       "aliases": [
-        "Standing Barbell Curl"
+        "Standing Barbell Curl",
+        "Barbell Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -2338,7 +2437,9 @@
       "nameTr": "EZ Bar Curl",
       "nameEn": "EZ-Bar Curl",
       "aliases": [
-        "EZ Curl"
+        "EZ Curl",
+        "EZ Bar Curl",
+        "EZ-Bar Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -2370,7 +2471,8 @@
       "nameTr": "Dumbbell Curl",
       "nameEn": "Dumbbell Curl",
       "aliases": [
-        "DB Curl"
+        "DB Curl",
+        "Dumbbell Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -2402,7 +2504,8 @@
       "nameTr": "Alternating Dumbbell Curl",
       "nameEn": "Alternating Dumbbell Curl",
       "aliases": [
-        "Alternating DB Curl"
+        "Alternating DB Curl",
+        "Alternating Dumbbell Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -2431,10 +2534,11 @@
     {
       "schemaVersion": "1.0",
       "id": "incline-dumbbell-curl",
-      "nameTr": "Incline Dumbbell Curl",
+      "nameTr": "Eğimli Dumbbell Curl",
       "nameEn": "Incline Dumbbell Curl",
       "aliases": [
-        "Incline DB Curl"
+        "Incline DB Curl",
+        "Incline Dumbbell Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -2467,7 +2571,8 @@
       "nameTr": "Hammer Curl",
       "nameEn": "Hammer Curl",
       "aliases": [
-        "Dumbbell Hammer Curl"
+        "Dumbbell Hammer Curl",
+        "Hammer Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -2498,7 +2603,9 @@
       "nameTr": "Cross Body Hammer Curl",
       "nameEn": "Cross-Body Hammer Curl",
       "aliases": [
-        "Pinwheel Curl"
+        "Pinwheel Curl",
+        "Cross Body Hammer Curl",
+        "Cross-Body Hammer Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -2529,7 +2636,8 @@
       "nameTr": "Preacher Curl",
       "nameEn": "Preacher Curl",
       "aliases": [
-        "EZ Bar Preacher Curl"
+        "EZ Bar Preacher Curl",
+        "Preacher Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -2562,7 +2670,8 @@
       "nameTr": "Dumbbell Preacher Curl",
       "nameEn": "Dumbbell Preacher Curl",
       "aliases": [
-        "Single Arm Preacher Curl"
+        "Single Arm Preacher Curl",
+        "Dumbbell Preacher Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -2592,10 +2701,11 @@
     {
       "schemaVersion": "1.0",
       "id": "machine-preacher-curl",
-      "nameTr": "Machine Preacher Curl",
+      "nameTr": "Preacher Curl Makinesi",
       "nameEn": "Machine Preacher Curl",
       "aliases": [
-        "Preacher Curl Machine"
+        "Preacher Curl Machine",
+        "Machine Preacher Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -2624,10 +2734,11 @@
     {
       "schemaVersion": "1.0",
       "id": "cable-curl",
-      "nameTr": "Cable Curl",
+      "nameTr": "Kablo Curl",
       "nameEn": "Cable Curl",
       "aliases": [
-        "Standing Cable Curl"
+        "Standing Cable Curl",
+        "Cable Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -2656,10 +2767,11 @@
     {
       "schemaVersion": "1.0",
       "id": "bayesian-cable-curl",
-      "nameTr": "Bayesian Cable Curl",
+      "nameTr": "Bayesian Kablo Curl",
       "nameEn": "Bayesian Cable Curl",
       "aliases": [
-        "Behind Body Cable Curl"
+        "Behind Body Cable Curl",
+        "Bayesian Cable Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -2691,7 +2803,9 @@
       "nameTr": "Rope Hammer Curl",
       "nameEn": "Cable Rope Hammer Curl",
       "aliases": [
-        "Cable Hammer Curl"
+        "Cable Hammer Curl",
+        "Rope Hammer Curl",
+        "Cable Rope Hammer Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -2723,7 +2837,8 @@
       "nameTr": "Concentration Curl",
       "nameEn": "Concentration Curl",
       "aliases": [
-        "Seated Concentration Curl"
+        "Seated Concentration Curl",
+        "Concentration Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -2756,7 +2871,9 @@
       "nameEn": "Cable Rope Triceps Pushdown",
       "aliases": [
         "Rope Pushdown",
-        "Triceps Rope Pushdown"
+        "Triceps Rope Pushdown",
+        "Rope Triceps Pushdown",
+        "Cable Rope Triceps Pushdown"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-extension",
@@ -2787,7 +2904,9 @@
       "nameTr": "Bar Triceps Pushdown",
       "nameEn": "Cable Bar Triceps Pushdown",
       "aliases": [
-        "Straight Bar Pushdown"
+        "Straight Bar Pushdown",
+        "Bar Triceps Pushdown",
+        "Cable Bar Triceps Pushdown"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-extension",
@@ -2814,10 +2933,12 @@
     {
       "schemaVersion": "1.0",
       "id": "single-arm-cable-triceps-pushdown",
-      "nameTr": "Tek Kol Cable Triceps Pushdown",
+      "nameTr": "Tek Kol Kablo Triceps Pushdown",
       "nameEn": "Single-Arm Cable Triceps Pushdown",
       "aliases": [
-        "One Arm Pushdown"
+        "One Arm Pushdown",
+        "Tek Kol Cable Triceps Pushdown",
+        "Single-Arm Cable Triceps Pushdown"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-extension",
@@ -2847,7 +2968,9 @@
       "nameTr": "Ters Tutuş Triceps Pushdown",
       "nameEn": "Reverse-Grip Triceps Pushdown",
       "aliases": [
-        "Underhand Pushdown"
+        "Underhand Pushdown",
+        "Ters Tutuş Triceps Pushdown",
+        "Reverse-Grip Triceps Pushdown"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-extension",
@@ -2877,7 +3000,8 @@
       "nameTr": "Overhead Rope Triceps Extension",
       "nameEn": "Overhead Rope Triceps Extension",
       "aliases": [
-        "Cable Overhead Triceps Extension"
+        "Cable Overhead Triceps Extension",
+        "Overhead Rope Triceps Extension"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-extension",
@@ -2905,10 +3029,12 @@
     {
       "schemaVersion": "1.0",
       "id": "single-arm-overhead-cable-triceps-extension",
-      "nameTr": "Tek Kol Overhead Cable Triceps Extension",
+      "nameTr": "Tek Kol Overhead Kablo Triceps Extension",
       "nameEn": "Single-Arm Overhead Cable Triceps Extension",
       "aliases": [
-        "One Arm Overhead Cable Extension"
+        "One Arm Overhead Cable Extension",
+        "Tek Kol Overhead Cable Triceps Extension",
+        "Single-Arm Overhead Cable Triceps Extension"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-extension",
@@ -2938,7 +3064,8 @@
       "nameTr": "Dumbbell Overhead Triceps Extension",
       "nameEn": "Dumbbell Overhead Triceps Extension",
       "aliases": [
-        "DB Overhead Extension"
+        "DB Overhead Extension",
+        "Dumbbell Overhead Triceps Extension"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-extension",
@@ -2968,7 +3095,9 @@
       "nameTr": "Tek Kol Dumbbell Overhead Triceps Extension",
       "nameEn": "Single-Arm Dumbbell Overhead Triceps Extension",
       "aliases": [
-        "One Arm DB Triceps Extension"
+        "One Arm DB Triceps Extension",
+        "Tek Kol Dumbbell Overhead Triceps Extension",
+        "Single-Arm Dumbbell Overhead Triceps Extension"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-extension",
@@ -2998,7 +3127,9 @@
       "nameTr": "EZ Bar Skull Crusher",
       "nameEn": "EZ-Bar Skull Crusher",
       "aliases": [
-        "Lying Triceps Extension"
+        "Lying Triceps Extension",
+        "EZ Bar Skull Crusher",
+        "EZ-Bar Skull Crusher"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-extension",
@@ -3029,7 +3160,8 @@
       "nameTr": "Dumbbell Skull Crusher",
       "nameEn": "Dumbbell Skull Crusher",
       "aliases": [
-        "DB Lying Triceps Extension"
+        "DB Lying Triceps Extension",
+        "Dumbbell Skull Crusher"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-extension",
@@ -3057,10 +3189,12 @@
     {
       "schemaVersion": "1.0",
       "id": "close-grip-bench-press",
-      "nameTr": "Close Grip Bench Press",
+      "nameTr": "Dar Tutuş Bench Press",
       "nameEn": "Close-Grip Bench Press",
       "aliases": [
-        "CGBP"
+        "CGBP",
+        "Close Grip Bench Press",
+        "Close-Grip Bench Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-push",
@@ -3094,7 +3228,9 @@
       "nameTr": "Triceps Dips",
       "nameEn": "Triceps Dip",
       "aliases": [
-        "Upright Dip"
+        "Upright Dip",
+        "Triceps Dips",
+        "Triceps Dip"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "elbow-extension",
@@ -3124,10 +3260,11 @@
     {
       "schemaVersion": "1.0",
       "id": "machine-triceps-extension",
-      "nameTr": "Machine Triceps Extension",
+      "nameTr": "Triceps Extension Makinesi",
       "nameEn": "Machine Triceps Extension",
       "aliases": [
-        "Triceps Extension Machine"
+        "Triceps Extension Machine",
+        "Machine Triceps Extension"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-extension",
@@ -3157,7 +3294,8 @@
       "nameTr": "Barbell Wrist Curl",
       "nameEn": "Barbell Wrist Curl",
       "aliases": [
-        "Wrist Curl"
+        "Wrist Curl",
+        "Barbell Wrist Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -3187,7 +3325,8 @@
       "nameTr": "Barbell Reverse Wrist Curl",
       "nameEn": "Barbell Reverse Wrist Curl",
       "aliases": [
-        "Wrist Extension"
+        "Wrist Extension",
+        "Barbell Reverse Wrist Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-extension",
@@ -3217,7 +3356,8 @@
       "nameTr": "Reverse Barbell Curl",
       "nameEn": "Reverse Barbell Curl",
       "aliases": [
-        "Pronated Barbell Curl"
+        "Pronated Barbell Curl",
+        "Reverse Barbell Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "elbow-flexion",
@@ -3249,7 +3389,8 @@
       "nameTr": "Barbell Back Squat",
       "nameEn": "Barbell Back Squat",
       "aliases": [
-        "Back Squat"
+        "Back Squat",
+        "Barbell Back Squat"
       ],
       "exerciseType": "strength",
       "movementPattern": "squat",
@@ -3283,7 +3424,8 @@
       "nameTr": "Barbell Front Squat",
       "nameEn": "Barbell Front Squat",
       "aliases": [
-        "Front Squat"
+        "Front Squat",
+        "Barbell Front Squat"
       ],
       "exerciseType": "strength",
       "movementPattern": "squat",
@@ -3316,7 +3458,9 @@
       "nameTr": "High Bar Squat",
       "nameEn": "High-Bar Back Squat",
       "aliases": [
-        "High Bar Back Squat"
+        "High Bar Back Squat",
+        "High Bar Squat",
+        "High-Bar Back Squat"
       ],
       "exerciseType": "strength",
       "movementPattern": "squat",
@@ -3350,7 +3494,8 @@
       "nameTr": "Goblet Squat",
       "nameEn": "Goblet Squat",
       "aliases": [
-        "Dumbbell Goblet Squat"
+        "Dumbbell Goblet Squat",
+        "Goblet Squat"
       ],
       "exerciseType": "strength",
       "movementPattern": "squat",
@@ -3383,7 +3528,8 @@
       "nameTr": "Smith Machine Squat",
       "nameEn": "Smith Machine Squat",
       "aliases": [
-        "Smith Squat"
+        "Smith Squat",
+        "Smith Machine Squat"
       ],
       "exerciseType": "strength",
       "movementPattern": "squat",
@@ -3416,7 +3562,8 @@
       "nameTr": "Hack Squat",
       "nameEn": "Hack Squat",
       "aliases": [
-        "Hack Squat Machine"
+        "Hack Squat Machine",
+        "Hack Squat"
       ],
       "exerciseType": "strength",
       "movementPattern": "squat",
@@ -3448,7 +3595,8 @@
       "nameTr": "Pendulum Squat",
       "nameEn": "Pendulum Squat",
       "aliases": [
-        "Pendulum Squat Machine"
+        "Pendulum Squat Machine",
+        "Pendulum Squat"
       ],
       "exerciseType": "strength",
       "movementPattern": "squat",
@@ -3480,7 +3628,8 @@
       "nameTr": "Leg Press",
       "nameEn": "Leg Press",
       "aliases": [
-        "45 Degree Leg Press"
+        "45 Degree Leg Press",
+        "Leg Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "squat",
@@ -3513,7 +3662,9 @@
       "nameTr": "Tek Bacak Leg Press",
       "nameEn": "Single-Leg Press",
       "aliases": [
-        "One Leg Press"
+        "One Leg Press",
+        "Tek Bacak Leg Press",
+        "Single-Leg Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "squat",
@@ -3546,7 +3697,8 @@
       "nameTr": "Leg Extension",
       "nameEn": "Leg Extension",
       "aliases": [
-        "Knee Extension Machine"
+        "Knee Extension Machine",
+        "Leg Extension"
       ],
       "exerciseType": "strength",
       "movementPattern": "knee-extension",
@@ -3576,7 +3728,9 @@
       "nameTr": "Tek Bacak Leg Extension",
       "nameEn": "Single-Leg Extension",
       "aliases": [
-        "One Leg Extension"
+        "One Leg Extension",
+        "Tek Bacak Leg Extension",
+        "Single-Leg Extension"
       ],
       "exerciseType": "strength",
       "movementPattern": "knee-extension",
@@ -3607,7 +3761,8 @@
       "nameEn": "Bulgarian Split Squat",
       "aliases": [
         "Rear Foot Elevated Split Squat",
-        "RFESS"
+        "RFESS",
+        "Bulgarian Split Squat"
       ],
       "exerciseType": "strength",
       "movementPattern": "lunge",
@@ -3642,7 +3797,8 @@
       "nameTr": "Split Squat",
       "nameEn": "Split Squat",
       "aliases": [
-        "Stationary Lunge"
+        "Stationary Lunge",
+        "Split Squat"
       ],
       "exerciseType": "strength",
       "movementPattern": "lunge",
@@ -3672,10 +3828,11 @@
     {
       "schemaVersion": "1.0",
       "id": "forward-lunge",
-      "nameTr": "Forward Lunge",
+      "nameTr": "Öne Lunge",
       "nameEn": "Forward Lunge",
       "aliases": [
-        "Walking Forward Lunge"
+        "Walking Forward Lunge",
+        "Forward Lunge"
       ],
       "exerciseType": "strength",
       "movementPattern": "lunge",
@@ -3706,10 +3863,11 @@
     {
       "schemaVersion": "1.0",
       "id": "reverse-lunge",
-      "nameTr": "Reverse Lunge",
+      "nameTr": "Geri Lunge",
       "nameEn": "Reverse Lunge",
       "aliases": [
-        "Backward Lunge"
+        "Backward Lunge",
+        "Reverse Lunge"
       ],
       "exerciseType": "strength",
       "movementPattern": "lunge",
@@ -3743,7 +3901,8 @@
       "nameTr": "Walking Lunge",
       "nameEn": "Walking Lunge",
       "aliases": [
-        "Walking Lunges"
+        "Walking Lunges",
+        "Walking Lunge"
       ],
       "exerciseType": "strength",
       "movementPattern": "lunge",
@@ -3777,7 +3936,8 @@
       "nameTr": "Step-Up",
       "nameEn": "Step-Up",
       "aliases": [
-        "Bench Step Up"
+        "Bench Step Up",
+        "Step-Up"
       ],
       "exerciseType": "strength",
       "movementPattern": "lunge",
@@ -3812,7 +3972,8 @@
       "nameTr": "Sissy Squat",
       "nameEn": "Sissy Squat",
       "aliases": [
-        "Bodyweight Sissy Squat"
+        "Bodyweight Sissy Squat",
+        "Sissy Squat"
       ],
       "exerciseType": "strength",
       "movementPattern": "knee-extension",
@@ -3842,7 +4003,8 @@
       "nameTr": "Conventional Deadlift",
       "nameEn": "Conventional Deadlift",
       "aliases": [
-        "Deadlift"
+        "Deadlift",
+        "Conventional Deadlift"
       ],
       "exerciseType": "strength",
       "movementPattern": "hinge",
@@ -3877,7 +4039,8 @@
       "nameTr": "Romanian Deadlift",
       "nameEn": "Romanian Deadlift",
       "aliases": [
-        "RDL"
+        "RDL",
+        "Romanian Deadlift"
       ],
       "exerciseType": "strength",
       "movementPattern": "hinge",
@@ -3910,7 +4073,8 @@
       "nameTr": "Dumbbell Romanian Deadlift",
       "nameEn": "Dumbbell Romanian Deadlift",
       "aliases": [
-        "DB RDL"
+        "DB RDL",
+        "Dumbbell Romanian Deadlift"
       ],
       "exerciseType": "strength",
       "movementPattern": "hinge",
@@ -3943,7 +4107,9 @@
       "nameTr": "Tek Bacak Romanian Deadlift",
       "nameEn": "Single-Leg Romanian Deadlift",
       "aliases": [
-        "Single Leg RDL"
+        "Single Leg RDL",
+        "Tek Bacak Romanian Deadlift",
+        "Single-Leg Romanian Deadlift"
       ],
       "exerciseType": "strength",
       "movementPattern": "hinge",
@@ -3977,7 +4143,9 @@
       "nameTr": "Stiff Leg Deadlift",
       "nameEn": "Stiff-Leg Deadlift",
       "aliases": [
-        "Straight Leg Deadlift"
+        "Straight Leg Deadlift",
+        "Stiff Leg Deadlift",
+        "Stiff-Leg Deadlift"
       ],
       "exerciseType": "strength",
       "movementPattern": "hinge",
@@ -4010,7 +4178,8 @@
       "nameTr": "Sumo Deadlift",
       "nameEn": "Sumo Deadlift",
       "aliases": [
-        "Wide Stance Deadlift"
+        "Wide Stance Deadlift",
+        "Sumo Deadlift"
       ],
       "exerciseType": "strength",
       "movementPattern": "hinge",
@@ -4045,7 +4214,8 @@
       "nameTr": "Barbell Hip Thrust",
       "nameEn": "Barbell Hip Thrust",
       "aliases": [
-        "Hip Thrust"
+        "Hip Thrust",
+        "Barbell Hip Thrust"
       ],
       "exerciseType": "strength",
       "movementPattern": "hip-extension",
@@ -4075,10 +4245,11 @@
     {
       "schemaVersion": "1.0",
       "id": "machine-hip-thrust",
-      "nameTr": "Machine Hip Thrust",
+      "nameTr": "Hip Thrust Makinesi",
       "nameEn": "Machine Hip Thrust",
       "aliases": [
-        "Hip Thrust Machine"
+        "Hip Thrust Machine",
+        "Machine Hip Thrust"
       ],
       "exerciseType": "strength",
       "movementPattern": "hip-extension",
@@ -4110,7 +4281,9 @@
       "nameTr": "Tek Bacak Hip Thrust",
       "nameEn": "Single-Leg Hip Thrust",
       "aliases": [
-        "One Leg Hip Thrust"
+        "One Leg Hip Thrust",
+        "Tek Bacak Hip Thrust",
+        "Single-Leg Hip Thrust"
       ],
       "exerciseType": "strength",
       "movementPattern": "hip-extension",
@@ -4144,7 +4317,8 @@
       "nameTr": "Glute Bridge",
       "nameEn": "Glute Bridge",
       "aliases": [
-        "Floor Glute Bridge"
+        "Floor Glute Bridge",
+        "Glute Bridge"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "hip-extension",
@@ -4173,10 +4347,11 @@
     {
       "schemaVersion": "1.0",
       "id": "lying-leg-curl",
-      "nameTr": "Lying Leg Curl",
+      "nameTr": "Yatarak Leg Curl",
       "nameEn": "Lying Leg Curl",
       "aliases": [
-        "Prone Leg Curl"
+        "Prone Leg Curl",
+        "Lying Leg Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "knee-flexion",
@@ -4203,10 +4378,11 @@
     {
       "schemaVersion": "1.0",
       "id": "seated-leg-curl",
-      "nameTr": "Seated Leg Curl",
+      "nameTr": "Oturarak Leg Curl",
       "nameEn": "Seated Leg Curl",
       "aliases": [
-        "Seated Hamstring Curl"
+        "Seated Hamstring Curl",
+        "Seated Leg Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "knee-flexion",
@@ -4233,10 +4409,12 @@
     {
       "schemaVersion": "1.0",
       "id": "standing-single-leg-curl",
-      "nameTr": "Standing Single Leg Curl",
+      "nameTr": "Ayakta Tek Bacak Leg Curl",
       "nameEn": "Standing Single-Leg Curl",
       "aliases": [
-        "Standing Hamstring Curl"
+        "Standing Hamstring Curl",
+        "Standing Single Leg Curl",
+        "Standing Single-Leg Curl"
       ],
       "exerciseType": "strength",
       "movementPattern": "knee-flexion",
@@ -4267,7 +4445,8 @@
       "nameEn": "Nordic Hamstring Curl",
       "aliases": [
         "Nordic Curl",
-        "Nordic Hamstring"
+        "Nordic Hamstring",
+        "Nordic Hamstring Curl"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "knee-flexion",
@@ -4296,10 +4475,12 @@
     {
       "schemaVersion": "1.0",
       "id": "cable-pull-through",
-      "nameTr": "Cable Pull Through",
+      "nameTr": "Kablo Pull Through",
       "nameEn": "Cable Pull-Through",
       "aliases": [
-        "Rope Pull Through"
+        "Rope Pull Through",
+        "Cable Pull Through",
+        "Cable Pull-Through"
       ],
       "exerciseType": "strength",
       "movementPattern": "hinge",
@@ -4334,7 +4515,8 @@
       "nameEn": "Back Extension",
       "aliases": [
         "45 Degree Back Extension",
-        "Hyperextension"
+        "Hyperextension",
+        "Back Extension"
       ],
       "exerciseType": "strength",
       "movementPattern": "hip-extension",
@@ -4364,10 +4546,12 @@
     {
       "schemaVersion": "1.0",
       "id": "glute-biased-back-extension",
-      "nameTr": "Glute Focused Back Extension",
+      "nameTr": "Glute Odaklı Back Extension",
       "nameEn": "Glute-Biased Back Extension",
       "aliases": [
-        "Glute Back Extension"
+        "Glute Back Extension",
+        "Glute Focused Back Extension",
+        "Glute-Biased Back Extension"
       ],
       "exerciseType": "strength",
       "movementPattern": "hip-extension",
@@ -4397,10 +4581,11 @@
     {
       "schemaVersion": "1.0",
       "id": "cable-glute-kickback",
-      "nameTr": "Cable Glute Kickback",
+      "nameTr": "Kablo Glute Kickback",
       "nameEn": "Cable Glute Kickback",
       "aliases": [
-        "Cable Hip Extension"
+        "Cable Hip Extension",
+        "Cable Glute Kickback"
       ],
       "exerciseType": "strength",
       "movementPattern": "hip-extension",
@@ -4429,10 +4614,11 @@
     {
       "schemaVersion": "1.0",
       "id": "machine-hip-abduction",
-      "nameTr": "Machine Hip Abduction",
+      "nameTr": "Hip Abduction Makinesi",
       "nameEn": "Machine Hip Abduction",
       "aliases": [
-        "Hip Abductor Machine"
+        "Hip Abductor Machine",
+        "Machine Hip Abduction"
       ],
       "exerciseType": "strength",
       "movementPattern": "hip-abduction",
@@ -4460,10 +4646,11 @@
     {
       "schemaVersion": "1.0",
       "id": "cable-hip-abduction",
-      "nameTr": "Cable Hip Abduction",
+      "nameTr": "Kablo Hip Abduction",
       "nameEn": "Cable Hip Abduction",
       "aliases": [
-        "Standing Cable Hip Abduction"
+        "Standing Cable Hip Abduction",
+        "Cable Hip Abduction"
       ],
       "exerciseType": "strength",
       "movementPattern": "hip-abduction",
@@ -4491,10 +4678,11 @@
     {
       "schemaVersion": "1.0",
       "id": "machine-hip-adduction",
-      "nameTr": "Machine Hip Adduction",
+      "nameTr": "Hip Adduction Makinesi",
       "nameEn": "Machine Hip Adduction",
       "aliases": [
-        "Hip Adductor Machine"
+        "Hip Adductor Machine",
+        "Machine Hip Adduction"
       ],
       "exerciseType": "strength",
       "movementPattern": "hip-adduction",
@@ -4524,7 +4712,8 @@
       "nameTr": "Copenhagen Plank",
       "nameEn": "Copenhagen Plank",
       "aliases": [
-        "Copenhagen Adduction"
+        "Copenhagen Adduction",
+        "Copenhagen Plank"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "hip-adduction",
@@ -4555,10 +4744,11 @@
     {
       "schemaVersion": "1.0",
       "id": "standing-calf-raise",
-      "nameTr": "Standing Calf Raise",
+      "nameTr": "Ayakta Calf Raise",
       "nameEn": "Standing Calf Raise",
       "aliases": [
-        "Calf Raise"
+        "Calf Raise",
+        "Standing Calf Raise"
       ],
       "exerciseType": "strength",
       "movementPattern": "plantar-flexion",
@@ -4587,10 +4777,11 @@
     {
       "schemaVersion": "1.0",
       "id": "seated-calf-raise",
-      "nameTr": "Seated Calf Raise",
+      "nameTr": "Oturarak Calf Raise",
       "nameEn": "Seated Calf Raise",
       "aliases": [
-        "Seated Calf Machine"
+        "Seated Calf Machine",
+        "Seated Calf Raise"
       ],
       "exerciseType": "strength",
       "movementPattern": "plantar-flexion",
@@ -4622,7 +4813,8 @@
       "nameTr": "Leg Press Calf Raise",
       "nameEn": "Leg Press Calf Raise",
       "aliases": [
-        "Calf Press on Leg Press"
+        "Calf Press on Leg Press",
+        "Leg Press Calf Raise"
       ],
       "exerciseType": "strength",
       "movementPattern": "plantar-flexion",
@@ -4654,7 +4846,9 @@
       "nameTr": "Tek Bacak Calf Raise",
       "nameEn": "Single-Leg Calf Raise",
       "aliases": [
-        "One Leg Calf Raise"
+        "One Leg Calf Raise",
+        "Tek Bacak Calf Raise",
+        "Single-Leg Calf Raise"
       ],
       "exerciseType": "strength",
       "movementPattern": "plantar-flexion",
@@ -4686,7 +4880,8 @@
       "nameTr": "Donkey Calf Raise",
       "nameEn": "Donkey Calf Raise",
       "aliases": [
-        "Donkey Calf"
+        "Donkey Calf",
+        "Donkey Calf Raise"
       ],
       "exerciseType": "strength",
       "movementPattern": "plantar-flexion",
@@ -4718,7 +4913,8 @@
       "nameTr": "Tibialis Raise",
       "nameEn": "Tibialis Raise",
       "aliases": [
-        "Tib Raise"
+        "Tib Raise",
+        "Tibialis Raise"
       ],
       "exerciseType": "strength",
       "movementPattern": "dorsiflexion",
@@ -4748,7 +4944,8 @@
       "nameTr": "Plank",
       "nameEn": "Front Plank",
       "aliases": [
-        "Plank"
+        "Plank",
+        "Front Plank"
       ],
       "exerciseType": "core",
       "movementPattern": "anti-extension",
@@ -4779,10 +4976,11 @@
     {
       "schemaVersion": "1.0",
       "id": "side-plank",
-      "nameTr": "Side Plank",
+      "nameTr": "Yan Plank",
       "nameEn": "Side Plank",
       "aliases": [
-        "Yan Plank"
+        "Yan Plank",
+        "Side Plank"
       ],
       "exerciseType": "core",
       "movementPattern": "anti-lateral-flexion",
@@ -4815,7 +5013,8 @@
       "nameTr": "Dead Bug",
       "nameEn": "Dead Bug",
       "aliases": [
-        "Deadbug"
+        "Deadbug",
+        "Dead Bug"
       ],
       "exerciseType": "core",
       "movementPattern": "anti-extension",
@@ -4846,7 +5045,8 @@
       "nameTr": "Bird Dog",
       "nameEn": "Bird Dog",
       "aliases": [
-        "Quadruped Bird Dog"
+        "Quadruped Bird Dog",
+        "Bird Dog"
       ],
       "exerciseType": "core",
       "movementPattern": "anti-rotation",
@@ -4879,7 +5079,8 @@
       "nameTr": "Hollow Body Hold",
       "nameEn": "Hollow Body Hold",
       "aliases": [
-        "Hollow Hold"
+        "Hollow Hold",
+        "Hollow Body Hold"
       ],
       "exerciseType": "core",
       "movementPattern": "anti-extension",
@@ -4910,7 +5111,8 @@
       "nameTr": "Ab Wheel Rollout",
       "nameEn": "Ab Wheel Rollout",
       "aliases": [
-        "Ab Roller"
+        "Ab Roller",
+        "Ab Wheel Rollout"
       ],
       "exerciseType": "core",
       "movementPattern": "anti-extension",
@@ -4943,7 +5145,8 @@
       "nameTr": "Stability Ball Rollout",
       "nameEn": "Stability Ball Rollout",
       "aliases": [
-        "Swiss Ball Rollout"
+        "Swiss Ball Rollout",
+        "Stability Ball Rollout"
       ],
       "exerciseType": "core",
       "movementPattern": "anti-extension",
@@ -4971,10 +5174,11 @@
     {
       "schemaVersion": "1.0",
       "id": "cable-crunch",
-      "nameTr": "Cable Crunch",
+      "nameTr": "Kablo Crunch",
       "nameEn": "Cable Crunch",
       "aliases": [
-        "Kneeling Cable Crunch"
+        "Kneeling Cable Crunch",
+        "Cable Crunch"
       ],
       "exerciseType": "core",
       "movementPattern": "spinal-flexion",
@@ -5003,10 +5207,12 @@
     {
       "schemaVersion": "1.0",
       "id": "machine-crunch",
-      "nameTr": "Machine Crunch",
+      "nameTr": "Crunch Makinesi",
       "nameEn": "Machine Abdominal Crunch",
       "aliases": [
-        "Ab Crunch Machine"
+        "Ab Crunch Machine",
+        "Machine Crunch",
+        "Machine Abdominal Crunch"
       ],
       "exerciseType": "core",
       "movementPattern": "spinal-flexion",
@@ -5038,7 +5244,8 @@
       "nameTr": "Reverse Crunch",
       "nameEn": "Reverse Crunch",
       "aliases": [
-        "Hip Lift Crunch"
+        "Hip Lift Crunch",
+        "Reverse Crunch"
       ],
       "exerciseType": "core",
       "movementPattern": "spinal-flexion",
@@ -5067,10 +5274,11 @@
     {
       "schemaVersion": "1.0",
       "id": "hanging-knee-raise",
-      "nameTr": "Hanging Knee Raise",
+      "nameTr": "Asılı Diz Çekiş",
       "nameEn": "Hanging Knee Raise",
       "aliases": [
-        "Hanging Knee Raises"
+        "Hanging Knee Raises",
+        "Hanging Knee Raise"
       ],
       "exerciseType": "core",
       "movementPattern": "hip-flexion",
@@ -5099,10 +5307,11 @@
     {
       "schemaVersion": "1.0",
       "id": "hanging-leg-raise",
-      "nameTr": "Hanging Leg Raise",
+      "nameTr": "Asılı Bacak Kaldırış",
       "nameEn": "Hanging Leg Raise",
       "aliases": [
-        "Straight Leg Raise"
+        "Straight Leg Raise",
+        "Hanging Leg Raise"
       ],
       "exerciseType": "core",
       "movementPattern": "hip-flexion",
@@ -5131,10 +5340,11 @@
     {
       "schemaVersion": "1.0",
       "id": "captains-chair-knee-raise",
-      "nameTr": "Captain's Chair Knee Raise",
+      "nameTr": "Captain Chair Diz Çekiş",
       "nameEn": "Captain's Chair Knee Raise",
       "aliases": [
-        "Vertical Knee Raise"
+        "Vertical Knee Raise",
+        "Captain's Chair Knee Raise"
       ],
       "exerciseType": "core",
       "movementPattern": "hip-flexion",
@@ -5166,7 +5376,8 @@
       "nameTr": "Pallof Press",
       "nameEn": "Pallof Press",
       "aliases": [
-        "Cable Pallof Press"
+        "Cable Pallof Press",
+        "Pallof Press"
       ],
       "exerciseType": "core",
       "movementPattern": "anti-rotation",
@@ -5197,7 +5408,8 @@
       "nameTr": "Band Pallof Press",
       "nameEn": "Band Pallof Press",
       "aliases": [
-        "Resistance Band Pallof Press"
+        "Resistance Band Pallof Press",
+        "Band Pallof Press"
       ],
       "exerciseType": "core",
       "movementPattern": "anti-rotation",
@@ -5225,10 +5437,11 @@
     {
       "schemaVersion": "1.0",
       "id": "cable-wood-chop",
-      "nameTr": "Cable Wood Chop",
+      "nameTr": "Kablo Wood Chop",
       "nameEn": "Cable Wood Chop",
       "aliases": [
-        "Cable Woodchopper"
+        "Cable Woodchopper",
+        "Cable Wood Chop"
       ],
       "exerciseType": "core",
       "movementPattern": "anti-rotation",
@@ -5260,7 +5473,8 @@
       "nameTr": "Russian Twist",
       "nameEn": "Russian Twist",
       "aliases": [
-        "Seated Russian Twist"
+        "Seated Russian Twist",
+        "Russian Twist"
       ],
       "exerciseType": "core",
       "movementPattern": "anti-rotation",
@@ -5292,7 +5506,8 @@
       "nameTr": "Suitcase Carry",
       "nameEn": "Suitcase Carry",
       "aliases": [
-        "Suitcase Walk"
+        "Suitcase Walk",
+        "Suitcase Carry"
       ],
       "exerciseType": "core",
       "movementPattern": "anti-lateral-flexion",
@@ -5323,10 +5538,11 @@
     {
       "schemaVersion": "1.0",
       "id": "farmers-carry",
-      "nameTr": "Farmer's Carry",
+      "nameTr": "Farmer Carry",
       "nameEn": "Farmer's Carry",
       "aliases": [
-        "Farmers Walk"
+        "Farmers Walk",
+        "Farmer's Carry"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "locomotion",
@@ -5360,7 +5576,9 @@
       "nameTr": "Band Pull Apart",
       "nameEn": "Band Pull-Apart",
       "aliases": [
-        "Resistance Band Pull Apart"
+        "Resistance Band Pull Apart",
+        "Band Pull Apart",
+        "Band Pull-Apart"
       ],
       "exerciseType": "activation",
       "movementPattern": "scapular-retraction",
@@ -5393,7 +5611,8 @@
       "nameTr": "Scapular Pull-Up",
       "nameEn": "Scapular Pull-Up",
       "aliases": [
-        "Scap Pull-Up"
+        "Scap Pull-Up",
+        "Scapular Pull-Up"
       ],
       "exerciseType": "activation",
       "movementPattern": "scapular-retraction",
@@ -5427,7 +5646,8 @@
       "nameTr": "Serratus Punch",
       "nameEn": "Serratus Punch",
       "aliases": [
-        "Supine Serratus Punch"
+        "Supine Serratus Punch",
+        "Serratus Punch"
       ],
       "exerciseType": "activation",
       "movementPattern": "scapular-protraction",
@@ -5457,7 +5677,8 @@
       "nameTr": "Band Internal Rotation",
       "nameEn": "Band Internal Rotation",
       "aliases": [
-        "Shoulder Internal Rotation"
+        "Shoulder Internal Rotation",
+        "Band Internal Rotation"
       ],
       "exerciseType": "activation",
       "movementPattern": "shoulder-internal-rotation",
@@ -5484,10 +5705,12 @@
     {
       "schemaVersion": "1.0",
       "id": "side-lying-external-rotation",
-      "nameTr": "Side Lying External Rotation",
+      "nameTr": "Yan Yatarak External Rotation",
       "nameEn": "Side-Lying External Rotation",
       "aliases": [
-        "Side Lying Rotator Cuff"
+        "Side Lying Rotator Cuff",
+        "Side Lying External Rotation",
+        "Side-Lying External Rotation"
       ],
       "exerciseType": "activation",
       "movementPattern": "shoulder-external-rotation",
@@ -5516,10 +5739,11 @@
     {
       "schemaVersion": "1.0",
       "id": "prone-t-raise",
-      "nameTr": "Prone T Raise",
+      "nameTr": "T Raise",
       "nameEn": "Prone T Raise",
       "aliases": [
-        "T Raise"
+        "T Raise",
+        "Prone T Raise"
       ],
       "exerciseType": "activation",
       "movementPattern": "scapular-retraction",
@@ -5550,10 +5774,11 @@
     {
       "schemaVersion": "1.0",
       "id": "prone-w-raise",
-      "nameTr": "Prone W Raise",
+      "nameTr": "W Raise",
       "nameEn": "Prone W Raise",
       "aliases": [
-        "W Raise"
+        "W Raise",
+        "Prone W Raise"
       ],
       "exerciseType": "activation",
       "movementPattern": "scapular-retraction",
@@ -5588,7 +5813,8 @@
       "nameEn": "Band Lateral Walk",
       "aliases": [
         "Lateral Band Walk",
-        "Monster Walk"
+        "Monster Walk",
+        "Band Lateral Walk"
       ],
       "exerciseType": "activation",
       "movementPattern": "hip-abduction",
@@ -5621,7 +5847,8 @@
       "nameTr": "Clamshell",
       "nameEn": "Clamshell",
       "aliases": [
-        "Side Lying Clamshell"
+        "Side Lying Clamshell",
+        "Clamshell"
       ],
       "exerciseType": "activation",
       "movementPattern": "hip-abduction",
@@ -5649,10 +5876,11 @@
     {
       "schemaVersion": "1.0",
       "id": "banded-glute-bridge",
-      "nameTr": "Banded Glute Bridge",
+      "nameTr": "Bandlı Glute Bridge",
       "nameEn": "Banded Glute Bridge",
       "aliases": [
-        "Mini Band Glute Bridge"
+        "Mini Band Glute Bridge",
+        "Banded Glute Bridge"
       ],
       "exerciseType": "activation",
       "movementPattern": "hip-extension",
@@ -5686,7 +5914,8 @@
       "nameEn": "Terminal Knee Extension",
       "aliases": [
         "TKE",
-        "Band TKE"
+        "Band TKE",
+        "Terminal Knee Extension"
       ],
       "exerciseType": "rehabilitation",
       "movementPattern": "knee-extension",
@@ -5713,10 +5942,11 @@
     {
       "schemaVersion": "1.0",
       "id": "bodyweight-calf-raise",
-      "nameTr": "Bodyweight Calf Raise",
+      "nameTr": "Vücut Ağırlığı Calf Raise",
       "nameEn": "Bodyweight Calf Raise",
       "aliases": [
-        "Warmup Calf Raise"
+        "Warmup Calf Raise",
+        "Bodyweight Calf Raise"
       ],
       "exerciseType": "activation",
       "movementPattern": "plantar-flexion",
@@ -5748,7 +5978,9 @@
       "nameTr": "Cat Cow",
       "nameEn": "Cat-Cow",
       "aliases": [
-        "Cat Camel"
+        "Cat Camel",
+        "Cat Cow",
+        "Cat-Cow"
       ],
       "exerciseType": "mobility",
       "movementPattern": "mobility",
@@ -5780,7 +6012,9 @@
       "nameTr": "Open Book Rotation",
       "nameEn": "Thoracic Open Book",
       "aliases": [
-        "Open Book Stretch"
+        "Open Book Stretch",
+        "Open Book Rotation",
+        "Thoracic Open Book"
       ],
       "exerciseType": "mobility",
       "movementPattern": "mobility",
@@ -5812,7 +6046,8 @@
       "nameTr": "Quadruped Thoracic Rotation",
       "nameEn": "Quadruped Thoracic Rotation",
       "aliases": [
-        "Thread the Needle"
+        "Thread the Needle",
+        "Quadruped Thoracic Rotation"
       ],
       "exerciseType": "mobility",
       "movementPattern": "mobility",
@@ -5841,10 +6076,11 @@
     {
       "schemaVersion": "1.0",
       "id": "wall-thoracic-extension",
-      "nameTr": "Wall Thoracic Extension",
+      "nameTr": "Duvar Thoracic Extension",
       "nameEn": "Wall Thoracic Extension",
       "aliases": [
-        "Wall T Spine Extension"
+        "Wall T Spine Extension",
+        "Wall Thoracic Extension"
       ],
       "exerciseType": "mobility",
       "movementPattern": "mobility",
@@ -5873,10 +6109,11 @@
     {
       "schemaVersion": "1.0",
       "id": "worlds-greatest-stretch",
-      "nameTr": "World's Greatest Stretch",
+      "nameTr": "World’s Greatest Stretch",
       "nameEn": "World's Greatest Stretch",
       "aliases": [
-        "WGS"
+        "WGS",
+        "World's Greatest Stretch"
       ],
       "exerciseType": "mobility",
       "movementPattern": "mobility",
@@ -5910,7 +6147,8 @@
       "nameTr": "90/90 Hip Switch",
       "nameEn": "90/90 Hip Switch",
       "aliases": [
-        "Hip 90 90"
+        "Hip 90 90",
+        "90/90 Hip Switch"
       ],
       "exerciseType": "mobility",
       "movementPattern": "mobility",
@@ -5941,7 +6179,8 @@
       "nameTr": "Adductor Rock Back",
       "nameEn": "Adductor Rock Back",
       "aliases": [
-        "Quadruped Adductor Rockback"
+        "Quadruped Adductor Rockback",
+        "Adductor Rock Back"
       ],
       "exerciseType": "mobility",
       "movementPattern": "mobility",
@@ -5970,10 +6209,12 @@
     {
       "schemaVersion": "1.0",
       "id": "half-kneeling-hip-flexor-mobility",
-      "nameTr": "Half Kneeling Hip Flexor Mobility",
+      "nameTr": "Yarım Diz Çöküş Hip Flexor Mobilite",
       "nameEn": "Half-Kneeling Hip Flexor Mobility",
       "aliases": [
-        "Hip Flexor Mobilization"
+        "Hip Flexor Mobilization",
+        "Half Kneeling Hip Flexor Mobility",
+        "Half-Kneeling Hip Flexor Mobility"
       ],
       "exerciseType": "mobility",
       "movementPattern": "mobility",
@@ -6005,7 +6246,8 @@
       "nameTr": "Ankle Dorsiflexion Rock",
       "nameEn": "Ankle Dorsiflexion Rock",
       "aliases": [
-        "Knee to Wall Ankle Mobility"
+        "Knee to Wall Ankle Mobility",
+        "Ankle Dorsiflexion Rock"
       ],
       "exerciseType": "mobility",
       "movementPattern": "dorsiflexion",
@@ -6038,7 +6280,8 @@
       "nameTr": "Deep Squat Pry",
       "nameEn": "Deep Squat Pry",
       "aliases": [
-        "Squat Pry"
+        "Squat Pry",
+        "Deep Squat Pry"
       ],
       "exerciseType": "mobility",
       "movementPattern": "mobility",
@@ -6072,7 +6315,9 @@
       "nameEn": "Shoulder Pass-Through",
       "aliases": [
         "Band Dislocate",
-        "Shoulder Dislocate"
+        "Shoulder Dislocate",
+        "Shoulder Pass Through",
+        "Shoulder Pass-Through"
       ],
       "exerciseType": "mobility",
       "movementPattern": "mobility",
@@ -6102,10 +6347,11 @@
     {
       "schemaVersion": "1.0",
       "id": "doorway-pec-stretch",
-      "nameTr": "Doorway Pec Stretch",
+      "nameTr": "Kapı Eşiği Göğüs Stretch",
       "nameEn": "Doorway Pec Stretch",
       "aliases": [
-        "Doorway Chest Stretch"
+        "Doorway Chest Stretch",
+        "Doorway Pec Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6137,7 +6383,8 @@
       "nameTr": "Overhead Lat Stretch",
       "nameEn": "Overhead Lat Stretch",
       "aliases": [
-        "Lat Stretch"
+        "Lat Stretch",
+        "Overhead Lat Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6166,10 +6413,12 @@
     {
       "schemaVersion": "1.0",
       "id": "cross-body-shoulder-stretch",
-      "nameTr": "Cross Body Shoulder Stretch",
+      "nameTr": "Cross Body Omuz Stretch",
       "nameEn": "Cross-Body Shoulder Stretch",
       "aliases": [
-        "Posterior Shoulder Stretch"
+        "Posterior Shoulder Stretch",
+        "Cross Body Shoulder Stretch",
+        "Cross-Body Shoulder Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6201,7 +6450,8 @@
       "nameTr": "Overhead Triceps Stretch",
       "nameEn": "Overhead Triceps Stretch",
       "aliases": [
-        "Triceps Stretch"
+        "Triceps Stretch",
+        "Overhead Triceps Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6231,7 +6481,8 @@
       "nameTr": "Wrist Flexor Stretch",
       "nameEn": "Wrist Flexor Stretch",
       "aliases": [
-        "Forearm Flexor Stretch"
+        "Forearm Flexor Stretch",
+        "Wrist Flexor Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6261,7 +6512,8 @@
       "nameTr": "Wrist Extensor Stretch",
       "nameEn": "Wrist Extensor Stretch",
       "aliases": [
-        "Forearm Extensor Stretch"
+        "Forearm Extensor Stretch",
+        "Wrist Extensor Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6291,7 +6543,8 @@
       "nameTr": "Upper Trapezius Stretch",
       "nameEn": "Upper Trapezius Stretch",
       "aliases": [
-        "Upper Trap Stretch"
+        "Upper Trap Stretch",
+        "Upper Trapezius Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6320,10 +6573,11 @@
     {
       "schemaVersion": "1.0",
       "id": "kneeling-hip-flexor-stretch",
-      "nameTr": "Kneeling Hip Flexor Stretch",
+      "nameTr": "Diz Çökerek Hip Flexor Stretch",
       "nameEn": "Kneeling Hip Flexor Stretch",
       "aliases": [
-        "Half Kneeling Hip Flexor Stretch"
+        "Half Kneeling Hip Flexor Stretch",
+        "Kneeling Hip Flexor Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6350,10 +6604,11 @@
     {
       "schemaVersion": "1.0",
       "id": "standing-quadriceps-stretch",
-      "nameTr": "Standing Quadriceps Stretch",
+      "nameTr": "Ayakta Quadriceps Stretch",
       "nameEn": "Standing Quadriceps Stretch",
       "aliases": [
-        "Standing Quad Stretch"
+        "Standing Quad Stretch",
+        "Standing Quadriceps Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6380,10 +6635,11 @@
     {
       "schemaVersion": "1.0",
       "id": "seated-hamstring-stretch",
-      "nameTr": "Seated Hamstring Stretch",
+      "nameTr": "Oturarak Hamstring Stretch",
       "nameEn": "Seated Hamstring Stretch",
       "aliases": [
-        "Hamstring Stretch"
+        "Hamstring Stretch",
+        "Seated Hamstring Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6413,7 +6669,9 @@
       "nameTr": "Figure Four Glute Stretch",
       "nameEn": "Figure-Four Glute Stretch",
       "aliases": [
-        "Piriformis Stretch"
+        "Piriformis Stretch",
+        "Figure Four Glute Stretch",
+        "Figure-Four Glute Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6441,10 +6699,12 @@
     {
       "schemaVersion": "1.0",
       "id": "butterfly-adductor-stretch",
-      "nameTr": "Butterfly Stretch",
+      "nameTr": "Butterfly Adductor Stretch",
       "nameEn": "Butterfly Adductor Stretch",
       "aliases": [
-        "Butterfly Groin Stretch"
+        "Butterfly Groin Stretch",
+        "Butterfly Stretch",
+        "Butterfly Adductor Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6471,10 +6731,11 @@
     {
       "schemaVersion": "1.0",
       "id": "standing-calf-stretch",
-      "nameTr": "Standing Calf Stretch",
+      "nameTr": "Ayakta Calf Stretch",
       "nameEn": "Standing Calf Stretch",
       "aliases": [
-        "Wall Calf Stretch"
+        "Wall Calf Stretch",
+        "Standing Calf Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6503,10 +6764,12 @@
     {
       "schemaVersion": "1.0",
       "id": "bent-knee-soleus-stretch",
-      "nameTr": "Bent Knee Soleus Stretch",
+      "nameTr": "Diz Bükülü Soleus Stretch",
       "nameEn": "Bent-Knee Soleus Stretch",
       "aliases": [
-        "Soleus Stretch"
+        "Soleus Stretch",
+        "Bent Knee Soleus Stretch",
+        "Bent-Knee Soleus Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6538,7 +6801,8 @@
       "nameTr": "Cobra Stretch",
       "nameEn": "Cobra Stretch",
       "aliases": [
-        "Abdominal Stretch"
+        "Abdominal Stretch",
+        "Cobra Stretch"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6565,10 +6829,11 @@
     {
       "schemaVersion": "1.0",
       "id": "childs-pose",
-      "nameTr": "Child's Pose",
+      "nameTr": "Child’s Pose",
       "nameEn": "Child's Pose",
       "aliases": [
-        "Child Pose"
+        "Child Pose",
+        "Child's Pose"
       ],
       "exerciseType": "stretch",
       "movementPattern": "stretch",
@@ -6601,7 +6866,9 @@
       "nameTr": "Koşu Bandı Yürüyüş",
       "nameEn": "Treadmill Walk",
       "aliases": [
-        "Treadmill Walking"
+        "Treadmill Walking",
+        "Koşu Bandı Yürüyüş",
+        "Treadmill Walk"
       ],
       "exerciseType": "cardio",
       "movementPattern": "locomotion",
@@ -6635,7 +6902,9 @@
       "nameTr": "Koşu Bandı Koşu",
       "nameEn": "Treadmill Run",
       "aliases": [
-        "Treadmill Running"
+        "Treadmill Running",
+        "Koşu Bandı Koşu",
+        "Treadmill Run"
       ],
       "exerciseType": "cardio",
       "movementPattern": "locomotion",
@@ -6669,7 +6938,9 @@
       "nameTr": "Eğimli Koşu Bandı Yürüyüş",
       "nameEn": "Incline Treadmill Walk",
       "aliases": [
-        "Incline Walking"
+        "Incline Walking",
+        "Eğimli Koşu Bandı Yürüyüş",
+        "Incline Treadmill Walk"
       ],
       "exerciseType": "cardio",
       "movementPattern": "locomotion",
@@ -6704,7 +6975,9 @@
       "nameEn": "Stationary Bike",
       "aliases": [
         "Exercise Bike",
-        "Cycling"
+        "Cycling",
+        "Sabit Bisiklet",
+        "Stationary Bike"
       ],
       "exerciseType": "cardio",
       "movementPattern": "locomotion",
@@ -6738,7 +7011,8 @@
       "nameEn": "Air Bike",
       "aliases": [
         "Assault Bike",
-        "Fan Bike"
+        "Fan Bike",
+        "Air Bike"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "locomotion",
@@ -6772,7 +7046,9 @@
       "nameEn": "Rowing Machine",
       "aliases": [
         "Row Ergometer",
-        "Concept2 Row"
+        "Concept2 Row",
+        "Kürek Ergometresi",
+        "Rowing Machine"
       ],
       "exerciseType": "cardio",
       "movementPattern": "locomotion",
@@ -6807,7 +7083,9 @@
       "nameTr": "Eliptik Bisiklet",
       "nameEn": "Elliptical Trainer",
       "aliases": [
-        "Cross Trainer"
+        "Cross Trainer",
+        "Eliptik Bisiklet",
+        "Elliptical Trainer"
       ],
       "exerciseType": "cardio",
       "movementPattern": "locomotion",
@@ -6842,7 +7120,9 @@
       "nameEn": "Stair Climber",
       "aliases": [
         "StairMaster",
-        "StepMill"
+        "StepMill",
+        "Merdiven Makinesi",
+        "Stair Climber"
       ],
       "exerciseType": "cardio",
       "movementPattern": "locomotion",
@@ -6876,7 +7156,9 @@
       "nameTr": "İp Atlama",
       "nameEn": "Jump Rope",
       "aliases": [
-        "Skipping Rope"
+        "Skipping Rope",
+        "İp Atlama",
+        "Jump Rope"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "locomotion",
@@ -6909,7 +7191,8 @@
       "nameTr": "Sled Push",
       "nameEn": "Sled Push",
       "aliases": [
-        "Prowler Push"
+        "Prowler Push",
+        "Sled Push"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "locomotion",
@@ -6943,7 +7226,8 @@
       "nameTr": "Kettlebell Swing",
       "nameEn": "Kettlebell Swing",
       "aliases": [
-        "KB Swing"
+        "KB Swing",
+        "Kettlebell Swing"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "hinge",
@@ -6977,7 +7261,9 @@
       "nameTr": "Tek Kol Kettlebell Swing",
       "nameEn": "Single-Arm Kettlebell Swing",
       "aliases": [
-        "One Arm KB Swing"
+        "One Arm KB Swing",
+        "Tek Kol Kettlebell Swing",
+        "Single-Arm Kettlebell Swing"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "hinge",
@@ -7011,7 +7297,8 @@
       "nameTr": "Kettlebell Goblet Squat",
       "nameEn": "Kettlebell Goblet Squat",
       "aliases": [
-        "KB Goblet Squat"
+        "KB Goblet Squat",
+        "Kettlebell Goblet Squat"
       ],
       "exerciseType": "strength",
       "movementPattern": "squat",
@@ -7044,7 +7331,8 @@
       "nameTr": "Kettlebell Deadlift",
       "nameEn": "Kettlebell Deadlift",
       "aliases": [
-        "KB Deadlift"
+        "KB Deadlift",
+        "Kettlebell Deadlift"
       ],
       "exerciseType": "strength",
       "movementPattern": "hinge",
@@ -7077,7 +7365,8 @@
       "nameTr": "Kettlebell Clean",
       "nameEn": "Kettlebell Clean",
       "aliases": [
-        "KB Clean"
+        "KB Clean",
+        "Kettlebell Clean"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "hinge",
@@ -7111,7 +7400,8 @@
       "nameTr": "Kettlebell Clean and Press",
       "nameEn": "Kettlebell Clean and Press",
       "aliases": [
-        "KB Clean Press"
+        "KB Clean Press",
+        "Kettlebell Clean and Press"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "vertical-push",
@@ -7145,7 +7435,8 @@
       "nameTr": "Kettlebell Strict Press",
       "nameEn": "Kettlebell Strict Press",
       "aliases": [
-        "KB Press"
+        "KB Press",
+        "Kettlebell Strict Press"
       ],
       "exerciseType": "strength",
       "movementPattern": "vertical-push",
@@ -7178,7 +7469,8 @@
       "nameTr": "Kettlebell Push Press",
       "nameEn": "Kettlebell Push Press",
       "aliases": [
-        "KB Push Press"
+        "KB Push Press",
+        "Kettlebell Push Press"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "vertical-push",
@@ -7212,7 +7504,8 @@
       "nameTr": "Turkish Get-Up",
       "nameEn": "Turkish Get-Up",
       "aliases": [
-        "TGU"
+        "TGU",
+        "Turkish Get-Up"
       ],
       "exerciseType": "strength",
       "movementPattern": "locomotion",
@@ -7246,7 +7539,8 @@
       "nameTr": "Kettlebell Halo",
       "nameEn": "Kettlebell Halo",
       "aliases": [
-        "KB Halo"
+        "KB Halo",
+        "Kettlebell Halo"
       ],
       "exerciseType": "mobility",
       "movementPattern": "mobility",
@@ -7280,7 +7574,9 @@
       "nameTr": "Tek Kol Kettlebell Row",
       "nameEn": "Single-Arm Kettlebell Row",
       "aliases": [
-        "KB Row"
+        "KB Row",
+        "Tek Kol Kettlebell Row",
+        "Single-Arm Kettlebell Row"
       ],
       "exerciseType": "strength",
       "movementPattern": "horizontal-pull",
@@ -7311,10 +7607,11 @@
     {
       "schemaVersion": "1.0",
       "id": "suspension-row",
-      "nameTr": "Suspension Row",
+      "nameTr": "TRX Row",
       "nameEn": "Suspension Row",
       "aliases": [
-        "TRX Row"
+        "TRX Row",
+        "Suspension Row"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "horizontal-pull",
@@ -7345,10 +7642,11 @@
     {
       "schemaVersion": "1.0",
       "id": "suspension-chest-press",
-      "nameTr": "Suspension Chest Press",
+      "nameTr": "TRX Chest Press",
       "nameEn": "Suspension Chest Press",
       "aliases": [
-        "TRX Chest Press"
+        "TRX Chest Press",
+        "Suspension Chest Press"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "horizontal-push",
@@ -7378,10 +7676,11 @@
     {
       "schemaVersion": "1.0",
       "id": "suspension-biceps-curl",
-      "nameTr": "Suspension Biceps Curl",
+      "nameTr": "TRX Biceps Curl",
       "nameEn": "Suspension Biceps Curl",
       "aliases": [
-        "TRX Biceps Curl"
+        "TRX Biceps Curl",
+        "Suspension Biceps Curl"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "elbow-flexion",
@@ -7410,10 +7709,11 @@
     {
       "schemaVersion": "1.0",
       "id": "suspension-triceps-extension",
-      "nameTr": "Suspension Triceps Extension",
+      "nameTr": "TRX Triceps Extension",
       "nameEn": "Suspension Triceps Extension",
       "aliases": [
-        "TRX Triceps Extension"
+        "TRX Triceps Extension",
+        "Suspension Triceps Extension"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "elbow-extension",
@@ -7440,10 +7740,11 @@
     {
       "schemaVersion": "1.0",
       "id": "suspension-squat",
-      "nameTr": "Suspension Squat",
+      "nameTr": "TRX Squat",
       "nameEn": "Suspension Squat",
       "aliases": [
-        "TRX Squat"
+        "TRX Squat",
+        "Suspension Squat"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "squat",
@@ -7473,10 +7774,11 @@
     {
       "schemaVersion": "1.0",
       "id": "suspension-split-squat",
-      "nameTr": "Suspension Split Squat",
+      "nameTr": "TRX Split Squat",
       "nameEn": "Suspension Split Squat",
       "aliases": [
-        "TRX Split Squat"
+        "TRX Split Squat",
+        "Suspension Split Squat"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "lunge",
@@ -7506,10 +7808,11 @@
     {
       "schemaVersion": "1.0",
       "id": "suspension-hamstring-curl",
-      "nameTr": "Suspension Hamstring Curl",
+      "nameTr": "TRX Hamstring Curl",
       "nameEn": "Suspension Hamstring Curl",
       "aliases": [
-        "TRX Hamstring Curl"
+        "TRX Hamstring Curl",
+        "Suspension Hamstring Curl"
       ],
       "exerciseType": "bodyweight",
       "movementPattern": "knee-flexion",
@@ -7538,10 +7841,11 @@
     {
       "schemaVersion": "1.0",
       "id": "suspension-pike",
-      "nameTr": "Suspension Pike",
+      "nameTr": "TRX Pike",
       "nameEn": "Suspension Pike",
       "aliases": [
-        "TRX Pike"
+        "TRX Pike",
+        "Suspension Pike"
       ],
       "exerciseType": "core",
       "movementPattern": "anti-extension",
@@ -7571,10 +7875,11 @@
     {
       "schemaVersion": "1.0",
       "id": "suspension-fallout",
-      "nameTr": "Suspension Fallout",
+      "nameTr": "TRX Fallout",
       "nameEn": "Suspension Fallout",
       "aliases": [
-        "TRX Fallout"
+        "TRX Fallout",
+        "Suspension Fallout"
       ],
       "exerciseType": "core",
       "movementPattern": "anti-extension",
@@ -7607,7 +7912,8 @@
       "nameTr": "Box Jump",
       "nameEn": "Box Jump",
       "aliases": [
-        "Box Jumps"
+        "Box Jumps",
+        "Box Jump"
       ],
       "exerciseType": "plyometric",
       "movementPattern": "squat",
@@ -7641,7 +7947,8 @@
       "nameTr": "Squat Jump",
       "nameEn": "Squat Jump",
       "aliases": [
-        "Jump Squat"
+        "Jump Squat",
+        "Squat Jump"
       ],
       "exerciseType": "plyometric",
       "movementPattern": "squat",
@@ -7674,7 +7981,8 @@
       "nameTr": "Broad Jump",
       "nameEn": "Broad Jump",
       "aliases": [
-        "Standing Long Jump"
+        "Standing Long Jump",
+        "Broad Jump"
       ],
       "exerciseType": "plyometric",
       "movementPattern": "hinge",
@@ -7708,7 +8016,8 @@
       "nameTr": "Lateral Bound",
       "nameEn": "Lateral Bound",
       "aliases": [
-        "Skater Bound"
+        "Skater Bound",
+        "Lateral Bound"
       ],
       "exerciseType": "plyometric",
       "movementPattern": "lunge",
@@ -7742,7 +8051,8 @@
       "nameTr": "Split Jump",
       "nameEn": "Split Jump",
       "aliases": [
-        "Jumping Lunge"
+        "Jumping Lunge",
+        "Split Jump"
       ],
       "exerciseType": "plyometric",
       "movementPattern": "lunge",
@@ -7776,7 +8086,8 @@
       "nameTr": "Pogo Jump",
       "nameEn": "Pogo Jump",
       "aliases": [
-        "Pogo Hops"
+        "Pogo Hops",
+        "Pogo Jump"
       ],
       "exerciseType": "plyometric",
       "movementPattern": "plantar-flexion",
@@ -7810,7 +8121,9 @@
       "nameEn": "Plyometric Push-Up",
       "aliases": [
         "Clap Push-Up",
-        "Explosive Push-Up"
+        "Explosive Push-Up",
+        "Plyometric Şınav",
+        "Plyometric Push-Up"
       ],
       "exerciseType": "plyometric",
       "movementPattern": "horizontal-push",
@@ -7843,7 +8156,8 @@
       "nameTr": "Medicine Ball Overhead Slam",
       "nameEn": "Medicine Ball Overhead Slam",
       "aliases": [
-        "Med Ball Slam"
+        "Med Ball Slam",
+        "Medicine Ball Overhead Slam"
       ],
       "exerciseType": "plyometric",
       "movementPattern": "hinge",
@@ -7877,7 +8191,8 @@
       "nameTr": "Medicine Ball Rotational Slam",
       "nameEn": "Medicine Ball Rotational Slam",
       "aliases": [
-        "Rotational Med Ball Slam"
+        "Rotational Med Ball Slam",
+        "Medicine Ball Rotational Slam"
       ],
       "exerciseType": "plyometric",
       "movementPattern": "anti-rotation",
@@ -7910,7 +8225,8 @@
       "nameTr": "Medicine Ball Chest Pass",
       "nameEn": "Medicine Ball Chest Pass",
       "aliases": [
-        "Med Ball Chest Throw"
+        "Med Ball Chest Throw",
+        "Medicine Ball Chest Pass"
       ],
       "exerciseType": "plyometric",
       "movementPattern": "horizontal-push",
@@ -7943,7 +8259,8 @@
       "nameTr": "Medicine Ball Rotational Throw",
       "nameEn": "Medicine Ball Rotational Throw",
       "aliases": [
-        "Med Ball Side Throw"
+        "Med Ball Side Throw",
+        "Medicine Ball Rotational Throw"
       ],
       "exerciseType": "plyometric",
       "movementPattern": "anti-rotation",
@@ -7976,7 +8293,8 @@
       "nameTr": "Medicine Ball Overhead Throw",
       "nameEn": "Medicine Ball Overhead Throw",
       "aliases": [
-        "Med Ball Overhead Throw"
+        "Med Ball Overhead Throw",
+        "Medicine Ball Overhead Throw"
       ],
       "exerciseType": "plyometric",
       "movementPattern": "vertical-push",
@@ -8009,7 +8327,8 @@
       "nameTr": "Battle Rope Alternating Waves",
       "nameEn": "Battle Rope Alternating Waves",
       "aliases": [
-        "Alternating Rope Waves"
+        "Alternating Rope Waves",
+        "Battle Rope Alternating Waves"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "locomotion",
@@ -8043,7 +8362,8 @@
       "nameTr": "Battle Rope Double Waves",
       "nameEn": "Battle Rope Double Waves",
       "aliases": [
-        "Double Rope Waves"
+        "Double Rope Waves",
+        "Battle Rope Double Waves"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "locomotion",
@@ -8077,7 +8397,8 @@
       "nameTr": "Bear Crawl",
       "nameEn": "Bear Crawl",
       "aliases": [
-        "Quadruped Crawl"
+        "Quadruped Crawl",
+        "Bear Crawl"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "locomotion",
@@ -8111,7 +8432,8 @@
       "nameTr": "Mountain Climber",
       "nameEn": "Mountain Climber",
       "aliases": [
-        "Mountain Climbers"
+        "Mountain Climbers",
+        "Mountain Climber"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "hip-flexion",
@@ -8144,7 +8466,8 @@
       "nameTr": "Burpee",
       "nameEn": "Burpee",
       "aliases": [
-        "Burpees"
+        "Burpees",
+        "Burpee"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "locomotion",
@@ -8178,7 +8501,8 @@
       "nameTr": "Sled Drag",
       "nameEn": "Sled Drag",
       "aliases": [
-        "Backward Sled Drag"
+        "Backward Sled Drag",
+        "Sled Drag"
       ],
       "exerciseType": "conditioning",
       "movementPattern": "locomotion",

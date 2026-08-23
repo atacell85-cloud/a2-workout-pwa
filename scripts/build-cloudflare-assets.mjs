@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 const root = resolve('.');
 const output = resolve('.cloudflare-assets');
-const canonicalExerciseSource = resolve(root, '..', 'product', 'data', 'exercises.v1.json');
+const canonicalExerciseSource = resolve(root, 'data', 'exercises-master-v1.1.json');
 const files = [
   'index.html', 'app.js', 'storage.js', 'exercise-service.js', 'program-service.js',
   'import-service.js', 'document-extractor.js', 'local-import-parser.js',
