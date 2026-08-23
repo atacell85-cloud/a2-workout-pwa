@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v37-workout-exercise-images-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v38-exercise-pool-picker-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=workout-exercise-images-v1',
+  './app.js?v=exercise-pool-picker-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',

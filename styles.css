@@ -824,9 +824,35 @@ th, td {
 }
 .exercise-picker { margin-top: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
 .exercise-picker > input { width: 100%; min-width: 0; margin: 8px 0; padding: 11px; border: 1px solid var(--line); border-radius: 8px; }
+.exercise-pool-page {
+  display: grid;
+  gap: 10px;
+}
+.picker-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
 .picker-filters { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 6px; scrollbar-width: thin; }
 .picker-filters button { flex: 0 0 auto; min-height: 36px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: #f8fafc; color: var(--ink); font-weight: 700; }
 .picker-filters button.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.exercise-pool-results {
+  display: grid;
+  gap: 14px;
+}
+.exercise-pool-group {
+  display: grid;
+  gap: 6px;
+}
+.exercise-pool-group h3 {
+  margin: 4px 0 0;
+  font-size: 18px;
+}
+.custom-exercise-result {
+  margin-top: 4px;
+}
 .builder-exercise { background: #f8fafc; margin: 9px 0 0; }
 .simple-builder-head {
   display: grid;

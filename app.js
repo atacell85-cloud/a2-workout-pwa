@@ -1,6 +1,6 @@
 import { A2_PROGRAM, findExercise, findWorkoutDay, exercisesForDay } from './data/public-programs.js';
 import { SCHEMA_VERSION, workoutRepository } from './storage.js';
-import { browseExercises, getCanonicalExercise, loadExerciseDatabase, searchExercises } from './exercise-service.js';
+import { getCanonicalExercise, loadExerciseDatabase, searchExercises } from './exercise-service.js';
 import { blankDay, blankExercise, blankInstruction, blankProgram, blankSection, normalizeProgram, permanentDayToLegacy, validateProgram } from './program-service.js';
 import { finalizeImport, matchImportExercises, validateImportPreview } from './import-service.js';
 import { createYouTubeSearchService } from './youtube-service.js';
@@ -242,6 +242,82 @@ async function updateExerciseLibraryResults(query) {
   const normalized = query.trim().toLowerCase();
   const results = normalized ? await searchExercises(normalized, 50) : (await loadExerciseDatabase()).slice(0, 50);
   holder.innerHTML = results.map(exerciseLibraryCard).join('');
+}
+
+const EXERCISE_REGION_FILTERS = [
+  ['', 'Tümü'],
+  ['chest', 'Göğüs'],
+  ['back', 'Sırt'],
+  ['shoulders', 'Omuz'],
+  ['arms', 'Kol'],
+  ['legs', 'Bacak'],
+  ['core', 'Core'],
+  ['full_body', 'Tüm Vücut']
+];
+
+const EXERCISE_MUSCLE_LABELS = {
+  abductors: 'Abduktor',
+  adductors: 'Adduktor',
+  'anterior-deltoid': 'Ön Omuz',
+  'biceps-brachii': 'Biceps',
+  brachialis: 'Brachialis',
+  brachioradialis: 'Ön Kol',
+  'erector-spinae': 'Bel/Sırt',
+  'forearm-extensors': 'Ön Kol Ekstansör',
+  'forearm-flexors': 'Ön Kol Fleksör',
+  gastrocnemius: 'Baldır',
+  'gluteus-maximus': 'Kalça',
+  'gluteus-medius': 'Yan Kalça',
+  hamstrings: 'Hamstring',
+  'hip-flexors': 'Kalça Fleksör',
+  'lateral-deltoid': 'Yan Omuz',
+  'latissimus-dorsi': 'Lat',
+  obliques: 'Oblik',
+  'pectoralis-major': 'Göğüs',
+  'posterior-deltoid': 'Arka Omuz',
+  'quadratus-lumborum': 'Bel',
+  quadriceps: 'Quadriceps',
+  'rectus-abdominis': 'Karın',
+  rhomboids: 'Rhomboid',
+  'serratus-anterior': 'Serratus',
+  soleus: 'Soleus',
+  'transverse-abdominis': 'Derin Karın',
+  trapezius: 'Trapez',
+  'triceps-brachii': 'Triceps'
+};
+
+function exerciseRegion(item) {
+  const bodyPart = item.repdb?.body_part;
+  if (bodyPart === 'upper_arms' || bodyPart === 'lower_arms') return 'arms';
+  if (bodyPart === 'upper_legs' || bodyPart === 'lower_legs') return 'legs';
+  return bodyPart || '';
+}
+
+function exerciseRegionLabel(item) {
+  return EXERCISE_REGION_FILTERS.find(([value]) => value === exerciseRegion(item))?.[1] || 'Diğer';
+}
+
+function exerciseMuscleLabel(muscle) {
+  return EXERCISE_MUSCLE_LABELS[muscle] || String(muscle || '').replace(/-/g, ' ');
+}
+
+function priorityValue(item) {
+  return ({ core: 0, standard: 1, specialist: 2 })[item.priority] ?? 9;
+}
+
+function sortExercisePool(items) {
+  return [...items].sort((a, b) => priorityValue(a) - priorityValue(b) || a.nameTr.localeCompare(b.nameTr, 'tr'));
+}
+
+function filterExercisePool(items, picker) {
+  return items
+    .filter(item => !picker.region || exerciseRegion(item) === picker.region)
+    .filter(item => !picker.muscle || [...(item.primaryMuscles || []), ...(item.secondaryMuscles || [])].includes(picker.muscle));
+}
+
+function pickerMuscleFilters(items, picker) {
+  return [...new Set(filterExercisePool(items, { ...picker, muscle: '' }).flatMap(item => [...(item.primaryMuscles || []), ...(item.secondaryMuscles || [])]))]
+    .sort((a, b) => exerciseMuscleLabel(a).localeCompare(exerciseMuscleLabel(b), 'tr'));
 }
 
 function fileImportView() {
@@ -818,17 +894,29 @@ function builderDay(day, dayIndex) {
 function builderSection(section) {
   return `<section class="builder-section builder-section-hidden simple-builder-section">
     ${section.items.filter(item => item.itemType === 'exercise').map((item, itemIndex) => builderExercise(item, itemIndex)).join('')}
-    <div class="builder-add simple-builder-add"><input data-exercise-search="${section.id}" placeholder="Hareket ara veya yaz..." autocomplete="off"><button class="secondary-btn" data-custom-exercise="${section.id}">Hareket Seç</button></div><div class="search-results" id="search-${section.id}"></div>
+    <div class="builder-add simple-builder-add"><input data-exercise-search="${section.id}" placeholder="Hareket ara veya yaz..." autocomplete="off"><button class="secondary-btn" data-open-picker="${section.id}">Hareket Seç</button></div><div class="search-results" id="search-${section.id}"></div>
     </section>`;
 }
 
-function builderExercisePicker(section) {
+async function renderExercisePoolPicker() {
   const picker = state.picker;
-  const muscleFilters = [['','Tümü'],['chest','Göğüs'],['back','Sırt'],['shoulders','Omuz'],['arms','Kol'],['legs','Bacak'],['core','Core']];
-  const equipmentFilters = [['','Tüm ekipman'],['dumbbell','Dumbbell'],['barbell','Barbell'],['cable','Cable'],['machine','Machine'],['bodyweight','Bodyweight']];
-  const result = (picker.results || []).map(item => exerciseSearchResult(section.id, item)).join('');
-  const custom = picker.query?.trim() ? `<button data-custom-exercise="${section.id}">"${escapeHtml(picker.query.trim())}" adlı özel hareket oluştur</button>` : '';
-  return `<div class="exercise-picker" aria-label="Hareket seçici"><div class="builder-row"><b>Hareket Ekle</b><button data-close-picker>Kapalı</button></div><input data-exercise-search="${section.id}" value="${escapeHtml(picker.query || '')}" placeholder="Hareket ara veya yaz..." autocomplete="off"><div class="picker-filters" aria-label="Kas grubu filtresi">${muscleFilters.map(([value,label]) => `<button class="${picker.muscle === value ? 'active' : ''}" data-picker-muscle="${section.id}:${value}">${label}</button>`).join('')}</div><div class="picker-filters" aria-label="Ekipman filtresi">${equipmentFilters.map(([value,label]) => `<button class="${picker.equipment === value ? 'active' : ''}" data-picker-equipment="${section.id}:${value}">${label}</button>`).join('')}</div><div class="search-results" id="search-${section.id}">${result || '<span class="muted small">Bu filtrelerle hareket bulunamadı.</span>'}${custom}</div></div>`;
+  if (!state.builder || !picker) return renderBuilder();
+  title.textContent = 'Hareket Seç'; nav('programs');
+  const db = await loadExerciseDatabase();
+  const source = picker.query?.trim() ? await searchExercises(picker.query, 250) : sortExercisePool(db);
+  const results = filterExercisePool(source, picker);
+  const muscles = pickerMuscleFilters(db, picker);
+  const custom = picker.query?.trim() ? `<button class="exercise-result custom-exercise-result" data-custom-exercise="${picker.sectionId}"><span><b>+ “${escapeHtml(picker.query.trim())}” özel hareketini oluştur</b><small>Havuzda yoksa bu isimle ekle</small></span></button>` : '';
+  app.innerHTML = `<section class="exercise-pool-page">
+    <button class="text-btn" data-close-picker>← Rutin Oluştur</button>
+    <input class="exercise-select" data-picker-search="${picker.sectionId}" placeholder="Hareket ara" value="${escapeHtml(picker.query || '')}" autocomplete="off" autofocus>
+    <div class="picker-label">Bölge</div>
+    <div class="picker-filters">${EXERCISE_REGION_FILTERS.map(([value, label]) => `<button class="${picker.region === value ? 'active' : ''}" data-picker-region="${picker.sectionId}:${value}">${label}</button>`).join('')}</div>
+    <div class="picker-label">Kas grubu</div>
+    <div class="picker-filters"><button class="${picker.muscle === '' ? 'active' : ''}" data-picker-muscle="${picker.sectionId}:">Tümü</button>${muscles.map(muscle => `<button class="${picker.muscle === muscle ? 'active' : ''}" data-picker-muscle="${picker.sectionId}:${muscle}">${escapeHtml(exerciseMuscleLabel(muscle))}</button>`).join('')}</div>
+    <div class="small muted">${results.length} hareket</div>
+    <div class="exercise-pool-results">${exercisePoolGroups(results, picker.sectionId)}${custom}</div>
+  </section>`;
 }
 
 function builderInstruction(item) { return `<div class="instruction-row"><input data-instruction="${item.id}" value="${escapeHtml(item.text)}" placeholder="Talimat"></div>`; }
@@ -840,6 +928,16 @@ function builderExercise(item, itemIndex) {
 
 function exerciseSearchResult(sectionId, item) {
   return `<button class="exercise-result" data-select-exercise="${sectionId}:${item.id}">${exerciseThumb(item)}<span><b>${escapeHtml(item.nameTr)}</b><small>${escapeHtml(exerciseMeta(item) || (item.primaryMuscles || []).join(', ') || 'Diğer')}</small></span></button>`;
+}
+
+function exercisePoolGroups(results, sectionId) {
+  if (!results.length) return '<div class="summary-card muted">Bu filtrelerle hareket bulunamadı.</div>';
+  const groups = EXERCISE_REGION_FILTERS.filter(([value]) => value);
+  return groups.map(([region, label]) => {
+    const items = results.filter(item => exerciseRegion(item) === region);
+    if (!items.length) return '';
+    return `<section class="exercise-pool-group"><h3>${label}</h3>${items.map(item => exerciseSearchResult(sectionId, item)).join('')}</section>`;
+  }).join('');
 }
 
 function sectionLabel(type) { return ({warmup:'Isınma',activation:'Aktivasyon',strength:'Ana Antrenman',core:'Core',cardio:'Kardiyo',stretch:'Stretch',mobility:'Mobilite',cooldown:'Soğuma',custom:'Özel Bölüm'})[type]; }
@@ -874,18 +972,22 @@ app.addEventListener('click', async event => {
   if (target.dataset.importCustom) { const [day, section, item] = target.dataset.importCustom.split(':').map(Number); const exercise = (await workoutRepository.getImportPreview(state.importId)).program.days[day].sections[section].items[item]; exercise.resolutionStatus = 'accepted-custom'; exercise.userEditedExerciseName = exercise.userEditedExerciseName || exercise.normalizedExerciseName || exercise.sourceExerciseName; await workoutRepository.saveImportPreview(await workoutRepository.getImportPreview(state.importId)); return renderImportPreview(state.importId); }
   if (target.dataset.importSelect) { const [day, section, item, exerciseId] = target.dataset.importSelect.split(':'); const preview = await workoutRepository.getImportPreview(state.importId); const exercise = preview.program.days[Number(day)].sections[Number(section)].items[Number(item)]; const canonical = await getCanonicalExercise(exerciseId); exercise.exerciseMatch = { status: 'matched', exerciseId, matchedName: canonical?.nameTr || exerciseId, score: 1, candidates: [] }; exercise.resolutionStatus = 'accepted-canonical'; exercise.userEditedExerciseName = null; await workoutRepository.saveImportPreview(preview); return renderImportPreview(state.importId); }
   if (target.dataset.unparsed) { const [index, resolution] = target.dataset.unparsed.split(':'); const preview = await workoutRepository.getImportPreview(state.importId); const item = preview.unparsedContent[Number(index)]; item.resolutionStatus = resolution === 'note' ? 'assigned' : resolution; if (resolution === 'instruction') { const section = preview.program.days[0]?.sections[0]; if (section) section.items.push({ itemType: 'instruction', order: section.items.length + 1, text: item.text, sourceReference: item.sourceReference }); } else if (resolution === 'note') preview.program.notes = `${preview.program.notes ? `${preview.program.notes}\n` : ''}${item.text}`; await workoutRepository.saveImportPreview(preview); return renderImportPreview(state.importId); }
-  if (target.dataset.openPicker) { const sectionId = target.dataset.openPicker; state.picker = { sectionId, query: '', muscle: '', equipment: '', results: await browseExercises() }; return renderBuilder(); }
+  if (target.dataset.openPicker) {
+    const sectionId = target.dataset.openPicker;
+    const query = document.querySelector(`[data-exercise-search="${sectionId}"]`)?.value || '';
+    state.picker = { sectionId, query, region: '', muscle: '' };
+    return renderExercisePoolPicker();
+  }
   if (target.dataset.closePicker !== undefined) { state.picker = null; return renderBuilder(); }
-  if (target.dataset.pickerMuscle !== undefined || target.dataset.pickerEquipment !== undefined) {
-    const [sectionId, value] = (target.dataset.pickerMuscle ?? target.dataset.pickerEquipment).split(':');
+  if (target.dataset.pickerRegion !== undefined || target.dataset.pickerMuscle !== undefined) {
+    const [sectionId, value = ''] = (target.dataset.pickerRegion ?? target.dataset.pickerMuscle).split(':');
     if (!state.picker || state.picker.sectionId !== sectionId) return;
-    if (target.dataset.pickerMuscle !== undefined) state.picker.muscle = value;
-    else state.picker.equipment = value;
-    state.picker.results = state.picker.query.trim() ? await searchExercises(state.picker.query, 24) : await browseExercises({ muscle: state.picker.muscle, equipment: state.picker.equipment });
-    return renderBuilder();
+    if (target.dataset.pickerRegion !== undefined) { state.picker.region = value; state.picker.muscle = ''; }
+    else state.picker.muscle = value;
+    return renderExercisePoolPicker();
   }
   if (target.dataset.selectExercise) { const [sectionId, exerciseId] = target.dataset.selectExercise.split(':'); const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === sectionId); const item = blankExercise(section.id, section.items.length + 1, exerciseId); const canonical = await getCanonicalExercise(exerciseId); item.displayName = canonical?.nameTr || canonical?.nameEn || exerciseId; item.imageUrl = canonical?.media?.image || null; section.items.push(item); state.picker = null; await persistBuilder(); return renderBuilder(); }
-  if (target.dataset.customExercise) { const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === target.dataset.customExercise); const value = document.querySelector(`[data-exercise-search="${section.id}"]`).value.trim(); if (!value) return toast('Hareket adı yazın'); section.items.push(blankExercise(section.id, section.items.length + 1, null, value)); await persistBuilder(); return renderBuilder(); }
+  if (target.dataset.customExercise) { const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === target.dataset.customExercise); const value = (document.querySelector(`[data-exercise-search="${section.id}"]`)?.value || state.picker?.query || '').trim(); if (!value) return toast('Hareket adı yazın'); section.items.push(blankExercise(section.id, section.items.length + 1, null, value)); state.picker = null; await persistBuilder(); return renderBuilder(); }
   if (target.dataset.startProgramDay) { const [programId, dayId] = target.dataset.startProgramDay.split(':'); return startProgramWorkout(programId, dayId); }
   if (target.dataset.setActiveProgram) { await workoutRepository.saveSettings({ activeProgramId: target.dataset.setActiveProgram }); toast('Aktif program değişti'); return programsView(); }
   if (target.dataset.openProgram) return openProgram(target.dataset.openProgram);
@@ -974,6 +1076,11 @@ app.addEventListener('input', async event => {
     if (event.target.dataset.importSearch) { const [day, section, item] = event.target.dataset.importSearch.split(':'); const results = await searchExercises(event.target.value, 5); const holder = document.querySelector(`#import-search-${day}-${section}-${item}`); holder.innerHTML = results.map(result => `<button data-import-select="${day}:${section}:${item}:${result.id}">${escapeHtml(result.nameTr)}</button>`).join(''); return; }
   }
   if (!state.builder) return;
+  if (event.target.dataset.pickerSearch) {
+    if (!state.picker || state.picker.sectionId !== event.target.dataset.pickerSearch) return;
+    state.picker.query = event.target.value;
+    return renderExercisePoolPicker();
+  }
   if (event.target.dataset.builderDayName) { state.builder.days.find(day => day.id === event.target.dataset.builderDayName).name = event.target.value; return persistBuilder(); }
   if (event.target.dataset.builderSectionTitle) { state.builder.days.flatMap(day => day.sections).find(section => section.id === event.target.dataset.builderSectionTitle).title = event.target.value; return persistBuilder(); }
   if (event.target.dataset.instruction) { findBuilderItem(event.target.dataset.instruction).item.text = event.target.value; return persistBuilder(); }
