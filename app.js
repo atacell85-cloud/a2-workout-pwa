@@ -55,6 +55,21 @@ function workoutCounts(workout) {
 function executionDayFor(workout) { return state.executionDay || findWorkoutDay(workout.programId, workout.workoutDayId); }
 function executionExercisesFor(workout) { return state.executionDay ? state.executionDay.sections.flatMap(section => section.exercises.map(item => ({ ...item, sectionType: section.type }))) : exercisesForDay(workout.programId, workout.workoutDayId); }
 function executionExercise(exerciseId) { return state.executionExercises.get(exerciseId) || findExercise(exerciseId); }
+async function hydrateExecutionDay(workout) {
+  if (!workout) return null;
+  if (workout.programId === A2_PROGRAM.id) {
+    state.executionDay = null;
+    state.executionExercises = new Map();
+    return findWorkoutDay(workout.programId, workout.workoutDayId);
+  }
+  const program = await workoutRepository.getProgram(workout.programId);
+  const day = program?.days.find(item => item.id === workout.workoutDayId);
+  if (!day) return null;
+  const names = new Map((await loadExerciseDatabase()).map(item => [item.id, item.nameTr]));
+  state.executionDay = permanentDayToLegacy(day, names);
+  state.executionExercises = new Map(state.executionDay.sections.flatMap(section => section.exercises).map(item => [item.id, item]));
+  return state.executionDay;
+}
 
 async function home() {
   return todayView();
@@ -67,10 +82,10 @@ async function todayView() {
   cachedSessions = await workoutRepository.getSessions();
   const lastSession = cachedSessions.at(-1);
   const nextProgram = programs[0];
+  const draftDay = draft ? await hydrateExecutionDay(draft) : null;
   app.innerHTML = `
-    <section class="summary-card"><h2>Programlar</h2><p class="muted">Plan oluşturma, düzenleme ve dosyadan içe aktarma burada. Antrenman başlatmak için Bugün ekranını kullan.</p></section>
     <section class="sync-status" id="syncStatus">${syncLabel(state.syncStatus)}</section>
-    ${draft ? `<section class="today-hero"><div><span>Devam eden antrenman</span><h2>${escapeHtml(findWorkoutDay(draft.programId, draft.workoutDayId)?.label || 'Antrenman')}</h2><p>Başladığın kaydı sürdürebilirsin.</p></div><button class="primary-btn full" data-action="resume">Devam Et</button></section>` : `<section class="today-hero"><div><span>Bugün</span><h2>${nextProgram ? 'Antrenmana hazır' : 'İlk programını oluştur'}</h2><p>${nextProgram ? 'Bir günü seç, kayıt ekranı açılsın.' : 'AKS önce programını kurar, sonra her gün sadece başlatıp kayıt alırsın.'}</p></div></section>`}
+    ${draft ? `<section class="today-hero"><div><span>Devam eden antrenman</span><h2>${escapeHtml(draftDay?.label || 'Antrenman')}</h2><p>Başladığın kaydı sürdürebilirsin.</p></div><button class="primary-btn full" data-action="resume">Devam Et</button></section>` : `<section class="today-hero"><div><span>Bugün</span><h2>${nextProgram ? 'Antrenmana hazır' : 'İlk programını oluştur'}</h2><p>${nextProgram ? 'Bir günü seç, kayıt ekranı açılsın.' : 'AKS önce programını kurar, sonra her gün sadece başlatıp kayıt alırsın.'}</p></div></section>`}
     ${nextProgram ? todayProgram(nextProgram) : `<section class="summary-card"><h2>Program yok</h2><p class="muted">PDF, Word veya Excel'den aktarabilir ya da elle oluşturabilirsin.</p><button class="primary-btn full" data-action="file-import">Dosyadan Program Oluştur</button><button class="secondary-btn full" data-action="new-program">Elle Program Oluştur</button></section>`}
     ${lastSession ? `<section class="summary-card"><h2>Son antrenman</h2>${lastSessionSummary(lastSession)}<button class="secondary-btn full" data-action="history">Geçmişi Gör</button></section>` : '<section class="summary-card muted">Henüz tamamlanmış antrenman kaydın yok.</section>'}`;
   nav('home');
@@ -97,6 +112,7 @@ async function programsView() {
   const draft = await workoutRepository.getProgramBuilderDraft();
   const imports = (await workoutRepository.getData()).importPreviews;
   app.innerHTML = `
+    <section class="summary-card"><h2>Programlar</h2><p class="muted">Plan oluşturma, düzenleme ve dosyadan içe aktarma burada. Antrenman başlatmak için Bugün ekranını kullan.</p></section>
     ${draft ? `<section class="resume-card"><div><b>Taslak program</b><span>${escapeHtml(draft.name || 'İsimsiz program')}</span></div><button class="primary-btn" data-action="resume-builder">Sürdür</button></section>` : ''}
     <section class="sync-status" id="syncStatus">${syncLabel(state.syncStatus)}</section>
     <section class="create-program-actions"><button class="primary-btn" data-action="new-program">+ Elle Program Oluştur</button><button class="secondary-btn" data-action="file-import">+ Dosyadan Program Oluştur</button></section>
@@ -296,6 +312,8 @@ async function startWorkout(workoutDayId) {
 
 async function resumeWorkout() {
   state.workout = await workoutRepository.getDraft();
+  const day = await hydrateExecutionDay(state.workout);
+  if (!day) { await workoutRepository.clearDraft(); state.workout = null; toast('Devam eden antrenman bulunamadı.'); return todayView(); }
   await renderWorkout();
 }
 
