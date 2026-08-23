@@ -166,7 +166,7 @@ function defaultData() {
   return {
     schemaVersion: SCHEMA_VERSION,
     migratedFromV1: false,
-    settings: { rest: 90, activeProgramId: null },
+    settings: { rest: 90, weightUnit: 'kg', activeProgramId: null, profile: { displayName: '', avatarDataUrl: '' } },
     sessions: [],
     draft: null,
     programs: [],
@@ -201,10 +201,17 @@ function normalizeData(candidate) {
 }
 
 function normalizeSettings(settings = {}) {
+  const profile = settings.profile && typeof settings.profile === 'object' ? settings.profile : {};
   return {
     ...settings,
     rest: Number(settings.rest) || 90,
-    activeProgramId: settings.activeProgramId || null
+    weightUnit: settings.weightUnit === 'lb' ? 'lb' : 'kg',
+    activeProgramId: settings.activeProgramId || null,
+    profile: {
+      ...profile,
+      displayName: String(profile.displayName || '').trim(),
+      avatarDataUrl: typeof profile.avatarDataUrl === 'string' ? profile.avatarDataUrl : ''
+    }
   };
 }
 

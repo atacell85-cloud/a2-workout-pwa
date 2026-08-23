@@ -13,7 +13,7 @@ import { createSyncService } from './sync-service.js';
 
 const app = document.querySelector('#app');
 const title = document.querySelector('#pageTitle');
-let state = { view: 'home', workout: null, timer: null, timerLeft: 0, executionDay: null, executionExercises: new Map(), builder: null, picker: null, video: null, user: null, syncStatus: 'saved', installPrompt: null, onboarding: null, authMode: 'login', authBusy: false };
+let state = { view: 'home', workout: null, timer: null, timerLeft: 0, timerExerciseId: null, executionDay: null, executionExercises: new Map(), builder: null, picker: null, video: null, user: null, syncStatus: 'saved', installPrompt: null, onboarding: null, authMode: 'login', authBusy: false };
 const youtube = createYouTubeSearchService(workoutRepository);
 const sync = createSyncService(workoutRepository, status => { state.syncStatus = status; const indicator = document.querySelector('#syncStatus'); if (indicator) indicator.textContent = syncLabel(status); });
 
@@ -209,7 +209,33 @@ function oauthErrorMessage(code) {
 
 function legacyMigrationView() { title.textContent = 'Mevcut Veriler'; nav('account'); app.innerHTML = `<section class="summary-card"><h2>Bu cihazda mevcut antrenman verileri bulundu.</h2><p class="muted">Veriler silinmez. İsterseniz bu hesabınıza aktarılır.</p><div class="builder-actions"><button class="secondary-btn" data-action="skip-legacy">Şimdilik Atla</button><button class="primary-btn" data-action="migrate-legacy">Bu verileri hesabıma aktar</button></div></section>`; }
 
-async function accountView() { title.textContent = 'Hesabım'; nav('account'); const legacy = await workoutRepository.hasLegacyDeviceData(); const installed = window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone; app.innerHTML = `<section class="summary-card"><h3>${escapeHtml(state.user?.email || '')}</h3><p id="syncStatus" class="muted">${syncLabel(state.syncStatus)}</p>${!installed ? `<button class="primary-btn full" data-action="install-app">AKS'yi Yükle</button><p class="small muted" id="installHelp" hidden>Safari'de Paylaş düğmesine dokunun → Ana Ekrana Ekle</p>` : ''}<button class="secondary-btn full" data-action="export-csv">CSV Log İndir</button><details><summary>Gelişmiş</summary>${legacy ? `<button class="secondary-btn full" data-action="migrate-legacy">Bu cihazdaki eski verileri içe aktar</button>` : ''}<button class="secondary-btn full" data-action="export-json">Veriyi Dışa Aktar</button><input type="file" id="restoreFile" accept="application/json"><button class="secondary-btn full" data-action="restore-json">JSON'dan Geri Yükle</button></details><p class="small muted">Exercise data by <a href="https://repdb.co" target="_blank" rel="noopener">RepDB (repdb.co)</a></p><button class="secondary-btn full" data-action="logout">Çıkış Yap</button><button class="danger-btn full" data-action="delete-account">Hesabımı Sil</button></section>`; }
+async function accountView() {
+  title.textContent = 'Profil'; nav('account');
+  const legacy = await workoutRepository.hasLegacyDeviceData();
+  const installed = window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone;
+  const settings = await workoutRepository.getSettings();
+  const profile = settings.profile || {};
+  const displayName = profile.displayName || state.user?.email?.split('@')[0] || 'Profil';
+  const avatar = profile.avatarDataUrl ? `<img src="${escapeHtml(profile.avatarDataUrl)}" alt="">` : `<span>${escapeHtml(displayName.slice(0, 1).toLocaleUpperCase('tr-TR'))}</span>`;
+  app.innerHTML = `<section class="summary-card profile-card">
+    <label class="profile-avatar">${avatar}<input type="file" id="profileAvatarInput" accept="image/*"></label>
+    <div class="profile-info"><input id="displayNameSetting" value="${escapeHtml(profile.displayName || '')}" placeholder="Kullanıcı adı"><p class="small muted">${escapeHtml(state.user?.email || '')}</p><p id="syncStatus" class="muted">${syncLabel(state.syncStatus)}</p></div>
+  </section>
+  <section class="summary-card">
+    <h3>Ayarlar</h3>
+    <label class="setting-row">Varsayılan dinlenme <input id="restSetting" inputmode="numeric" type="number" min="15" step="5" value="${settings.rest || 90}"><span>saniye</span></label>
+    <label class="setting-row">Ağırlık birimi <select id="weightUnitSetting"><option value="kg" ${settings.weightUnit !== 'lb' ? 'selected' : ''}>kg</option><option value="lb" ${settings.weightUnit === 'lb' ? 'selected' : ''}>lbs</option></select></label>
+    <button class="secondary-btn full" data-action="save-settings">Kaydet</button>
+  </section>
+  <section class="summary-card">
+    ${!installed ? `<button class="primary-btn full" data-action="install-app">AKS'yi Yükle</button><p class="small muted" id="installHelp" hidden>Safari'de Paylaş düğmesine dokunun → Ana Ekrana Ekle</p>` : ''}
+    <button class="secondary-btn full" data-action="export-csv">CSV Log İndir</button>
+    <details><summary>Gelişmiş</summary>${legacy ? `<button class="secondary-btn full" data-action="migrate-legacy">Bu cihazdaki eski verileri içe aktar</button>` : ''}<button class="secondary-btn full" data-action="export-json">Veriyi Dışa Aktar</button><input type="file" id="restoreFile" accept="application/json"><button class="secondary-btn full" data-action="restore-json">JSON'dan Geri Yükle</button></details>
+    <p class="small muted">Exercise data by <a href="https://repdb.co" target="_blank" rel="noopener">RepDB (repdb.co)</a></p>
+    <button class="secondary-btn full" data-action="logout">Çıkış Yap</button>
+    <button class="danger-btn full" data-action="delete-account">Hesabımı Sil</button>
+  </section>`;
+}
 
 async function exercisesView(query = '') {
   state.view = 'exercises'; title.textContent = 'Hareketler'; nav('exercises');
@@ -456,16 +482,16 @@ async function renderWorkout() {
   const workout = state.workout;
   const day = executionDayFor(workout);
   const images = await exerciseImageMap();
+  const settings = await workoutRepository.getSettings();
   const counts = workoutCounts(workout);
   title.textContent = day.label;
   app.innerHTML = `
-    ${timerHtml()}
     <section class="summary-card">
       <b>${escapeHtml(day.label)}</b>
       <div class="progress"><div style="width:${Math.min(100, counts.done / counts.total * 100)}%"></div></div>
       <div class="small muted">${counts.done}/${counts.total} hareket/blok kayıtlandı • Başlangıç ${new Date(workout.startedAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</div>
     </section>
-    ${day.sections.map(section => `<div class="section-title ${section.type}">${escapeHtml(section.name)}</div>${section.exercises.map(exercise => exerciseCard(exercise, section.type, images)).join('')}`).join('')}
+    ${day.sections.map(section => `<div class="section-title ${section.type}">${escapeHtml(section.name)}</div>${section.exercises.map(exercise => exerciseCard(exercise, section.type, images, settings)).join('')}`).join('')}
     <div class="workout-toolbar">
       <button class="secondary-btn" data-action="home">Kapat</button>
       <button class="primary-btn" data-action="finish">Antrenmanı Bitir</button>
@@ -473,8 +499,8 @@ async function renderWorkout() {
   nav('home');
 }
 
-function timerHtml() {
-  if (state.timerLeft <= 0) return '';
+function timerHtml(exerciseId) {
+  if (state.timerLeft <= 0 || state.timerExerciseId !== exerciseId) return '';
   return `<div class="timer" aria-live="polite">
     <span>Dinlenme</span><strong id="timerText">${fmt(state.timerLeft)}</strong>
     <div><button data-action="timer-reset">Sıfırla</button><button data-action="timer-stop">Atla</button></div>
@@ -485,7 +511,7 @@ function exerciseHeader(exercise) {
   return `<div class="exercise-summary">${exerciseThumb({ imageUrl: exercise.imageUrl })}<div><div class="exercise-name">${escapeHtml(exercise.name)}</div>${exercise.setType === 'warmup' ? '<div class="warmup-label">Isınma seti</div>' : ''}</div></div>`;
 }
 
-function exerciseCard(exercise, sectionType, images = new Map()) {
+function exerciseCard(exercise, sectionType, images = new Map(), settings = {}) {
   exercise.imageUrl ||= images.get(exercise.canonicalExerciseId || exercise.id) || null;
   const prescription = exercise.prescription.text;
   const prescriptionHtml = prescription ? `<div class="prescription">${escapeHtml(prescription)}</div>` : '';
@@ -500,28 +526,30 @@ function exerciseCard(exercise, sectionType, images = new Map()) {
     </article>`;
   }
   const current = state.workout.sets[exercise.id] || {};
-  const rows = Array.from({ length: exercise.prescription.plannedSets }, (_, i) => setRow(exercise, i + 1, current[i + 1])).join('');
+  const unit = settings.weightUnit === 'lb' ? 'lbs' : 'kg';
+  const rows = Array.from({ length: exercise.prescription.plannedSets }, (_, i) => setRow(exercise, i + 1, current[i + 1], unit)).join('');
   return `<article class="exercise-card ${exercise.setType}" id="ex-${exercise.id}">
     <div class="exercise-head">
       ${exerciseHeader(exercise)}
       ${prescriptionHtml}
     </div>
-    <div data-last="${exercise.id}">${lastBlock(exercise.id, exercise.canonicalExerciseId || exercise.id)}</div>
-    ${progressionText(exercise.id)}
-    <div class="labels"><span>Set</span><span>KG</span><span>Tekrar</span><span>RIR</span><span></span></div>
+    ${timerHtml(exercise.id)}
+    <div data-last="${exercise.id}">${lastBlock(exercise.id, exercise.canonicalExerciseId || exercise.id, unit)}</div>
+    ${progressionText(exercise.id, unit)}
+    <div class="labels"><span>Set</span><span>${escapeHtml(unit)}</span><span>Tekrar</span><span>RIR</span><span></span></div>
     ${rows}
     ${exercise.canonicalExerciseId ? '<button class="video-link" data-video-exercise="' + exercise.canonicalExerciseId + '">Form Videosu</button>' : ''}
   </article>`;
 }
 
-function setRow(exercise, setNumber, set) {
+function setRow(exercise, setNumber, set, unit = 'kg') {
   const planned = exercise.planned || {};
   const weight = set?.weight ?? planned.weight ?? '';
   const reps = set?.reps ?? planned.reps ?? '';
   const rir = set?.rir ?? planned.rir ?? '';
   return `<div class="set-row ${set ? 'saved' : ''}">
     <div class="set-n">${setNumber}</div>
-    <input inputmode="decimal" autocomplete="off" pattern="[0-9]*[.,]?[0-9]*" placeholder="kg" id="kg-${exercise.id}-${setNumber}" value="${escapeHtml(weight)}">
+    <input inputmode="decimal" autocomplete="off" pattern="[0-9]*[.,]?[0-9]*" placeholder="${escapeHtml(unit)}" id="kg-${exercise.id}-${setNumber}" value="${escapeHtml(weight)}">
     <input inputmode="numeric" autocomplete="off" pattern="[0-9]*" placeholder="tekrar" id="rp-${exercise.id}-${setNumber}" value="${escapeHtml(reps)}">
     <input inputmode="numeric" autocomplete="off" pattern="[0-9]*" placeholder="RIR" id="ri-${exercise.id}-${setNumber}" value="${escapeHtml(rir)}">
     <div class="set-actions">
@@ -531,10 +559,10 @@ function setRow(exercise, setNumber, set) {
   </div>`;
 }
 
-function lastBlock(exerciseId, lookupExerciseId = exerciseId) {
+function lastBlock(exerciseId, lookupExerciseId = exerciseId, unit = 'kg') {
   const last = lastFor(lookupExerciseId);
   if (!last) return '<div class="last empty">Geçen Antrenman: İlk kayıt</div>';
-  const rows = last.sets.map(set => `<div>${escapeHtml(set.weight || '-')} kg × ${escapeHtml(set.reps || '-')} @ RIR ${escapeHtml(set.rir || '-')}</div>`).join('');
+  const rows = last.sets.map(set => `<div>${escapeHtml(set.weight || '-')} ${escapeHtml(unit)} × ${escapeHtml(set.reps || '-')} @ RIR ${escapeHtml(set.rir || '-')}</div>`).join('');
   return `<button class="last last-fill" data-fill-last="${exerciseId}:${lookupExerciseId}"><b>Geçen Antrenman</b><span>${new Date(last.session.startedAt).toLocaleDateString('tr-TR')}</span>${rows}<em>Bu değerleri doldur</em></button>`;
 }
 
@@ -564,7 +592,7 @@ function lastFor(exerciseId) {
   return null;
 }
 
-function progressionText(exerciseId) {
+function progressionText(exerciseId, unit = 'kg') {
   const entries = [];
   for (let i = cachedSessions.length - 1; i >= 0 && entries.length < 2; i -= 1) {
     const sets = cachedSessions[i].sets.filter(set => set.exerciseId === exerciseId);
@@ -575,7 +603,7 @@ function progressionText(exerciseId) {
   const previous = aggregateByWeight(entries[1]);
   const messages = [];
   Object.entries(current).forEach(([weight, reps]) => {
-    if (previous[weight] !== undefined && reps > previous[weight]) messages.push(`${weight} kg toplam tekrar: ${previous[weight]} → ${reps}`);
+    if (previous[weight] !== undefined && reps > previous[weight]) messages.push(`${weight} ${unit} toplam tekrar: ${previous[weight]} → ${reps}`);
   });
   return messages.length ? `<div class="progress-note">Progresyon: ${escapeHtml(messages.join(' • '))}</div>` : '';
 }
@@ -611,7 +639,7 @@ async function saveSet(exerciseId, setNumber) {
     updatedAt: old ? new Date().toISOString() : null
   };
   await workoutRepository.saveDraft(state.workout);
-  if (['working', 'core'].includes(exercise.setType)) await startTimer();
+  if (['working', 'core'].includes(exercise.setType)) await startTimer(exercise.id);
   await renderWorkout();
   toast(old ? 'Set güncellendi' : 'Set kaydedildi');
 }
@@ -631,10 +659,21 @@ async function toggleActivity(exerciseId) {
   await renderWorkout();
 }
 
-async function startTimer() {
+function plannedRestSeconds(exercise) {
+  const raw = String(exercise?.planned?.rest || '').trim().toLocaleLowerCase('tr-TR');
+  if (!raw) return null;
+  const value = Number(raw.replace(',', '.').match(/\d+(?:\.\d+)?/)?.[0]);
+  if (!Number.isFinite(value) || value <= 0) return null;
+  if (raw.includes('dk') || raw.includes('dak') || raw.includes('min')) return Math.round(value * 60);
+  return Math.round(value);
+}
+
+async function startTimer(exerciseId = state.timerExerciseId) {
   stopTimer(false);
   const settings = await workoutRepository.getSettings();
-  state.timerLeft = settings.rest || 90;
+  const exercise = executionExercise(exerciseId);
+  state.timerExerciseId = exerciseId;
+  state.timerLeft = plannedRestSeconds(exercise) || settings.rest || 90;
   state.timer = setInterval(() => {
     state.timerLeft -= 1;
     const el = document.querySelector('#timerText');
@@ -648,7 +687,7 @@ async function startTimer() {
 }
 
 async function resetTimer() {
-  await startTimer();
+  await startTimer(state.timerExerciseId);
   await renderWorkout();
 }
 
@@ -656,6 +695,7 @@ function stopTimer(rerender = true) {
   if (state.timer) clearInterval(state.timer);
   state.timer = null;
   state.timerLeft = 0;
+  state.timerExerciseId = null;
   if (rerender && state.workout) renderWorkout();
 }
 
@@ -817,8 +857,17 @@ async function backup() {
 }
 
 async function saveSettings() {
-  await workoutRepository.saveSettings({ rest: Number(document.querySelector('#restSetting').value) || 90 });
+  const current = await workoutRepository.getSettings();
+  await workoutRepository.saveSettings({
+    rest: Number(document.querySelector('#restSetting')?.value) || 90,
+    weightUnit: document.querySelector('#weightUnitSetting')?.value === 'lb' ? 'lb' : 'kg',
+    profile: {
+      ...(current.profile || {}),
+      displayName: document.querySelector('#displayNameSetting')?.value?.trim() || ''
+    }
+  });
   toast('Ayar kaydedildi');
+  await accountView();
 }
 
 function download(name, text, type) {
@@ -1140,6 +1189,19 @@ app.addEventListener('focusin', async event => {
 });
 
 app.addEventListener('change', event => {
+  if (event.target.id === 'profileAvatarInput') {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const current = await workoutRepository.getSettings();
+      await workoutRepository.saveSettings({ profile: { ...(current.profile || {}), avatarDataUrl: String(reader.result || '') } });
+      toast('Profil resmi kaydedildi');
+      await accountView();
+    };
+    reader.readAsDataURL(file);
+    return;
+  }
   if (state.importId && event.target.dataset.importSectionType) { workoutRepository.getImportPreview(state.importId).then(preview => { const [day, section] = event.target.dataset.importSectionType.split(':').map(Number); preview.program.days[day].sections[section].sectionType = event.target.value; return workoutRepository.saveImportPreview(preview); }); return; }
   if (state.builder && event.target.dataset.builderSectionType) { state.builder.days.flatMap(day => day.sections).find(section => section.id === event.target.dataset.builderSectionType).sectionType = event.target.value; persistBuilder(); return; }
   if (event.target.id === 'exerciseSelect') exerciseHistory(event.target.value);

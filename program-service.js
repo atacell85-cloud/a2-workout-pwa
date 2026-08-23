@@ -91,7 +91,8 @@ export function permanentDayToLegacy(day, exerciseNames = new Map()) {
         planned: {
           weight: item.weightText || item.weight || '',
           reps: item.repsText || (item.repsMin != null ? `${item.repsMin}${item.repsMax != null && item.repsMax !== item.repsMin ? `-${item.repsMax}` : ''}` : ''),
-          rir: item.rirText || item.rir || ''
+          rir: item.rirText || item.rir || '',
+          rest: item.restText || item.restSeconds || ''
         }
       }))
     }))

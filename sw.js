@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v44-active-home-fill-last-workout-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v45-profile-settings-inline-rest-timer-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=active-home-fill-last-workout-v1',
+  './app.js?v=profile-settings-inline-rest-timer-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
