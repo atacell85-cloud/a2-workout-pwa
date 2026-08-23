@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v46-persistent-rest-timer-notifications-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v47-session-day-labels-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=persistent-rest-timer-notifications-v1',
+  './app.js?v=session-day-labels-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',

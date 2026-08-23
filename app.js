@@ -86,11 +86,12 @@ async function todayView() {
   const lastSession = cachedSessions.at(-1);
   const hasProgram = programs.length > 0;
   const draftDay = draft ? await hydrateExecutionDay(draft) : null;
+  const lastSessionLabel = lastSession ? sessionDayLabel(lastSession, programs) : '';
   app.innerHTML = `
     <section class="sync-status" id="syncStatus">${syncLabel(state.syncStatus)}</section>
     ${draft ? `<section class="today-hero"><div><span>Devam eden antrenman</span><h2>${escapeHtml(draftDay?.label || 'Antrenman')}</h2><p>Başladığın kaydı sürdürebilirsin.</p></div><button class="primary-btn full" data-action="resume">Devam Et</button></section>` : `<section class="today-hero"><div><span>Bugün</span><h2>${hasProgram ? 'Antrenmana hazır' : 'İlk programını oluştur'}</h2><p>${hasProgram ? 'Programlar sekmesinden bir gün seçip antrenmanı başlat.' : 'AKS önce programını kurar, sonra her gün sadece başlatıp kayıt alırsın.'}</p></div>${hasProgram ? '<button class="primary-btn full" data-action="programs">Programlara Git</button>' : ''}</section>`}
     ${hasProgram ? '' : `<section class="summary-card"><h2>Program yok</h2><p class="muted">PDF, Word veya Excel'den aktarabilir ya da elle oluşturabilirsin.</p><button class="primary-btn full" data-action="file-import">Dosyadan Program Oluştur</button><button class="secondary-btn full" data-action="new-program">Elle Program Oluştur</button></section>`}
-    ${lastSession ? `<section class="summary-card"><h2>Son antrenman</h2>${lastSessionSummary(lastSession)}<button class="secondary-btn full" data-action="history">Geçmişi Gör</button></section>` : '<section class="summary-card muted">Henüz tamamlanmış antrenman kaydın yok.</section>'}`;
+    ${lastSession ? `<section class="summary-card"><h2>Son antrenman</h2>${lastSessionSummary(lastSession, lastSessionLabel)}<button class="secondary-btn full" data-action="history">Geçmişi Gör</button></section>` : '<section class="summary-card muted">Henüz tamamlanmış antrenman kaydın yok.</section>'}`;
   nav('home');
 }
 
@@ -98,10 +99,17 @@ function dayExerciseCount(day) {
   return day.sections.reduce((sum, section) => sum + section.items.filter(item => item.itemType === 'exercise').length, 0);
 }
 
-function lastSessionSummary(session) {
+function sessionDayLabel(session, programs = []) {
+  const publicDay = findWorkoutDay(session.programId, session.workoutDayId);
+  if (publicDay?.label) return publicDay.label;
+  const program = programs.find(item => item.id === session.programId);
+  const day = program?.days?.find(item => item.id === session.workoutDayId);
+  return day?.name || 'Antrenman';
+}
+
+function lastSessionSummary(session, label = 'Antrenman') {
   const summary = session.summary || sessionSummary(session);
-  const day = findWorkoutDay(session.programId, session.workoutDayId);
-  return `<div class="history-metrics">${escapeHtml(day?.label || session.workoutDayId)} • ${summary.completedExercises} hareket • ${summary.setCount} set • ${Math.round(summary.volume)} kg × tekrar</div><div class="small muted">${new Date(session.startedAt).toLocaleString('tr-TR')}</div>`;
+  return `<div class="history-metrics">${escapeHtml(label)} • ${summary.completedExercises} hareket • ${summary.setCount} set • ${Math.round(summary.volume)} kg × tekrar</div><div class="small muted">${new Date(session.startedAt).toLocaleString('tr-TR')}</div>`;
 }
 
 async function workoutHomeView() {
@@ -855,23 +863,23 @@ async function historyView() {
   state.view = 'history';
   title.textContent = 'Geçmiş';
   cachedSessions = await workoutRepository.getSessions();
+  const programs = await workoutRepository.getPrograms();
   const sessions = [...cachedSessions].reverse();
   app.innerHTML = `
     <section class="history-tabs">
       <button class="tab-btn active" data-action="history">Antrenmanlar</button>
       <button class="tab-btn" data-action="exercise-history">Hareketler</button>
     </section>
-    ${sessions.length ? sessions.map(sessionCard).join('') : '<div class="summary-card">Henüz kayıt yok.</div>'}`;
+    ${sessions.length ? sessions.map(session => sessionCard(session, sessionDayLabel(session, programs))).join('') : '<div class="summary-card">Henüz kayıt yok.</div>'}`;
   nav('history');
 }
 
-function sessionCard(session) {
-  const day = findWorkoutDay(session.programId, session.workoutDayId);
+function sessionCard(session, label = 'Antrenman') {
   const summary = session.summary || sessionSummary(session);
   const grouped = Object.groupBy ? Object.groupBy(session.sets, set => set.exerciseId) : groupBy(session.sets, set => set.exerciseId);
   return `<article class="history-card">
     <div class="history-head">
-      <div><h3>${escapeHtml(day?.label || session.workoutDayId)}</h3><div class="sub">${new Date(session.startedAt).toLocaleString('tr-TR')} • ${summary.durationMin} dk</div></div>
+      <div><h3>${escapeHtml(label)}</h3><div class="sub">${new Date(session.startedAt).toLocaleString('tr-TR')} • ${summary.durationMin} dk</div></div>
       <button class="danger-btn small-btn" data-delete-session="${session.id}">Sil</button>
     </div>
     <div class="history-metrics">${summary.completedExercises} hareket • ${summary.setCount} set • ${Math.round(summary.volume)} kg × tekrar</div>
