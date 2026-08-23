@@ -587,7 +587,7 @@ th, td {
   display: flex;
   gap: 4px;
   height: 64px;
-  align-items: center;
+  align-items: flex-start;
   padding: 8px 10px;
   background: rgba(255, 255, 255, .96);
   backdrop-filter: blur(14px);
@@ -603,6 +603,7 @@ th, td {
   font-weight: 850;
   color: var(--muted);
   background: transparent;
+  transform: translateY(-3px);
 }
 
 .nav-btn.active {
