@@ -119,13 +119,8 @@ async function myRoutinesView() {
   state.view = 'my-routines'; state.workout = null; state.executionDay = null; title.textContent = 'Rutinlerim';
   const programs = await workoutRepository.getPrograms();
   const settings = await workoutRepository.getSettings();
-  const draft = await workoutRepository.getProgramBuilderDraft();
-  const imports = (await workoutRepository.getData()).importPreviews;
   app.innerHTML = `
     <button class="text-btn" data-action="programs">← Antrenman</button>
-    ${draft ? `<section class="resume-card"><div><b>Taslak program</b><span>${escapeHtml(draft.name || 'İsimsiz program')}</span></div><button class="primary-btn" data-action="resume-builder">Sürdür</button></section>` : ''}
-    <section class="sync-status" id="syncStatus">${syncLabel(state.syncStatus)}</section>
-    ${Object.values(imports).length ? `<section class="resume-card"><div><b>Yarım kalan dosya aktarımı</b><span>${escapeHtml(Object.values(imports)[0].source.fileName)}</span></div><button class="primary-btn" data-resume-import="${Object.values(imports)[0].importId}">Sürdür</button></section>` : ''}
     ${programs.length ? programs.map(program => `<article class="program-card ${program.id === settings.activeProgramId ? 'active-program-card' : ''}"><div><b>${escapeHtml(program.name)}</b><span>${program.id === settings.activeProgramId ? 'Aktif program · ' : ''}${program.days.length} gün · ${escapeHtml(program.sourceType)}</span></div><div class="compact-actions">${program.id === settings.activeProgramId ? '' : `<button class="secondary-btn" data-set-active-program="${program.id}">Aktif Yap</button>`}<button class="secondary-btn" data-edit-program="${program.id}">Düzenle</button><button class="primary-btn" data-open-program="${program.id}">Aç</button></div></article>`).join('') : '<div class="summary-card muted">Henüz kaydettiğin rutin yok.</div>'}`;
   nav('programs');
 }
