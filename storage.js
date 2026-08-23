@@ -113,6 +113,7 @@ export const workoutRepository = {
     if (!preview) throw Object.assign(new Error('INVALID_IMPORT_SCHEMA'), { code: 'INVALID_IMPORT_SCHEMA' });
     const program = factory(preview);
     data.programs.push(program);
+    data.settings = { ...data.settings, activeProgramId: program.id };
     data.finalizations[importId] = program.id;
     data.importHistory.push({ importId, finalProgramId: program.id, finalizedAt: new Date().toISOString(), source: preview.source, warnings: preview.warnings || [], dismissedContent: (preview.unparsedContent || []).filter(item => item.resolutionStatus === 'dismissed') });
     delete data.importPreviews[importId];
@@ -165,7 +166,7 @@ function defaultData() {
   return {
     schemaVersion: SCHEMA_VERSION,
     migratedFromV1: false,
-    settings: { rest: 90 },
+    settings: { rest: 90, activeProgramId: null },
     sessions: [],
     draft: null,
     programs: [],
@@ -185,7 +186,7 @@ function normalizeData(candidate) {
   return {
     schemaVersion: SCHEMA_VERSION,
     migratedFromV1: Boolean(source.migratedFromV1 || nested.migratedFromV1),
-    settings: { ...(nested.settings || source.settings || {}), rest: Number(nested.settings?.rest || source.settings?.rest) || 90 },
+    settings: normalizeSettings(nested.settings || source.settings),
     sessions: Array.isArray(nested.sessions) ? nested.sessions.map(normalizeSession).filter(Boolean) : [],
     draft: nested.draft ? normalizeDraft(nested.draft) : null,
     programs: Array.isArray(nested.programs) ? nested.programs.filter(item => item?.schemaVersion === '1.0' && item.id) : [],
@@ -196,6 +197,14 @@ function normalizeData(candidate) {
     finalizations: nested.finalizations && typeof nested.finalizations === 'object' ? nested.finalizations : {},
     syncMetadata: { accountId: nested.syncMetadata?.accountId || null, dirty: Boolean(nested.syncMetadata?.dirty), dirtySince: nested.syncMetadata?.dirtySince || null, lastAttemptAt: nested.syncMetadata?.lastAttemptAt || null, lastSuccessAt: nested.syncMetadata?.lastSuccessAt || null, lastError: nested.syncMetadata?.lastError || null, localRevision: Number(nested.syncMetadata?.localRevision || 0) }
     ,syncUpdatedAt: nested.syncUpdatedAt || null
+  };
+}
+
+function normalizeSettings(settings = {}) {
+  return {
+    ...settings,
+    rest: Number(settings.rest) || 90,
+    activeProgramId: settings.activeProgramId || null
   };
 }
 

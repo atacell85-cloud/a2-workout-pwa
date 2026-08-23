@@ -79,9 +79,10 @@ async function todayView() {
   state.view = 'today'; state.workout = null; state.executionDay = null; title.textContent = 'Bugün';
   const draft = await workoutRepository.getDraft();
   const programs = await workoutRepository.getPrograms();
+  const settings = await workoutRepository.getSettings();
   cachedSessions = await workoutRepository.getSessions();
   const lastSession = cachedSessions.at(-1);
-  const nextProgram = programs[0];
+  const nextProgram = activeProgram(programs, settings);
   const draftDay = draft ? await hydrateExecutionDay(draft) : null;
   app.innerHTML = `
     <section class="sync-status" id="syncStatus">${syncLabel(state.syncStatus)}</section>
@@ -94,6 +95,10 @@ async function todayView() {
 function todayProgram(program) {
   return `<section class="summary-card"><div class="section-kicker">Aktif program</div><h2>${escapeHtml(program.name)}</h2><p class="muted">${program.days.length} gün. Değişiklik için Programlar sekmesine git.</p></section>
     <div class="day-grid">${program.days.map(day => `<article class="day-card"><div class="day">${escapeHtml(day.name)}</div><div class="meta">${dayExerciseCount(day)} hareket</div><button class="primary-btn full" data-start-program-day="${program.id}:${day.id}">Başlat</button></article>`).join('')}</div>`;
+}
+
+function activeProgram(programs, settings = {}) {
+  return programs.find(program => program.id === settings.activeProgramId) || programs[0] || null;
 }
 
 function dayExerciseCount(day) {
@@ -109,6 +114,7 @@ function lastSessionSummary(session) {
 async function programsView() {
   state.view = 'programs'; state.workout = null; state.executionDay = null; title.textContent = 'Programlar';
   const programs = await workoutRepository.getPrograms();
+  const settings = await workoutRepository.getSettings();
   const draft = await workoutRepository.getProgramBuilderDraft();
   const imports = (await workoutRepository.getData()).importPreviews;
   app.innerHTML = `
@@ -117,7 +123,7 @@ async function programsView() {
     <section class="sync-status" id="syncStatus">${syncLabel(state.syncStatus)}</section>
     <section class="create-program-actions"><button class="primary-btn" data-action="new-program">+ Elle Program Oluştur</button><button class="secondary-btn" data-action="file-import">+ Dosyadan Program Oluştur</button></section>
     ${Object.values(imports).length ? `<section class="resume-card"><div><b>Yarım kalan dosya aktarımı</b><span>${escapeHtml(Object.values(imports)[0].source.fileName)}</span></div><button class="primary-btn" data-resume-import="${Object.values(imports)[0].importId}">Sürdür</button></section>` : ''}
-    ${programs.length ? programs.map(program => `<article class="program-card"><div><b>${escapeHtml(program.name)}</b><span>${program.days.length} gün · ${escapeHtml(program.sourceType)}</span></div><div class="compact-actions"><button class="secondary-btn" data-edit-program="${program.id}">Düzenle</button><button class="primary-btn" data-open-program="${program.id}">Aç</button></div></article>`).join('') : '<div class="summary-card muted">Henüz programınız yok.</div>'}`;
+    ${programs.length ? programs.map(program => `<article class="program-card ${program.id === settings.activeProgramId ? 'active-program-card' : ''}"><div><b>${escapeHtml(program.name)}</b><span>${program.id === settings.activeProgramId ? 'Aktif program · ' : ''}${program.days.length} gün · ${escapeHtml(program.sourceType)}</span></div><div class="compact-actions">${program.id === settings.activeProgramId ? '' : `<button class="secondary-btn" data-set-active-program="${program.id}">Aktif Yap</button>`}<button class="secondary-btn" data-edit-program="${program.id}">Düzenle</button><button class="primary-btn" data-open-program="${program.id}">Aç</button></div></article>`).join('') : '<div class="summary-card muted">Henüz programınız yok.</div>'}`;
   nav('programs');
 }
 
@@ -290,6 +296,7 @@ async function startProgramWorkout(programId, dayId) {
   state.executionDay = permanentDayToLegacy(day, names); state.executionExercises = new Map(state.executionDay.sections.flatMap(section => section.exercises).map(item => [item.id, item]));
   const draft = await workoutRepository.getDraft();
   if (draft && !confirm('Devam eden antrenman silinip yeni antrenman başlatılsın mı?')) return;
+  await workoutRepository.saveSettings({ activeProgramId: programId });
   state.workout = { id: uid(), programId, workoutDayId: dayId, startedAt: new Date().toISOString(), status: 'active', completedActivities: {}, sets: {} };
   await workoutRepository.saveDraft(state.workout); await renderWorkout();
 }
@@ -828,6 +835,7 @@ app.addEventListener('click', async event => {
   if (target.dataset.selectExercise) { const [sectionId, exerciseId] = target.dataset.selectExercise.split(':'); const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === sectionId); const item = blankExercise(section.id, section.items.length + 1, exerciseId); const canonical = await getCanonicalExercise(exerciseId); item.displayName = canonical?.nameTr || canonical?.nameEn || exerciseId; section.items.push(item); state.picker = null; await persistBuilder(); return renderBuilder(); }
   if (target.dataset.customExercise) { const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === target.dataset.customExercise); const value = document.querySelector(`[data-exercise-search="${section.id}"]`).value.trim(); section.items.push(blankExercise(section.id, section.items.length + 1, null, value)); await persistBuilder(); return renderBuilder(); }
   if (target.dataset.startProgramDay) { const [programId, dayId] = target.dataset.startProgramDay.split(':'); return startProgramWorkout(programId, dayId); }
+  if (target.dataset.setActiveProgram) { await workoutRepository.saveSettings({ activeProgramId: target.dataset.setActiveProgram }); toast('Aktif program değişti'); return programsView(); }
   if (target.dataset.openProgram) return openProgram(target.dataset.openProgram);
   if (target.dataset.editProgram) return openBuilder(await workoutRepository.getProgram(target.dataset.editProgram));
   if (target.dataset.videoExercise) return showVideo(target.dataset.videoExercise);

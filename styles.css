@@ -652,6 +652,10 @@ th, td {
   margin: 10px 0;
   padding: 12px;
 }
+.active-program-card {
+  border-color: var(--accent);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, .12);
+}
 .create-program-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
 .import-upload { text-align: center; }
 .import-upload input { width: 100%; margin: 14px 0 8px; }
