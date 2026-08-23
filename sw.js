@@ -1,9 +1,9 @@
-const CACHE_VERSION = 'a2-workout-v18-bottom-nav-safe-area-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v19-bottom-nav-safe-area-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './app.js?v=bottom-nav-safe-area-v2',
+  './app.js?v=bottom-nav-safe-area-v3',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
