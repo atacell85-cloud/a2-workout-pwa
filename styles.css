@@ -887,10 +887,37 @@ th, td {
 .simple-builder-exercise {
   border-radius: 14px;
   background: #f8fafc;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.simple-builder-exercise.dragging {
+  box-shadow: 0 14px 34px rgba(15, 23, 42, .18);
+  opacity: .88;
 }
 .simple-builder-exercise .builder-row b {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+.drag-handle {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 18px;
+  font-weight: 900;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+.is-dragging-builder-exercise {
+  user-select: none;
 }
 .compact-fields { align-items: end; margin-top: 9px; }
 .compact-fields label, .detail-grid label { font-size: 11px; font-weight: 800; color: var(--muted); min-width: 0; }

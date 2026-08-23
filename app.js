@@ -922,7 +922,7 @@ async function renderExercisePoolPicker() {
 function builderInstruction(item) { return `<div class="instruction-row"><input data-instruction="${item.id}" value="${escapeHtml(item.text)}" placeholder="Talimat"></div>`; }
 function builderExercise(item, itemIndex) {
   const name = item.customExerciseName || item.displayName || item.exerciseId || 'Hareket';
-  return `<article class="builder-exercise simple-builder-exercise"><div class="builder-row exercise-summary">${exerciseThumb(item)}<b>${itemIndex + 1}. ${escapeHtml(name)}</b></div>
+  return `<article class="builder-exercise simple-builder-exercise" data-builder-exercise-card="${item.id}" data-builder-section-card="${item.sectionId}"><div class="builder-row exercise-summary"><span class="drag-handle" data-drag-exercise="${item.sectionId}:${item.id}" aria-label="Sırayı değiştir">☰</span>${exerciseThumb(item)}<b>${itemIndex + 1}. ${escapeHtml(name)}</b></div>
     <div class="compact-fields"><label>Set<input data-field="${item.id}:setsText" inputmode="text" value="${escapeHtml(item.setsText ?? item.sets ?? '')}"></label><label>Tekrar<input data-field="${item.id}:repsText" inputmode="text" value="${escapeHtml(item.repsText ?? '')}"></label></div></article>`;
 }
 
@@ -1106,6 +1106,52 @@ app.addEventListener('change', event => {
   if (state.importId && event.target.dataset.importSectionType) { workoutRepository.getImportPreview(state.importId).then(preview => { const [day, section] = event.target.dataset.importSectionType.split(':').map(Number); preview.program.days[day].sections[section].sectionType = event.target.value; return workoutRepository.saveImportPreview(preview); }); return; }
   if (state.builder && event.target.dataset.builderSectionType) { state.builder.days.flatMap(day => day.sections).find(section => section.id === event.target.dataset.builderSectionType).sectionType = event.target.value; persistBuilder(); return; }
   if (event.target.id === 'exerciseSelect') exerciseHistory(event.target.value);
+});
+
+app.addEventListener('pointerdown', event => {
+  const handle = event.target.closest('[data-drag-exercise]');
+  if (!state.builder || !handle) return;
+  const [sectionId, itemId] = handle.dataset.dragExercise.split(':');
+  const card = document.querySelector(`[data-builder-exercise-card="${itemId}"]`);
+  if (!card) return;
+  event.preventDefault();
+  handle.setPointerCapture?.(event.pointerId);
+  state.builderDrag = { sectionId, itemId, pointerId: event.pointerId };
+  card.classList.add('dragging');
+  document.body.classList.add('is-dragging-builder-exercise');
+});
+
+app.addEventListener('pointermove', event => {
+  if (!state.builderDrag || event.pointerId !== state.builderDrag.pointerId) return;
+  const card = document.querySelector(`[data-builder-exercise-card="${state.builderDrag.itemId}"]`);
+  if (!card) return;
+  card.style.transform = 'scale(.985)';
+});
+
+app.addEventListener('pointerup', async event => {
+  if (!state.builderDrag || event.pointerId !== state.builderDrag.pointerId) return;
+  const drag = state.builderDrag;
+  state.builderDrag = null;
+  document.body.classList.remove('is-dragging-builder-exercise');
+  const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === drag.sectionId);
+  if (!section) return renderBuilder();
+  const exerciseItems = section.items.filter(item => item.itemType === 'exercise');
+  const dragged = exerciseItems.find(item => item.id === drag.itemId);
+  if (!dragged) return renderBuilder();
+  const remaining = exerciseItems.filter(item => item.id !== drag.itemId);
+  const cards = [...document.querySelectorAll(`[data-builder-section-card="${drag.sectionId}"]`)].filter(card => card.dataset.builderExerciseCard !== drag.itemId);
+  const targetIndex = cards.findIndex(card => event.clientY < card.getBoundingClientRect().top + card.getBoundingClientRect().height / 2);
+  remaining.splice(targetIndex === -1 ? remaining.length : targetIndex, 0, dragged);
+  section.items = remaining.map((item, index) => ({ ...item, order: index + 1 }));
+  await persistBuilder();
+  renderBuilder();
+});
+
+app.addEventListener('pointercancel', () => {
+  if (!state.builderDrag) return;
+  state.builderDrag = null;
+  document.body.classList.remove('is-dragging-builder-exercise');
+  renderBuilder();
 });
 
 document.querySelectorAll('.nav-btn').forEach(button => {
