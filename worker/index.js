@@ -65,22 +65,41 @@ async function parseImport(request, env) {
 
 async function createImportJob(request, env, ctx) {
   if (request.method !== 'POST') return apiError('METHOD_NOT_ALLOWED', 405, { Allow: 'POST' });
-  if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) return apiError('UNSUPPORTED_CONTENT_TYPE', 415);
+  const contentType = request.headers.get('content-type')?.toLowerCase() || '';
+  if (!contentType.startsWith('application/json') && !contentType.startsWith('multipart/form-data')) return apiError('UNSUPPORTED_CONTENT_TYPE', 415);
   const user = await currentUser(request, env);
   if (!user) return apiError('AUTH_REQUIRED', 401);
   if (!sameOrigin(request)) return apiError('AUTH_ORIGIN_INVALID', 403);
   const config = importConfig(env);
-  const body = await readJson(request, config.maxInputBytes);
+  const body = contentType.startsWith('multipart/form-data') ? await readImportForm(request, config) : await readJson(request, config.maxInputBytes);
   if (!body?.importId || !body?.normalizedDocument?.blocks?.length) return apiError('OPENAI_INVALID_RESPONSE', 400);
   const normalizedJson = JSON.stringify(sanitize(body.normalizedDocument));
   if (bytes(normalizedJson) > config.maxInputBytes) return apiError('DOCUMENT_TOO_LARGE', 413);
   const now = new Date().toISOString();
   const source = body.normalizedDocument;
-  await env.DB.prepare(`INSERT INTO import_jobs (id, user_id, status, source_json, normalized_document_json, attempts, created_at, updated_at)
-    VALUES (?, ?, 'queued', ?, ?, 0, ?, ?)
-    ON CONFLICT(user_id, id) DO UPDATE SET status = 'queued', error_code = NULL, preview_json = NULL, observability_json = NULL, normalized_document_json = excluded.normalized_document_json, source_json = excluded.source_json, updated_at = excluded.updated_at`)
-    .bind(body.importId, user.id, JSON.stringify({ fileName: source.fileName, fileType: source.fileType, language: source.language || null }), normalizedJson, now, now)
+  await env.DB.prepare(`INSERT INTO import_jobs (id, user_id, status, source_json, normalized_document_json, raw_file_name, raw_file_type, raw_file_size, attempts, created_at, updated_at)
+    VALUES (?, ?, 'queued', ?, ?, ?, ?, ?, 0, ?, ?)
+    ON CONFLICT(user_id, id) DO UPDATE SET status = 'queued', error_code = NULL, preview_json = NULL, observability_json = NULL, openai_response_id = NULL, normalized_document_json = excluded.normalized_document_json, source_json = excluded.source_json, raw_file_name = excluded.raw_file_name, raw_file_type = excluded.raw_file_type, raw_file_size = excluded.raw_file_size, updated_at = excluded.updated_at`)
+    .bind(body.importId, user.id, JSON.stringify({ fileName: source.fileName, fileType: source.fileType, language: source.language || null }), normalizedJson, body.file?.name || null, body.file?.type || null, body.file?.size || null, now, now)
     .run();
+  if (body.file) {
+    if (!env.OPENAI_API_KEY) return apiError('OPENAI_API_KEY_MISSING', 503);
+    try {
+      const rawFile = await rawFileFromUpload(body.file, config);
+      const requestId = crypto.randomUUID();
+      const started = Date.now();
+      const { payload, upstream, attempts } = await createOpenAIBackgroundResponse({ apiKey: env.OPENAI_API_KEY, config, input: { importId: body.importId, normalizedDocument: body.normalizedDocument, rawFile }, requestId });
+      const metadata = observability({ requestId, config, payload, upstream, attempts, started, status: payload.status || 'queued' });
+      await env.DB.prepare("UPDATE import_jobs SET status = 'processing', openai_response_id = ?, observability_json = ?, attempts = attempts + 1, updated_at = ? WHERE user_id = ? AND id = ?")
+        .bind(payload.id, JSON.stringify(metadata), new Date().toISOString(), user.id, body.importId)
+        .run();
+      return json({ importId: body.importId, status: 'queued' }, 202);
+    } catch (error) {
+      const code = error.code || 'OPENAI_REQUEST_FAILED';
+      await env.DB.prepare("UPDATE import_jobs SET status = 'failed', error_code = ?, updated_at = ? WHERE user_id = ? AND id = ?").bind(code, new Date().toISOString(), user.id, body.importId).run();
+      return apiError(code, statusFor(code));
+    }
+  }
   await enqueueImportJob(env, ctx, body.importId);
   return json({ importId: body.importId, status: 'queued' }, 202);
 }
@@ -98,8 +117,9 @@ async function handleImportJob(request, env, ctx, importId, retry) {
     return json({ importId, status: 'queued' }, 202);
   }
   if (request.method !== 'GET') return apiError('METHOD_NOT_ALLOWED', 405, { Allow: 'GET' });
-  const row = await env.DB.prepare('SELECT id, status, error_code, source_json, preview_json, observability_json, attempts, created_at, updated_at, completed_at FROM import_jobs WHERE user_id = ? AND id = ?').bind(user.id, importId).first();
+  let row = await env.DB.prepare('SELECT id, status, error_code, source_json, normalized_document_json, preview_json, observability_json, openai_response_id, attempts, created_at, updated_at, completed_at FROM import_jobs WHERE user_id = ? AND id = ?').bind(user.id, importId).first();
   if (!row) return apiError('IMPORT_JOB_NOT_FOUND', 404);
+  if (row.status === 'processing' && row.openai_response_id) row = await syncOpenAIBackgroundJob(env, row);
   return json({
     importId: row.id,
     status: row.status,
@@ -205,6 +225,54 @@ export async function requestOpenAI({ apiKey, config, input, requestId, fetchImp
   throw lastError;
 }
 
+async function createOpenAIBackgroundResponse({ apiKey, config, input, requestId, fetchImpl = fetch }) {
+  const upstream = await fetchImpl(OPENAI_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'X-Client-Request-Id': requestId },
+    body: JSON.stringify(requestBody(config.model, input, requestId, { background: true }))
+  });
+  if (!upstream.ok) {
+    const error = coded(mapOpenAIStatus(upstream.status));
+    error.status = upstream.status;
+    throw error;
+  }
+  return { payload: await upstream.json(), upstream, attempts: 1 };
+}
+
+async function retrieveOpenAIResponse({ apiKey, responseId, fetchImpl = fetch }) {
+  const upstream = await fetchImpl(`${OPENAI_URL}/${encodeURIComponent(responseId)}`, { headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' } });
+  if (!upstream.ok) {
+    const error = coded(mapOpenAIStatus(upstream.status));
+    error.status = upstream.status;
+    throw error;
+  }
+  return { payload: await upstream.json(), upstream };
+}
+
+async function syncOpenAIBackgroundJob(env, row) {
+  const config = importConfig(env);
+  try {
+    if (!env.OPENAI_API_KEY) throw coded('OPENAI_API_KEY_MISSING');
+    const { payload, upstream } = await retrieveOpenAIResponse({ apiKey: env.OPENAI_API_KEY, responseId: row.openai_response_id });
+    if (payload.status === 'queued' || payload.status === 'in_progress') return row;
+    const normalizedDocument = parseJson(row.normalized_document_json);
+    if (payload.status !== 'completed') throw coded(payload.error?.code || 'OPENAI_REQUEST_FAILED');
+    let preview;
+    try { preview = JSON.parse(extractStructuredOutput(payload)); } catch (error) { if (error.code) throw error; throw coded('OPENAI_INVALID_RESPONSE'); }
+    validatePreview(preview, row.id, normalizedDocument);
+    const metadata = { ...(parseJson(row.observability_json) || {}), status: 'ok', model: payload.model || config.model, inputTokens: payload.usage?.input_tokens ?? null, outputTokens: payload.usage?.output_tokens ?? null, totalTokens: payload.usage?.total_tokens ?? null, openaiRequestId: upstream.headers?.get?.('x-request-id') || payload.id || row.openai_response_id };
+    const now = new Date().toISOString();
+    await env.DB.prepare("UPDATE import_jobs SET status = 'done', preview_json = ?, observability_json = ?, error_code = NULL, updated_at = ?, completed_at = ? WHERE id = ?")
+      .bind(JSON.stringify(preview), JSON.stringify(metadata), now, now, row.id)
+      .run();
+    return { ...row, status: 'done', preview_json: JSON.stringify(preview), observability_json: JSON.stringify(metadata), error_code: null, updated_at: now, completed_at: now };
+  } catch (error) {
+    const code = error.code || 'OPENAI_REQUEST_FAILED';
+    await env.DB.prepare("UPDATE import_jobs SET status = 'failed', error_code = ?, updated_at = ? WHERE id = ?").bind(code, new Date().toISOString(), row.id).run();
+    return { ...row, status: 'failed', error_code: code, updated_at: new Date().toISOString() };
+  }
+}
+
 export function extractStructuredOutput(payload) {
   if (typeof payload?.output_text === 'string' && payload.output_text.trim()) return payload.output_text;
   for (const item of payload?.output || []) for (const content of item?.content || []) {
@@ -219,8 +287,14 @@ export function mapOpenAIStatus(status) {
   return 'OPENAI_REQUEST_FAILED';
 }
 
-function importConfig(env) { return { model: env.OPENAI_IMPORT_MODEL || 'gpt-4.1-mini', timeoutMs: positive(env.OPENAI_IMPORT_TIMEOUT_MS, 45000), maxRetries: nonNegative(env.OPENAI_IMPORT_MAX_RETRIES, 1), retryBaseMs: positive(env.OPENAI_IMPORT_RETRY_BASE_MS, 750), maxInputBytes: positive(env.OPENAI_IMPORT_MAX_INPUT_BYTES, 180000) }; }
-function requestBody(model, input, requestId) { return { model, temperature: 0, metadata: { import_request_id: requestId }, input: [{ role: 'developer', content: [{ type: 'input_text', text: prompt() }] }, { role: 'user', content: [{ type: 'input_text', text: JSON.stringify({ importId: input.importId, normalizedDocument: sanitize(input.normalizedDocument) }) }] }], text: { format: { type: 'json_schema', name: 'import_program_v1_1', strict: true, schema: responseSchema } } }; }
+function importConfig(env) { return { model: env.OPENAI_IMPORT_MODEL || 'gpt-4.1-mini', timeoutMs: positive(env.OPENAI_IMPORT_TIMEOUT_MS, 45000), maxRetries: nonNegative(env.OPENAI_IMPORT_MAX_RETRIES, 1), retryBaseMs: positive(env.OPENAI_IMPORT_RETRY_BASE_MS, 750), maxInputBytes: positive(env.OPENAI_IMPORT_MAX_INPUT_BYTES, 180000), maxFileBytes: positive(env.OPENAI_IMPORT_MAX_FILE_BYTES, 6000000) }; }
+function requestBody(model, input, requestId, options = {}) {
+  const content = [
+    { type: 'input_text', text: JSON.stringify({ importId: input.importId, normalizedDocument: sanitize(input.normalizedDocument), note: input.rawFile ? 'The original uploaded file is attached as input_file. Use the original file as the primary source. Use normalizedDocument only as helper context.' : 'No original file is attached. Use normalizedDocument as the source.' }) }
+  ];
+  if (input.rawFile?.base64) content.push({ type: 'input_file', filename: input.rawFile.name, file_data: `data:${input.rawFile.type || 'application/octet-stream'};base64,${input.rawFile.base64}` });
+  return { model, temperature: 0, metadata: { import_request_id: requestId }, background: Boolean(options.background), input: [{ role: 'developer', content: [{ type: 'input_text', text: prompt() }] }, { role: 'user', content }], text: { format: { type: 'json_schema', name: 'import_program_v1_1', strict: true, schema: responseSchema } } };
+}
 function prompt() { return 'Extract, do not coach. Convert only source evidence into the supplied JSON shape. Never add exercises, prescriptions, RIR, RPE, rest, tempo or advice. The product uses a simplified routine model: Program -> Day -> Exercise -> sets and reps. For every day, create exactly one section titled "Ana Antrenman" with sectionType "strength"; do not invent extra section headings. If the source clearly contains warmup, cardio, mobility or notes, preserve them as instructions or item notes inside the same "Ana Antrenman" section instead of creating additional sections. exerciseMatch must be null. Preserve free-form prescription text. Put ambiguous source content in unparsedContent.'; }
 function sanitize(document) { return { fileName: document.fileName, fileType: document.fileType, language: document.language || null, blocks: document.blocks.filter(block => block?.type && (block.text || block.rows)).slice(0, 1000) }; }
 function validatePreview(value, importId, document) { if (!value || value.schemaVersion !== '1.1' || !value.program?.name || !Array.isArray(value.program.days)) throw coded('OPENAI_SCHEMA_VALIDATION_FAILED'); value.importId = importId; value.importedAt ||= new Date().toISOString(); value.source ||= { fileName: document.fileName, fileType: document.fileType, language: document.language || null, documentTitle: null }; value.warnings ||= []; value.unparsedContent ||= []; }
@@ -228,6 +302,24 @@ function retryable(error) { return error.code === 'OPENAI_RATE_LIMITED' || error
 function retryAfter(value) { const seconds = Number(value); return Number.isFinite(seconds) && seconds >= 0 ? seconds * 1000 : null; }
 function observability({ requestId, config, payload, upstream, attempts, started, status }) { const usage = payload?.usage || {}; return { requestId, model: payload?.model || config.model, attemptCount: attempts, durationMs: Date.now() - started, status, inputTokens: usage.input_tokens ?? null, outputTokens: usage.output_tokens ?? null, totalTokens: usage.total_tokens ?? null, openaiRequestId: upstream?.headers?.get('x-request-id') || payload?.id || null }; }
 async function readJson(request, limit) { const declared = Number(request.headers.get('content-length') || 0); if (declared > limit * 2) throw coded('DOCUMENT_TOO_LARGE'); const text = await request.text(); if (bytes(text) > limit * 2) throw coded('DOCUMENT_TOO_LARGE'); try { return JSON.parse(text); } catch { throw coded('OPENAI_INVALID_RESPONSE'); } }
+async function readImportForm(request, config) {
+  const declared = Number(request.headers.get('content-length') || 0);
+  if (declared > config.maxFileBytes + config.maxInputBytes * 2) throw coded('DOCUMENT_TOO_LARGE');
+  const form = await request.formData();
+  const importId = String(form.get('importId') || '');
+  let normalizedDocument;
+  try { normalizedDocument = JSON.parse(String(form.get('normalizedDocument') || '')); } catch { throw coded('OPENAI_INVALID_RESPONSE'); }
+  const file = form.get('file');
+  return { importId, normalizedDocument, file: file && typeof file.arrayBuffer === 'function' ? file : null };
+}
+async function rawFileFromUpload(file, config) {
+  if (!supportedUploadFile(file)) throw coded('UNSUPPORTED_FILE');
+  if (file.size > config.maxFileBytes) throw coded('DOCUMENT_TOO_LARGE');
+  return { name: file.name || 'program', type: file.type || contentTypeFor(file.name), size: file.size || 0, base64: arrayBufferToBase64(await file.arrayBuffer()) };
+}
+function supportedUploadFile(file) { return ['pdf', 'docx', 'xlsx'].includes(String(file.name || '').split('.').pop()?.toLowerCase()); }
+function contentTypeFor(name) { const ext = String(name || '').split('.').pop()?.toLowerCase(); return ext === 'pdf' ? 'application/pdf' : ext === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : ext === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/octet-stream'; }
+function arrayBufferToBase64(buffer) { let binary = ''; const bytes = new Uint8Array(buffer); for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000)); return btoa(binary); }
 function statusFor(code) { if (code === 'AI_IMPORT_RATE_LIMITED' || code === 'OPENAI_RATE_LIMITED') return 429; if (code === 'DOCUMENT_TOO_LARGE') return 413; if (code === 'OPENAI_API_KEY_MISSING') return 503; if (code === 'OPENAI_AUTH_FAILED') return 502; if (code === 'OPENAI_TIMEOUT') return 504; return 400; }
 function json(body, status = 200, headers = {}) { return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...headers } }); }
 function apiError(code, status, headers) { return json({ code }, status, headers); }

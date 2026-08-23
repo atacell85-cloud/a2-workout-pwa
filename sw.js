@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v54-background-import-jobs-2026-08-24';
+const CACHE_VERSION = 'a2-workout-v56-raw-file-import-report-copy-2026-08-24';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=background-import-jobs-v1',
+  './app.js?v=raw-file-import-v2',
   './storage.js',
   './exercise-service.js',
   './program-service.js',

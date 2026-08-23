@@ -387,7 +387,7 @@ async function importFile(file) {
     state.pendingNormalizedDocument = normalized; state.pendingImportId = uid();
     await workoutRepository.saveImportPreview({ schemaVersion: '1.1', importId: state.pendingImportId, importedAt: new Date().toISOString(), source: { fileName: normalized.fileName, fileType: normalized.fileType, language: normalized.language, documentTitle: null }, program: { id: null, name: normalized.fileName.replace(/\.[^.]+$/, ''), description: null, sourceType: `${normalized.fileType}-import`, notes: null, days: [] }, warnings: [], unparsedContent: [], normalizedDocument: normalized, parserStatus: 'pending' });
     status.innerHTML = importLoading('Program arka planda analiz ediliyor');
-    await createImportJob(normalized);
+    await createImportJob(normalized, file);
     await pollImportJob(state.pendingImportId, true);
   } catch (error) {
     console.error(error);
@@ -407,11 +407,22 @@ async function resumePendingImport(provider) {
   catch (error) { console.error(error); toast(importErrorMessage(error.code || 'OPENAI_REQUEST_FAILED')); }
 }
 
-async function createImportJob(normalizedDocument) {
-  const response = await fetch('/api/import/jobs', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ importId: state.pendingImportId, normalizedDocument }) });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw Object.assign(new Error(body.code || 'OPENAI_REQUEST_FAILED'), { code: body.code || 'OPENAI_REQUEST_FAILED' });
-  return body;
+async function createImportJob(normalizedDocument, file = null) {
+  let body;
+  let headers;
+  if (file) {
+    body = new FormData();
+    body.append('importId', state.pendingImportId);
+    body.append('normalizedDocument', JSON.stringify(normalizedDocument));
+    body.append('file', file, file.name);
+  } else {
+    headers = { 'Content-Type': 'application/json' };
+    body = JSON.stringify({ importId: state.pendingImportId, normalizedDocument });
+  }
+  const response = await fetch('/api/import/jobs', { method: 'POST', credentials: 'same-origin', headers, body });
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) throw Object.assign(new Error(responseBody.code || 'OPENAI_REQUEST_FAILED'), { code: responseBody.code || 'OPENAI_REQUEST_FAILED' });
+  return responseBody;
 }
 
 async function retryImportAnalysis() {
@@ -464,13 +475,11 @@ function importFailureActions(code) {
 
 function reportImportIssue() {
   // Future implementation note:
-  // If we decide to collect failed import files, require explicit user consent first,
-  // upload the original file to Cloudflare R2 with a short retention policy, and store
-  // only report metadata in D1: user id, email, file name/type/size, importId,
-  // error code, createdAt, status(new/reviewed/fixed), and the R2 object key.
-  // Do not upload user files silently.
+  // Raw files are sent to OpenAI for background analysis, but they are not stored by AKS yet.
+  // To inspect failed uploads later, enable Cloudflare R2 and attach the stored object key
+  // to an import report queue with a clear retention policy.
   const fileName = state.pendingNormalizedDocument?.fileName || 'Dosya';
-  const message = `${fileName} için rapor notu oluşturuldu. Şimdilik dosya bize gönderilmiyor; dosya gönderme/inceleme altyapısını daha sonra açık izinli şekilde ekleyeceğiz.`;
+  const message = `${fileName} için rapor notu oluşturuldu. Dosya inceleme arşivi R2 aktifleşince eklenecek.`;
   toast(message);
 }
 
