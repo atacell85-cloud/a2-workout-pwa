@@ -1,9 +1,9 @@
-const CACHE_VERSION = 'a2-workout-v24-bottom-nav-padding-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v25-hevy-like-workout-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './app.js?v=bottom-nav-padding-v1',
+  './app.js?v=hevy-like-workout-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',

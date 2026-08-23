@@ -41,7 +41,7 @@ function nav(view) {
   const bottomNav = document.querySelector('.bottom-nav');
   const historyButton = document.querySelector('#historyBtn');
   if (bottomNav) bottomNav.hidden = !state.user;
-  if (historyButton) historyButton.hidden = !state.user;
+  if (historyButton) historyButton.hidden = true;
   document.querySelectorAll('.nav-btn').forEach(button => button.classList.toggle('active', button.dataset.nav === view));
 }
 
@@ -72,7 +72,7 @@ async function hydrateExecutionDay(workout) {
 }
 
 async function home() {
-  return todayView();
+  return programsView();
 }
 
 async function todayView() {
@@ -99,6 +99,25 @@ function lastSessionSummary(session) {
   const summary = session.summary || sessionSummary(session);
   const day = findWorkoutDay(session.programId, session.workoutDayId);
   return `<div class="history-metrics">${escapeHtml(day?.label || session.workoutDayId)} • ${summary.completedExercises} hareket • ${summary.setCount} set • ${Math.round(summary.volume)} kg × tekrar</div><div class="small muted">${new Date(session.startedAt).toLocaleString('tr-TR')}</div>`;
+}
+
+async function workoutHomeView() {
+  state.view = 'workout-home'; state.workout = null; state.executionDay = null; title.textContent = 'Antrenman';
+  const draft = await workoutRepository.getDraft();
+  const programs = await workoutRepository.getPrograms();
+  const draftDay = draft ? await hydrateExecutionDay(draft) : null;
+  app.innerHTML = `
+    <section class="workout-home">
+      ${draft ? `<button class="start-workout-btn active-draft" data-action="resume"><span>↻</span><b>${escapeHtml(draftDay?.label || 'Devam eden antrenman')}</b></button>` : '<button class="start-workout-btn" data-action="empty-workout"><span>＋</span><b>Boş Antrenmana Başla</b></button>'}
+      <h2>Rutinler</h2>
+      <div class="routine-actions">
+        <button data-action="new-program"><span>▤</span><b>Yeni Rutin</b></button>
+        <button data-action="programs-list"><span>⌕</span><b>Rutinleri Keşfet</b></button>
+      </div>
+      ${programs.length ? `<section class="routine-list"><h3>Programların</h3>${programs.slice(0, 3).map(program => `<article class="program-card"><div><b>${escapeHtml(program.name)}</b><span>${program.days.length} gün</span></div><button class="primary-btn small-btn" data-open-program="${program.id}">Aç</button></article>`).join('')}</section>` : ''}
+      <button class="help-start-card" data-action="file-import"><span>Nasıl başlarım</span><b>→</b></button>
+    </section>`;
+  nav('programs');
 }
 
 async function programsView() {
@@ -158,7 +177,7 @@ async function completeAuth(user, isNew = false) {
   const accountHasContent = Boolean(accountData.programs.length || accountData.sessions.length || accountData.draft || Object.keys(accountData.importPreviews).length);
   if (isNew) return firstProgramView();
   if (!accountHasContent && await workoutRepository.hasLegacyDeviceData()) return legacyMigrationView();
-  return todayView();
+  return workoutHomeView();
 }
 
 async function submitAuth(mode) {
@@ -871,7 +890,9 @@ app.addEventListener('click', async event => {
   if (action === 'install-app') { if (state.installPrompt) { state.installPrompt.prompt(); await state.installPrompt.userChoice; state.installPrompt = null; return accountView(); } const help = document.querySelector('#installHelp'); if (help) help.hidden = false; return; }
   if (action === 'logout') { await authService.logout(); sync.stop(); await workoutRepository.setActiveAccount(null); state.user = null; state.workout = null; state.onboarding = null; state.authMode = 'login'; cachedSessions = []; return welcomeView(); }
   if (action === 'delete-account') { const password = prompt('Hesabı silmek için şifrenizi girin. Bu işlem bulut verilerinizi siler.'); if (password === null) return; if (!confirm('Hesabınızı ve bulut verilerinizi silmek istediğinizi onaylıyor musunuz?')) return; try { await authService.deleteAccount(password); sync.stop(); await workoutRepository.setActiveAccount(null); state.user = null; state.onboarding = null; state.authMode = 'login'; cachedSessions = []; toast('Hesabınız silindi.'); return welcomeView(); } catch { return toast('Hesap silinemedi. Şifrenizi kontrol edin.'); } }
-  if (action === 'programs') return programsView();
+  if (action === 'programs') return workoutHomeView();
+  if (action === 'programs-list') return programsView();
+  if (action === 'empty-workout') return toast('Boş antrenman başlatma yakında eklenecek.');
   if (action === 'new-program') return openBuilder(blankProgram());
   if (action === 'file-import') return fileImportView();
   if (action === 'retry-openai') return resumePendingImport('openai');
@@ -927,7 +948,7 @@ app.addEventListener('change', event => {
 });
 
 document.querySelectorAll('.nav-btn').forEach(button => {
-  button.addEventListener('click', () => ({ home, programs: programsView, exercises: exercisesView, history: historyView, account: accountView }[button.dataset.nav]()));
+  button.addEventListener('click', () => ({ home: todayView, programs: workoutHomeView, account: accountView }[button.dataset.nav]()));
 });
 document.querySelector('#historyBtn').addEventListener('click', historyView);
 
