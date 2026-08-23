@@ -349,11 +349,12 @@ main {
 }
 
 .prescription {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   font-size: 13px;
   color: var(--brand);
   font-weight: 800;
-  white-space: nowrap;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .last {
@@ -778,7 +779,7 @@ th, td {
 .program-section > b { display: block; font-size: 13px; }
 .program-exercise { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0 0; font-size: 13px; }
 .program-exercise span { min-width: 0; overflow-wrap: anywhere; }
-.program-exercise small { color: var(--muted); white-space: nowrap; }
+.program-exercise small { color: var(--muted); text-align: right; overflow-wrap: anywhere; }
 .compact-actions, .order-actions { display: flex; gap: 5px; flex-wrap: wrap; }
 .compact-actions button, .order-actions button, .section-options button, .builder-add button, .instruction-row button, .details button, .video-link {
   min-height: 36px; border: 1px solid var(--line); border-radius: 8px; background: #f8fafc; color: var(--brand); font-weight: 750; padding: 7px 9px;

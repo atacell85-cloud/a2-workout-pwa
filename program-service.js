@@ -113,4 +113,18 @@ function nullableText(value) { const text = String(value ?? '').trim(); return t
 function nullableInteger(value) { return value === '' || value == null ? null : Number.isInteger(Number(value)) ? Number(value) : null; }
 function nullableNumber(value) { return value === '' || value == null ? null : Number.isFinite(Number(value)) ? Number(value) : null; }
 function sectionTitle(type) { return ({ warmup: 'Isınma', activation: 'Aktivasyon', strength: 'Ana Antrenman', core: 'Core', cardio: 'Kardiyo', stretch: 'Stretch', mobility: 'Mobilite', cooldown: 'Soğuma', custom: 'Özel Bölüm' })[type] || 'Özel Bölüm'; }
-function prescriptionText(item) { const sets = item.setsText || item.sets || ''; const reps = item.repsText || (item.repsMin != null ? `${item.repsMin}${item.repsMax != null && item.repsMax !== item.repsMin ? `-${item.repsMax}` : ''}` : ''); return [sets, reps].filter(Boolean).join(' × ') || 'Serbest'; }
+function prescriptionText(item) {
+  const sets = item.setsText || item.sets || '';
+  const reps = item.repsText || (item.repsMin != null ? `${item.repsMin}${item.repsMax != null && item.repsMax !== item.repsMin ? `-${item.repsMax}` : ''}` : '');
+  const main = [sets, reps].filter(Boolean).join(' × ');
+  const details = [
+    item.weightText,
+    item.rirText ? `RIR ${item.rirText}` : '',
+    item.rpeText ? `RPE ${item.rpeText}` : '',
+    item.restText,
+    item.tempoText ? `Tempo ${item.tempoText}` : '',
+    item.durationText,
+    item.distanceText
+  ].filter(Boolean);
+  return [main, ...details].filter(Boolean).join(' · ');
+}

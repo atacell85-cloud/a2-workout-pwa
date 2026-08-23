@@ -397,13 +397,24 @@ function programExerciseRow(item, names, exercisesById) {
   const canonical = exercisesById.get(item.exerciseId);
   const displayItem = canonical || { imageUrl: item.imageUrl };
   const name = names.get(item.exerciseId) || item.customExerciseName || item.displayName || item.exerciseId || 'Hareket';
-  return `<div class="program-exercise"><div class="exercise-summary">${exerciseThumb(displayItem)}<span>${escapeHtml(name)}</span></div><small>${escapeHtml(programPrescription(item))}</small></div>`;
+  const prescription = programPrescription(item);
+  return `<div class="program-exercise"><div class="exercise-summary">${exerciseThumb(displayItem)}<span>${escapeHtml(name)}</span></div>${prescription ? `<small>${escapeHtml(prescription)}</small>` : ''}</div>`;
 }
 
 function programPrescription(item) {
   const sets = item.setsText || item.sets || '';
   const reps = item.repsText || (item.repsMin != null ? `${item.repsMin}${item.repsMax != null && item.repsMax !== item.repsMin ? `-${item.repsMax}` : ''}` : '');
-  return [sets, reps].filter(Boolean).join(' × ') || 'Serbest';
+  const main = [sets, reps].filter(Boolean).join(' × ');
+  const details = [
+    item.weightText,
+    item.rirText ? `RIR ${item.rirText}` : '',
+    item.rpeText ? `RPE ${item.rpeText}` : '',
+    item.restText,
+    item.tempoText ? `Tempo ${item.tempoText}` : '',
+    item.durationText,
+    item.distanceText
+  ].filter(Boolean);
+  return [main, ...details].filter(Boolean).join(' · ');
 }
 
 async function startProgramWorkout(programId, dayId) {
@@ -476,10 +487,12 @@ function exerciseHeader(exercise) {
 
 function exerciseCard(exercise, sectionType, images = new Map()) {
   exercise.imageUrl ||= images.get(exercise.canonicalExerciseId || exercise.id) || null;
+  const prescription = exercise.prescription.text;
+  const prescriptionHtml = prescription ? `<div class="prescription">${escapeHtml(prescription)}</div>` : '';
   if (['activation', 'stretch'].includes(exercise.setType)) {
     const done = Boolean(state.workout.completedActivities[exercise.id]);
     return `<article class="exercise-card simple ${sectionType}">
-      <div class="exercise-head">${exerciseHeader(exercise)}<div class="prescription">Plan: ${escapeHtml(exercise.prescription.text)}</div></div>
+      <div class="exercise-head">${exerciseHeader(exercise)}${prescriptionHtml}</div>
       <div class="simple-done">
         ${done ? '<span class="done-badge">Tamamlandı</span>' : '<span class="muted small">Aktivasyon / süre çalışması</span>'}
         <button class="secondary-btn" data-toggle-activity="${exercise.id}">${done ? 'Geri Al' : 'Tamam'}</button>
@@ -491,7 +504,7 @@ function exerciseCard(exercise, sectionType, images = new Map()) {
   return `<article class="exercise-card ${exercise.setType}" id="ex-${exercise.id}">
     <div class="exercise-head">
       ${exerciseHeader(exercise)}
-      <div class="prescription">Plan: ${escapeHtml(exercise.prescription.text)}</div>
+      ${prescriptionHtml}
     </div>
     <div data-last="${exercise.id}">${lastBlock(exercise.canonicalExerciseId || exercise.id)}</div>
     ${progressionText(exercise.id)}
