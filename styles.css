@@ -1063,7 +1063,17 @@ th, td {
 .individual-set { display: grid; grid-template-columns: 22px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 5px; align-items: center; margin-top: 7px; }
 .individual-set select:last-child { grid-column: 2 / -1; }
 .individual-set button { min-height: 34px; grid-column: 2 / -1; }
-.video-link { margin-top: 10px; }
+.video-name-link {
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
 .video-results { display: grid; gap: 8px; margin-top: 10px; }
 .video-result { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 9px; text-align: left; border: 1px solid var(--line); border-radius: 8px; background: var(--card); padding: 6px; color: var(--ink); }
 .video-result img { width: 104px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 5px; }

@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v50-youtube-module-cache-bust-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v51-exercise-name-video-2026-08-24';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=youtube-worker-search-v2',
+  './app.js?v=exercise-name-video-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',

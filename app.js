@@ -536,7 +536,10 @@ function timerHtml(exerciseId) {
 }
 
 function exerciseHeader(exercise) {
-  return `<div class="exercise-summary">${exerciseThumb({ imageUrl: exercise.imageUrl })}<div><div class="exercise-name">${escapeHtml(exercise.name)}</div>${exercise.setType === 'warmup' ? '<div class="warmup-label">Isınma seti</div>' : ''}</div></div>`;
+  const name = exercise.canonicalExerciseId
+    ? `<button class="exercise-name video-name-link" data-video-exercise="${exercise.canonicalExerciseId}">${escapeHtml(exercise.name)}</button>`
+    : `<div class="exercise-name">${escapeHtml(exercise.name)}</div>`;
+  return `<div class="exercise-summary">${exerciseThumb({ imageUrl: exercise.imageUrl })}<div>${name}${exercise.setType === 'warmup' ? '<div class="warmup-label">Isınma seti</div>' : ''}</div></div>`;
 }
 
 function exerciseCard(exercise, sectionType, images = new Map(), settings = {}) {
@@ -566,7 +569,6 @@ function exerciseCard(exercise, sectionType, images = new Map(), settings = {}) 
     ${progressionText(exercise.id, unit)}
     <div class="labels"><span>Set</span><span>${escapeHtml(unit)}</span><span>Tekrar</span><span>RIR</span><span></span></div>
     ${rows}
-    ${exercise.canonicalExerciseId ? '<button class="video-link" data-video-exercise="' + exercise.canonicalExerciseId + '">Form Videosu</button>' : ''}
   </article>`;
 }
 
@@ -1138,11 +1140,17 @@ async function showVideo(exerciseId) {
     return;
   }
   if (result.status !== 'ok') return toast(result.message);
-  state.video = result; title.textContent = 'Form Videosu';
-  app.innerHTML = `<section class="summary-card"><b>${escapeHtml(exercise.nameTr)}</b><div class="video-results">${result.videos.map(video => `<button class="video-result" data-open-video="${video.videoId}"><img src="${escapeHtml(video.thumbnailUrl)}" alt=""><span><b>${escapeHtml(video.title)}</b><small>${escapeHtml(video.channelTitle)}</small></span></button>`).join('')}</div><button class="secondary-btn full" data-action="render-workout">Antrenmana Dön</button></section>`;
+  state.video = { ...result, exerciseName: exercise.nameTr || exercise.nameEn || exercise.id };
+  renderVideoResults();
 }
 
-function openVideo(videoId) { app.innerHTML = `<section class="video-player"><iframe src="https://www.youtube.com/embed/${encodeURIComponent(videoId)}" title="YouTube form videosu" allowfullscreen></iframe><button class="secondary-btn full" data-action="render-workout">Antrenmana Dön</button></section>`; }
+function renderVideoResults() {
+  if (!state.video?.videos?.length) return renderWorkout();
+  title.textContent = 'Form Videosu';
+  app.innerHTML = `<section class="summary-card"><b>${escapeHtml(state.video.exerciseName || 'Form Videosu')}</b><div class="video-results">${state.video.videos.map(video => `<button class="video-result" data-open-video="${video.videoId}"><img src="${escapeHtml(video.thumbnailUrl)}" alt=""><span><b>${escapeHtml(video.title)}</b><small>${escapeHtml(video.channelTitle)}</small></span></button>`).join('')}</div><button class="secondary-btn full" data-action="render-workout">Antrenmana Dön</button></section>`;
+}
+
+function openVideo(videoId) { app.innerHTML = `<section class="video-player"><iframe src="https://www.youtube.com/embed/${encodeURIComponent(videoId)}" title="YouTube form videosu" allowfullscreen></iframe><button class="secondary-btn full" data-action="video-results">Video Listesine Dön</button><button class="secondary-btn full" data-action="render-workout">Antrenmana Dön</button></section>`; }
 
 app.addEventListener('click', async event => {
   const target = event.target.closest('button');
@@ -1237,6 +1245,7 @@ app.addEventListener('click', async event => {
   if (action === 'home') return home();
   if (action === 'exercises') return exercisesView();
   if (action === 'render-workout') return renderWorkout();
+  if (action === 'video-results') return renderVideoResults();
   if (action === 'finish') return finishWorkout();
   if (action === 'force-finish') return finishWorkout(true);
   if (action === 'timer-reset') return resetTimer();
