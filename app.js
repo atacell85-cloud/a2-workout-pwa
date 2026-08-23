@@ -96,7 +96,7 @@ function onboardingView() {
 
 function authView(message = '', mode = state.authMode) {
   state.view = 'auth'; state.authMode = mode; title.textContent = mode === 'register' ? 'Hesap oluştur' : 'Giriş yap'; nav('');
-  app.innerHTML = `<section class="onboarding-screen auth-card"><div class="progress-label">Hesap</div><h2>${mode === 'register' ? 'Hesabını oluştur' : 'Tekrar hoş geldin'}</h2><div class="social-stack"><button class="secondary-btn full" data-oauth-provider="apple">Apple ile devam et</button><button class="secondary-btn full" data-oauth-provider="google">Google ile devam et</button><button class="secondary-btn full" data-provider-disabled>Facebook ile devam et</button><p class="or-divider">veya</p></div>${message ? `<p class="field-error" role="alert">${escapeHtml(message)}</p>` : ''}<label>E-posta<input id="authEmail" type="email" autocomplete="email" inputmode="email"></label><label>Şifre<div class="password-field"><input id="authPassword" type="password" autocomplete="${mode === 'register' ? 'new-password' : 'current-password'}" minlength="8"><button type="button" data-toggle-password aria-label="Şifreyi göster">Göster</button></div><span class="field-help">Şifren en az 8 karakter olmalı.</span></label><div class="builder-actions"><button class="secondary-btn" data-action="auth-back">Geri</button><button class="primary-btn" data-action="${mode}">${mode === 'register' ? 'Hesap oluştur' : 'Giriş yap'}</button></div></section>`;
+  app.innerHTML = `<section class="onboarding-screen auth-card"><div class="progress-label">Hesap</div><h2>${mode === 'register' ? 'Hesabını oluştur' : 'Tekrar hoş geldin'}</h2><div class="social-stack"><button class="secondary-btn full" data-provider-disabled>Apple ile devam et</button><button class="secondary-btn full" data-oauth-provider="google">Google ile devam et</button><button class="secondary-btn full" data-provider-disabled>Facebook ile devam et</button></div>${message ? `<p class="field-error" role="alert">${escapeHtml(message)}</p>` : ''}<div class="builder-actions"><button class="secondary-btn" data-action="auth-back">Geri</button></div></section>`;
 }
 
 function firstProgramView() {
@@ -122,6 +122,17 @@ async function submitAuth(mode) {
   try { const result = mode === 'register' ? await authService.register(email, password) : await authService.login(email, password); await completeAuth(result.user, mode === 'register'); }
   catch (error) { const code = error.code; const message = code === 'AUTH_INVALID_EMAIL' ? 'E-posta adresini kontrol et.' : code === 'AUTH_PASSWORD_TOO_SHORT' ? 'Şifre en az 8 karakter olmalı.' : code === 'AUTH_EMAIL_IN_USE' ? 'Bu e-posta ile zaten bir hesap var. Giriş yap' : code === 'AUTH_INVALID_CREDENTIALS' ? 'E-posta veya şifre hatalı.' : error instanceof TypeError || !navigator.onLine ? 'İnternet bağlantını kontrol edip tekrar dene.' : code?.startsWith('AUTH_') ? 'Şu anda hesabını oluşturamıyoruz. Biraz sonra tekrar dene.' : 'Hesap oluşturulamadı. Tekrar deneyebilirsin.'; authView(message, mode); }
   finally { state.authBusy = false; }
+}
+
+function oauthErrorMessage(code) {
+  return ({
+    OAUTH_PROVIDER_NOT_CONFIGURED: 'Google girişi henüz yapılandırılmadı. Kurulum tamamlanınca tekrar deneyebilirsin.',
+    OAUTH_STATE_INVALID: 'Google giriş oturumu süresi doldu. Lütfen tekrar dene.',
+    OAUTH_CODE_INVALID: 'Google giriş izni doğrulanamadı. Lütfen tekrar dene.',
+    OAUTH_CLIENT_INVALID: 'Google bağlantı ayarları geçersiz. Kurulumu kontrol etmemiz gerekiyor.',
+    OAUTH_EMAIL_MISSING: 'Google hesabından e-posta bilgisi alınamadı.',
+    OAUTH_FAILED: 'Google ile giriş tamamlanamadı. Lütfen tekrar dene.'
+  })[code] || 'Google ile giriş tamamlanamadı. Lütfen tekrar dene.';
 }
 
 function legacyMigrationView() { title.textContent = 'Mevcut Veriler'; nav('account'); app.innerHTML = `<section class="summary-card"><h2>Bu cihazda mevcut antrenman verileri bulundu.</h2><p class="muted">Veriler silinmez. İsterseniz bu hesabınıza aktarılır.</p><div class="builder-actions"><button class="secondary-btn" data-action="skip-legacy">Şimdilik Atla</button><button class="primary-btn" data-action="migrate-legacy">Bu verileri hesabıma aktar</button></div></section>`; }
@@ -722,7 +733,7 @@ function openVideo(videoId) { app.innerHTML = `<section class="video-player"><if
 app.addEventListener('click', async event => {
   const target = event.target.closest('button');
   if (!target) return;
-  if (target.dataset.providerDisabled !== undefined) return toast('Bu giriş yöntemi yakında kullanılabilir olacak. E-posta ile devam edebilirsin.');
+  if (target.dataset.providerDisabled !== undefined) return toast('Bu giriş yöntemi yakında kullanılabilir olacak.');
   if (target.dataset.oauthProvider) return authService.startOAuth(target.dataset.oauthProvider, state.authMode);
   if (target.dataset.togglePassword !== undefined) { const input = document.querySelector('#authPassword'); if (input) { input.type = input.type === 'password' ? 'text' : 'password'; target.textContent = input.type === 'password' ? 'Göster' : 'Gizle'; } return; }
   if (target.dataset.onboardingValue) { const [key, value] = target.dataset.onboardingValue.split(':'); state.onboarding[key] = value; return onboardingView(); }
@@ -860,8 +871,16 @@ init();
 async function init() {
   try {
     const user = await authService.me();
+    const params = new URLSearchParams(window.location.search);
+    const authError = params.get('auth_error');
+    if (authError) {
+      params.delete('auth_error');
+      const cleanUrl = `${window.location.pathname}${params.toString() ? `?${params}` : ''}${window.location.hash}`;
+      window.history.replaceState({}, '', cleanUrl);
+    }
     window.addEventListener('online', async () => sync.push(await workoutRepository.getData()));
     window.__a2 = { repository: workoutRepository, schemaVersion: SCHEMA_VERSION, buildCsv, searchExercises, loadExerciseDatabase, validateImportPreview, finalizeImport, matchImportExercises, youtube, documentExtractor, localImportParser, openAIImportParser, authService, sync };
+    if (!user && authError) return authView(oauthErrorMessage(authError), 'login');
     if (!user) return welcomeView();
     await completeAuth(user);
   } catch (error) {
