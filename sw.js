@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v47-session-day-labels-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v48-ai-import-youtube-fallback-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=session-day-labels-v1',
+  './app.js?v=ai-import-youtube-fallback-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',

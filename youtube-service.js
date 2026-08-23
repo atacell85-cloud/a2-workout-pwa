@@ -8,7 +8,7 @@ export function createYouTubeSearchService(repository, { apiKey = globalThis.A2_
       const cached = await repository.getYoutubeCache(exercise.id, query);
       if (cached && new Date(cached.expiresAt) > new Date()) return { status: 'ok', cached: true, ...cached };
       if (!navigator.onLine) return cached ? { status: 'ok', cached: true, stale: true, ...cached } : { status: 'offline', message: 'İnternet yok; önbellekte video sonucu bulunamadı.' };
-      if (!apiKey) return cached ? { status: 'ok', cached: true, stale: true, ...cached } : { status: 'unavailable', message: 'Form Videosu şu anda yapılandırılmadı.' };
+      if (!apiKey) return cached ? { status: 'ok', cached: true, stale: true, ...cached } : { status: 'search', query, url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}` };
       try {
         const url = new URL('https://www.googleapis.com/youtube/v3/search');
         Object.entries({ key: apiKey, q: query, part: 'snippet', type: 'video', videoEmbeddable: 'true', safeSearch: 'strict', maxResults: '5', relevanceLanguage: 'en' }).forEach(([key, value]) => url.searchParams.set(key, value));

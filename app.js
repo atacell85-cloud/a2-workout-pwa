@@ -1132,6 +1132,11 @@ async function saveProgram() {
 
 async function showVideo(exerciseId) {
   const exercise = await getCanonicalExercise(exerciseId); const result = await youtube.search(exercise);
+  if (result.status === 'search') {
+    title.textContent = 'Form Videosu';
+    app.innerHTML = `<section class="summary-card"><b>${escapeHtml(exercise.nameTr)}</b><p class="muted">Bu hareket için YouTube araması açılacak.</p><a class="primary-btn full" href="${escapeHtml(result.url)}" target="_blank" rel="noopener">YouTube'da Ara</a><button class="secondary-btn full" data-action="render-workout">Antrenmana Dön</button></section>`;
+    return;
+  }
   if (result.status !== 'ok') return toast(result.message);
   state.video = result; title.textContent = 'Form Videosu';
   app.innerHTML = `<section class="summary-card"><b>${escapeHtml(exercise.nameTr)}</b><div class="video-results">${result.videos.map(video => `<button class="video-result" data-open-video="${video.videoId}"><img src="${escapeHtml(video.thumbnailUrl)}" alt=""><span><b>${escapeHtml(video.title)}</b><small>${escapeHtml(video.channelTitle)}</small></span></button>`).join('')}</div><button class="secondary-btn full" data-action="render-workout">Antrenmana Dön</button></section>`;

@@ -111,7 +111,7 @@ async function scenario() {
   const finalProgram = window.__a2.finalizeImport(importPreview, new Set(database.map(item => item.id)));
   const importFinalizationOk = finalProgram.days[0].sections[0].items[0].individualSets[0].rpe === 8 && finalProgram.days[0].sections[0].items[0].individualSets[0].weightUnit === 'kg';
   const unresolvedOk = window.__a2.validateImportPreview({ ...importPreview, program: { ...importPreview.program, days: [{ ...importPreview.program.days[0], sections: [{ ...importPreview.program.days[0].sections[0], items: [{ ...importPreview.program.days[0].sections[0].items[0], resolutionStatus: 'unresolved' }] }] }] } }, new Set(database.map(item => item.id))).includes('UNRESOLVED_EXERCISE');
-  const youtubeNoKey = (await window.__a2.youtube.search(database[0])).status === 'unavailable';
+  const youtubeNoKey = (await window.__a2.youtube.search(database[0])).status === 'search';
   const pdfFile = new File(['%PDF-1.4\nstream\nBT (Upper Day) Tj ET\nendstream\n%%EOF'], 'sample-workout.pdf', { type: 'application/pdf' });
   const pdfExtraction = await window.__a2.documentExtractor.extract(pdfFile);
   const pdfExtractionOk = pdfExtraction.blocks.some(block => block.text.includes('Upper Day'));
