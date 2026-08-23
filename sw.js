@@ -1,9 +1,9 @@
-const CACHE_VERSION = 'a2-workout-v27-simple-routines-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v28-routine-subpages-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './app.js?v=simple-routines-v1',
+  './app.js?v=routine-subpages-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',

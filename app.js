@@ -108,28 +108,41 @@ async function workoutHomeView() {
   app.innerHTML = `
     <section class="workout-home">
       ${draft ? `<button class="routine-row active-draft" data-action="resume"><span>${escapeHtml(draftDay?.label || 'Devam eden antrenman')}</span><b>Devam Et</b></button>` : ''}
-      <button class="routine-row" data-action="programs-list"><span>Rutinlerim</span><b>→</b></button>
-      <button class="routine-row" data-action="new-program"><span>Yeni Rutin</span><b>→</b></button>
-      <button class="routine-row" data-action="file-import"><span>Rutinleri Keşfet</span><b>→</b></button>
+      <button class="routine-row" data-action="my-routines"><span>Rutinlerim</span><b>→</b></button>
+      <button class="routine-row" data-action="new-routine-menu"><span>Yeni Rutin Oluştur</span><b>→</b></button>
+      <button class="routine-row" data-action="discover-routines"><span>Hazır Rutinleri Keşfet</span><b>→</b></button>
     </section>`;
   nav('programs');
 }
 
-async function programsView() {
-  state.view = 'programs'; state.workout = null; state.executionDay = null; title.textContent = 'Programlar';
+async function myRoutinesView() {
+  state.view = 'my-routines'; state.workout = null; state.executionDay = null; title.textContent = 'Rutinlerim';
   const programs = await workoutRepository.getPrograms();
   const settings = await workoutRepository.getSettings();
   const draft = await workoutRepository.getProgramBuilderDraft();
   const imports = (await workoutRepository.getData()).importPreviews;
   app.innerHTML = `
-    <section class="summary-card"><h2>Programlar</h2><p class="muted">Plan oluşturma, düzenleme ve dosyadan içe aktarma burada. Antrenman başlatmak için Bugün ekranını kullan.</p></section>
+    <button class="text-btn" data-action="programs">← Antrenman</button>
     ${draft ? `<section class="resume-card"><div><b>Taslak program</b><span>${escapeHtml(draft.name || 'İsimsiz program')}</span></div><button class="primary-btn" data-action="resume-builder">Sürdür</button></section>` : ''}
     <section class="sync-status" id="syncStatus">${syncLabel(state.syncStatus)}</section>
-    <section class="create-program-actions"><button class="primary-btn" data-action="new-program">+ Elle Program Oluştur</button><button class="secondary-btn" data-action="file-import">+ Dosyadan Program Oluştur</button></section>
     ${Object.values(imports).length ? `<section class="resume-card"><div><b>Yarım kalan dosya aktarımı</b><span>${escapeHtml(Object.values(imports)[0].source.fileName)}</span></div><button class="primary-btn" data-resume-import="${Object.values(imports)[0].importId}">Sürdür</button></section>` : ''}
-    ${programs.length ? programs.map(program => `<article class="program-card ${program.id === settings.activeProgramId ? 'active-program-card' : ''}"><div><b>${escapeHtml(program.name)}</b><span>${program.id === settings.activeProgramId ? 'Aktif program · ' : ''}${program.days.length} gün · ${escapeHtml(program.sourceType)}</span></div><div class="compact-actions">${program.id === settings.activeProgramId ? '' : `<button class="secondary-btn" data-set-active-program="${program.id}">Aktif Yap</button>`}<button class="secondary-btn" data-edit-program="${program.id}">Düzenle</button><button class="primary-btn" data-open-program="${program.id}">Aç</button></div></article>`).join('') : '<div class="summary-card muted">Henüz programınız yok.</div>'}`;
+    ${programs.length ? programs.map(program => `<article class="program-card ${program.id === settings.activeProgramId ? 'active-program-card' : ''}"><div><b>${escapeHtml(program.name)}</b><span>${program.id === settings.activeProgramId ? 'Aktif program · ' : ''}${program.days.length} gün · ${escapeHtml(program.sourceType)}</span></div><div class="compact-actions">${program.id === settings.activeProgramId ? '' : `<button class="secondary-btn" data-set-active-program="${program.id}">Aktif Yap</button>`}<button class="secondary-btn" data-edit-program="${program.id}">Düzenle</button><button class="primary-btn" data-open-program="${program.id}">Aç</button></div></article>`).join('') : '<div class="summary-card muted">Henüz kaydettiğin rutin yok.</div>'}`;
   nav('programs');
 }
+
+function newRoutineMenuView() {
+  state.view = 'new-routine-menu'; title.textContent = 'Yeni Rutin Oluştur';
+  app.innerHTML = `<button class="text-btn" data-action="programs">← Antrenman</button><section class="workout-home"><button class="routine-row" data-action="new-program"><span>Rutin oluştur</span><b>→</b></button><button class="routine-row" data-action="file-import"><span>Rutin yükle</span><b>→</b></button></section>`;
+  nav('programs');
+}
+
+function discoverRoutinesView() {
+  state.view = 'discover-routines'; title.textContent = 'Hazır Rutinleri Keşfet';
+  app.innerHTML = `<button class="text-btn" data-action="programs">← Antrenman</button><section class="summary-card muted">Hazır rutin kütüphanesi yakında burada olacak.</section>`;
+  nav('programs');
+}
+
+async function programsView() { return myRoutinesView(); }
 
 function syncLabel(status) { return ({ saved: 'Kaydedildi', syncing: 'Senkronize ediliyor...', offline: 'Çevrimdışı — sonra senkronize edilecek', pending: 'Senkronizasyon bekliyor' })[status] || 'Kaydedildi'; }
 
@@ -886,7 +899,9 @@ app.addEventListener('click', async event => {
   if (action === 'logout') { await authService.logout(); sync.stop(); await workoutRepository.setActiveAccount(null); state.user = null; state.workout = null; state.onboarding = null; state.authMode = 'login'; cachedSessions = []; return welcomeView(); }
   if (action === 'delete-account') { const password = prompt('Hesabı silmek için şifrenizi girin. Bu işlem bulut verilerinizi siler.'); if (password === null) return; if (!confirm('Hesabınızı ve bulut verilerinizi silmek istediğinizi onaylıyor musunuz?')) return; try { await authService.deleteAccount(password); sync.stop(); await workoutRepository.setActiveAccount(null); state.user = null; state.onboarding = null; state.authMode = 'login'; cachedSessions = []; toast('Hesabınız silindi.'); return welcomeView(); } catch { return toast('Hesap silinemedi. Şifrenizi kontrol edin.'); } }
   if (action === 'programs') return workoutHomeView();
-  if (action === 'programs-list') return programsView();
+  if (action === 'my-routines') return myRoutinesView();
+  if (action === 'new-routine-menu') return newRoutineMenuView();
+  if (action === 'discover-routines') return discoverRoutinesView();
   if (action === 'empty-workout') return toast('Boş antrenman başlatma yakında eklenecek.');
   if (action === 'new-program') return openBuilder(blankProgram());
   if (action === 'file-import') return fileImportView();

@@ -147,7 +147,7 @@ async function scenario() {
   await window.__a2.repository.saveProgram(smokeProgram);
   click('[data-nav="programs"]');
   await sleep(150);
-  click('[data-action="programs-list"]');
+  click('[data-action="my-routines"]');
   await sleep(150);
   click('[data-open-program]');
   await sleep(150);
@@ -174,7 +174,7 @@ async function scenario() {
 
   click('[data-nav="programs"]');
   await sleep(150);
-  click('[data-action="programs-list"]');
+  click('[data-action="my-routines"]');
   await sleep(150);
   click('[data-open-program]');
   await sleep(150);
