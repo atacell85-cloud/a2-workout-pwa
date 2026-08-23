@@ -922,8 +922,9 @@ async function renderExercisePoolPicker() {
 function builderInstruction(item) { return `<div class="instruction-row"><input data-instruction="${item.id}" value="${escapeHtml(item.text)}" placeholder="Talimat"></div>`; }
 function builderExercise(item, itemIndex) {
   const name = item.customExerciseName || item.displayName || item.exerciseId || 'Hareket';
-  return `<article class="builder-exercise simple-builder-exercise" data-builder-exercise-card="${item.id}" data-builder-section-card="${item.sectionId}"><div class="builder-row exercise-summary"><span class="drag-handle" data-drag-exercise="${item.sectionId}:${item.id}" aria-label="Sırayı değiştir">☰</span>${exerciseThumb(item)}<b>${itemIndex + 1}. ${escapeHtml(name)}</b></div>
-    <div class="compact-fields"><label>Set<input data-field="${item.id}:setsText" inputmode="text" value="${escapeHtml(item.setsText ?? item.sets ?? '')}"></label><label>Tekrar<input data-field="${item.id}:repsText" inputmode="text" value="${escapeHtml(item.repsText ?? '')}"></label></div></article>`;
+  return `<article class="builder-exercise-shell" data-builder-exercise-card="${item.id}" data-builder-section-card="${item.sectionId}"><button class="builder-delete-action" data-delete-item="${item.id}">Sil</button><div class="builder-exercise simple-builder-exercise" data-swipe-exercise="${item.id}">
+    <div class="builder-exercise-main"><div class="builder-exercise-title"><span class="drag-handle" data-drag-exercise="${item.sectionId}:${item.id}" aria-label="Sırayı değiştir">☰</span><b>${itemIndex + 1}. ${escapeHtml(name)}</b></div>${exerciseThumb(item)}</div>
+    <div class="compact-fields"><label>Set<input data-field="${item.id}:setsText" inputmode="text" value="${escapeHtml(item.setsText ?? item.sets ?? '')}"></label><label>Tekrar<input data-field="${item.id}:repsText" inputmode="text" value="${escapeHtml(item.repsText ?? '')}"></label></div></div></article>`;
 }
 
 function exerciseSearchResult(sectionId, item) {
@@ -1110,46 +1111,86 @@ app.addEventListener('change', event => {
 
 app.addEventListener('pointerdown', event => {
   const handle = event.target.closest('[data-drag-exercise]');
-  if (!state.builder || !handle) return;
-  const [sectionId, itemId] = handle.dataset.dragExercise.split(':');
-  const card = document.querySelector(`[data-builder-exercise-card="${itemId}"]`);
-  if (!card) return;
-  event.preventDefault();
-  handle.setPointerCapture?.(event.pointerId);
-  state.builderDrag = { sectionId, itemId, pointerId: event.pointerId };
-  card.classList.add('dragging');
-  document.body.classList.add('is-dragging-builder-exercise');
+  const swipeCard = event.target.closest('[data-swipe-exercise]');
+  if (state.builder && handle) {
+    const [sectionId, itemId] = handle.dataset.dragExercise.split(':');
+    const shell = document.querySelector(`[data-builder-exercise-card="${itemId}"]`);
+    if (!shell) return;
+    event.preventDefault();
+    handle.setPointerCapture?.(event.pointerId);
+    document.querySelectorAll('[data-swipe-exercise].swiped').forEach(item => item.classList.remove('swiped'));
+    state.builderDrag = { sectionId, itemId, pointerId: event.pointerId, targetIndex: null };
+    shell.classList.add('dragging');
+    document.body.classList.add('is-dragging-builder-exercise');
+    return;
+  }
+  if (state.builder && swipeCard && !event.target.closest('input, button, [data-drag-exercise]')) {
+    state.builderSwipe = { itemId: swipeCard.dataset.swipeExercise, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, active: false };
+    swipeCard.setPointerCapture?.(event.pointerId);
+  }
 });
 
 app.addEventListener('pointermove', event => {
-  if (!state.builderDrag || event.pointerId !== state.builderDrag.pointerId) return;
-  const card = document.querySelector(`[data-builder-exercise-card="${state.builderDrag.itemId}"]`);
-  if (!card) return;
-  card.style.transform = 'scale(.985)';
+  if (state.builderDrag && event.pointerId === state.builderDrag.pointerId) {
+    const drag = state.builderDrag;
+    const shell = document.querySelector(`[data-builder-exercise-card="${drag.itemId}"]`);
+    if (!shell) return;
+    const cards = [...document.querySelectorAll(`[data-builder-section-card="${drag.sectionId}"]`)].filter(card => card.dataset.builderExerciseCard !== drag.itemId);
+    const targetIndex = cards.findIndex(card => event.clientY < card.getBoundingClientRect().top + card.getBoundingClientRect().height / 2);
+    drag.targetIndex = targetIndex === -1 ? cards.length : targetIndex;
+    cards.forEach((card, index) => {
+      card.classList.toggle('drop-before', index === drag.targetIndex);
+      card.classList.toggle('drop-after', drag.targetIndex === cards.length && index === cards.length - 1);
+    });
+    shell.classList.add('dragging');
+    return;
+  }
+  if (state.builderSwipe && event.pointerId === state.builderSwipe.pointerId) {
+    const swipe = state.builderSwipe;
+    const dx = event.clientX - swipe.startX;
+    const dy = event.clientY - swipe.startY;
+    const card = document.querySelector(`[data-swipe-exercise="${swipe.itemId}"]`);
+    if (!card) return;
+    if (!swipe.active && Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.2) swipe.active = true;
+    if (!swipe.active) return;
+    event.preventDefault();
+    const offset = Math.max(-96, Math.min(0, dx));
+    card.style.transform = `translateX(${offset}px)`;
+  }
 });
 
 app.addEventListener('pointerup', async event => {
-  if (!state.builderDrag || event.pointerId !== state.builderDrag.pointerId) return;
-  const drag = state.builderDrag;
-  state.builderDrag = null;
-  document.body.classList.remove('is-dragging-builder-exercise');
-  const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === drag.sectionId);
-  if (!section) return renderBuilder();
-  const exerciseItems = section.items.filter(item => item.itemType === 'exercise');
-  const dragged = exerciseItems.find(item => item.id === drag.itemId);
-  if (!dragged) return renderBuilder();
-  const remaining = exerciseItems.filter(item => item.id !== drag.itemId);
-  const cards = [...document.querySelectorAll(`[data-builder-section-card="${drag.sectionId}"]`)].filter(card => card.dataset.builderExerciseCard !== drag.itemId);
-  const targetIndex = cards.findIndex(card => event.clientY < card.getBoundingClientRect().top + card.getBoundingClientRect().height / 2);
-  remaining.splice(targetIndex === -1 ? remaining.length : targetIndex, 0, dragged);
-  section.items = remaining.map((item, index) => ({ ...item, order: index + 1 }));
-  await persistBuilder();
-  renderBuilder();
+  if (state.builderDrag && event.pointerId === state.builderDrag.pointerId) {
+    const drag = state.builderDrag;
+    state.builderDrag = null;
+    document.body.classList.remove('is-dragging-builder-exercise');
+    const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === drag.sectionId);
+    if (!section) return renderBuilder();
+    const exerciseItems = section.items.filter(item => item.itemType === 'exercise');
+    const dragged = exerciseItems.find(item => item.id === drag.itemId);
+    if (!dragged) return renderBuilder();
+    const remaining = exerciseItems.filter(item => item.id !== drag.itemId);
+    remaining.splice(drag.targetIndex ?? remaining.length, 0, dragged);
+    section.items = remaining.map((item, index) => ({ ...item, order: index + 1 }));
+    await persistBuilder();
+    renderBuilder();
+    return;
+  }
+  if (state.builderSwipe && event.pointerId === state.builderSwipe.pointerId) {
+    const swipe = state.builderSwipe;
+    state.builderSwipe = null;
+    const card = document.querySelector(`[data-swipe-exercise="${swipe.itemId}"]`);
+    if (!card) return;
+    const dx = event.clientX - swipe.startX;
+    document.querySelectorAll('[data-swipe-exercise].swiped').forEach(item => { if (item !== card) item.classList.remove('swiped'); });
+    card.style.transform = '';
+    card.classList.toggle('swiped', swipe.active && dx < -44);
+  }
 });
 
 app.addEventListener('pointercancel', () => {
-  if (!state.builderDrag) return;
   state.builderDrag = null;
+  state.builderSwipe = null;
   document.body.classList.remove('is-dragging-builder-exercise');
   renderBuilder();
 });
