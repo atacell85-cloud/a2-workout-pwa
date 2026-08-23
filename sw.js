@@ -1,9 +1,9 @@
-const CACHE_VERSION = 'a2-workout-v15-active-program-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v16-today-simplified-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './app.js?v=active-program-v1',
+  './app.js?v=today-simplified-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',

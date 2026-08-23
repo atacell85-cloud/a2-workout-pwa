@@ -79,26 +79,16 @@ async function todayView() {
   state.view = 'today'; state.workout = null; state.executionDay = null; title.textContent = 'Bugün';
   const draft = await workoutRepository.getDraft();
   const programs = await workoutRepository.getPrograms();
-  const settings = await workoutRepository.getSettings();
   cachedSessions = await workoutRepository.getSessions();
   const lastSession = cachedSessions.at(-1);
-  const nextProgram = activeProgram(programs, settings);
+  const hasProgram = programs.length > 0;
   const draftDay = draft ? await hydrateExecutionDay(draft) : null;
   app.innerHTML = `
     <section class="sync-status" id="syncStatus">${syncLabel(state.syncStatus)}</section>
-    ${draft ? `<section class="today-hero"><div><span>Devam eden antrenman</span><h2>${escapeHtml(draftDay?.label || 'Antrenman')}</h2><p>Başladığın kaydı sürdürebilirsin.</p></div><button class="primary-btn full" data-action="resume">Devam Et</button></section>` : `<section class="today-hero"><div><span>Bugün</span><h2>${nextProgram ? 'Antrenmana hazır' : 'İlk programını oluştur'}</h2><p>${nextProgram ? 'Bir günü seç, kayıt ekranı açılsın.' : 'AKS önce programını kurar, sonra her gün sadece başlatıp kayıt alırsın.'}</p></div></section>`}
-    ${nextProgram ? todayProgram(nextProgram) : `<section class="summary-card"><h2>Program yok</h2><p class="muted">PDF, Word veya Excel'den aktarabilir ya da elle oluşturabilirsin.</p><button class="primary-btn full" data-action="file-import">Dosyadan Program Oluştur</button><button class="secondary-btn full" data-action="new-program">Elle Program Oluştur</button></section>`}
+    ${draft ? `<section class="today-hero"><div><span>Devam eden antrenman</span><h2>${escapeHtml(draftDay?.label || 'Antrenman')}</h2><p>Başladığın kaydı sürdürebilirsin.</p></div><button class="primary-btn full" data-action="resume">Devam Et</button></section>` : `<section class="today-hero"><div><span>Bugün</span><h2>${hasProgram ? 'Antrenmana hazır' : 'İlk programını oluştur'}</h2><p>${hasProgram ? 'Programlar sekmesinden bir gün seçip antrenmanı başlat.' : 'AKS önce programını kurar, sonra her gün sadece başlatıp kayıt alırsın.'}</p></div>${hasProgram ? '<button class="primary-btn full" data-action="programs">Programlara Git</button>' : ''}</section>`}
+    ${hasProgram ? '' : `<section class="summary-card"><h2>Program yok</h2><p class="muted">PDF, Word veya Excel'den aktarabilir ya da elle oluşturabilirsin.</p><button class="primary-btn full" data-action="file-import">Dosyadan Program Oluştur</button><button class="secondary-btn full" data-action="new-program">Elle Program Oluştur</button></section>`}
     ${lastSession ? `<section class="summary-card"><h2>Son antrenman</h2>${lastSessionSummary(lastSession)}<button class="secondary-btn full" data-action="history">Geçmişi Gör</button></section>` : '<section class="summary-card muted">Henüz tamamlanmış antrenman kaydın yok.</section>'}`;
   nav('home');
-}
-
-function todayProgram(program) {
-  return `<section class="summary-card"><div class="section-kicker">Aktif program</div><h2>${escapeHtml(program.name)}</h2><p class="muted">${program.days.length} gün. Değişiklik için Programlar sekmesine git.</p></section>
-    <div class="day-grid">${program.days.map(day => `<article class="day-card"><div class="day">${escapeHtml(day.name)}</div><div class="meta">${dayExerciseCount(day)} hareket</div><button class="primary-btn full" data-start-program-day="${program.id}:${day.id}">Başlat</button></article>`).join('')}</div>`;
-}
-
-function activeProgram(programs, settings = {}) {
-  return programs.find(program => program.id === settings.activeProgramId) || programs[0] || null;
 }
 
 function dayExerciseCount(day) {
