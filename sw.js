@@ -1,9 +1,9 @@
-const CACHE_VERSION = 'a2-workout-v11-onboarding-2026-08-16';
+const CACHE_VERSION = 'a2-workout-v12-google-oauth-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './app.js?v=onboarding-v1',
+  './app.js?v=google-oauth-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
