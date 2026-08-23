@@ -1,9 +1,9 @@
-const CACHE_VERSION = 'a2-workout-v31-program-analysis-loading-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v32-simple-builder-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './app.js?v=program-analysis-loading-v1',
+  './app.js?v=simple-builder-v2',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
