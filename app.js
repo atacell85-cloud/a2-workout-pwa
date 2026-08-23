@@ -13,7 +13,7 @@ import { createSyncService } from './sync-service.js';
 
 const app = document.querySelector('#app');
 const title = document.querySelector('#pageTitle');
-let state = { view: 'home', workout: null, timer: null, timerEndsAt: null, timerExerciseId: null, timerNotified: false, executionDay: null, executionExercises: new Map(), builder: null, picker: null, video: null, user: null, syncStatus: 'saved', installPrompt: null, onboarding: null, authMode: 'login', authBusy: false };
+let state = { view: 'home', workout: null, timer: null, timerEndsAt: null, timerExerciseId: null, timerNotified: false, executionDay: null, executionExercises: new Map(), builder: null, picker: null, video: null, user: null, syncStatus: 'saved', installPrompt: null, onboarding: null, authMode: 'login', authBusy: false, notifiedImports: new Set() };
 const youtube = createYouTubeSearchService(workoutRepository);
 const sync = createSyncService(workoutRepository, status => { state.syncStatus = status; const indicator = document.querySelector('#syncStatus'); if (indicator) indicator.textContent = syncLabel(status); });
 
@@ -81,7 +81,9 @@ async function home() {
 async function todayView() {
   state.view = 'today'; state.workout = null; state.executionDay = null; title.textContent = 'Bugün';
   const draft = await workoutRepository.getDraft();
-  const programs = await workoutRepository.getPrograms();
+  const data = await workoutRepository.getData();
+  const programs = data.programs;
+  const importNotice = importNoticeCard(data.importPreviews);
   cachedSessions = await workoutRepository.getSessions();
   const lastSession = cachedSessions.at(-1);
   const hasProgram = programs.length > 0;
@@ -89,10 +91,20 @@ async function todayView() {
   const lastSessionLabel = lastSession ? sessionDayLabel(lastSession, programs) : '';
   app.innerHTML = `
     <section class="sync-status" id="syncStatus">${syncLabel(state.syncStatus)}</section>
+    ${importNotice}
     ${draft ? `<section class="today-hero"><div><span>Devam eden antrenman</span><h2>${escapeHtml(draftDay?.label || 'Antrenman')}</h2><p>Başladığın kaydı sürdürebilirsin.</p></div><button class="primary-btn full" data-action="resume">Devam Et</button></section>` : `<section class="today-hero"><div><span>Bugün</span><h2>${hasProgram ? 'Antrenmana hazır' : 'İlk programını oluştur'}</h2><p>${hasProgram ? 'Programlar sekmesinden bir gün seçip antrenmanı başlat.' : 'AKS önce programını kurar, sonra her gün sadece başlatıp kayıt alırsın.'}</p></div>${hasProgram ? '<button class="primary-btn full" data-action="programs">Programlara Git</button>' : ''}</section>`}
     ${hasProgram ? '' : `<section class="summary-card"><h2>Program yok</h2><p class="muted">PDF, Word veya Excel'den aktarabilir ya da elle oluşturabilirsin.</p><button class="primary-btn full" data-action="file-import">Dosyadan Program Oluştur</button><button class="secondary-btn full" data-action="new-program">Elle Program Oluştur</button></section>`}
     ${lastSession ? `<section class="summary-card"><h2>Son antrenman</h2>${lastSessionSummary(lastSession, lastSessionLabel)}<button class="secondary-btn full" data-action="history">Geçmişi Gör</button></section>` : '<section class="summary-card muted">Henüz tamamlanmış antrenman kaydın yok.</section>'}`;
   nav('home');
+}
+
+function importNoticeCard(importPreviews = {}) {
+  const previews = Object.values(importPreviews || {}).filter(Boolean).sort((a, b) => String(b.importedAt || '').localeCompare(String(a.importedAt || '')));
+  const ready = previews.find(item => item.importId && !item.parserStatus && item.program?.days?.length);
+  if (ready) return `<section class="summary-card import-ready-card"><span>Program analizi tamamlandı</span><h2>${escapeHtml(ready.program?.name || ready.source?.fileName || 'Yüklenen program')}</h2><p class="muted">Önizlemeyi kontrol edip programı oluşturabilirsin.</p><button class="primary-btn full" data-resume-import="${escapeHtml(ready.importId)}">Önizlemeyi Aç</button></section>`;
+  const pending = previews.find(item => item.importId && item.parserStatus === 'pending');
+  if (pending) return `<section class="summary-card import-pending-card"><span>Program analizi sürüyor</span><h2>${escapeHtml(pending.program?.name || pending.source?.fileName || 'Yüklenen program')}</h2><p class="muted">Arka planda devam ediyor. Hazır olduğunda burada görünecek.</p><button class="secondary-btn full" data-resume-import="${escapeHtml(pending.importId)}">Durumu Kontrol Et</button></section>`;
+  return '';
 }
 
 function dayExerciseCount(day) {
@@ -248,16 +260,16 @@ async function accountView() {
 }
 
 function notificationSettingsHtml() {
-  if (!('Notification' in window)) return '<p class="small muted">Bu cihazda dinlenme bildirimi desteklenmiyor.</p>';
-  if (Notification.permission === 'granted') return '<p class="small muted">Dinlenme bildirimleri açık.</p>';
+  if (!('Notification' in window)) return '<p class="small muted">Bu cihazda bildirim desteklenmiyor.</p>';
+  if (Notification.permission === 'granted') return '<p class="small muted">Dinlenme ve program analizi bildirimleri açık.</p>';
   if (Notification.permission === 'denied') return '<p class="small muted">Bildirim izni kapalı. Açmak için tarayıcı/site ayarlarını kullanman gerekiyor.</p>';
-  return '<button class="secondary-btn full" data-action="enable-notifications">Dinlenme bildirimlerini aç</button>';
+  return '<button class="secondary-btn full" data-action="enable-notifications">Bildirimleri Aç</button>';
 }
 
 async function enableNotifications() {
   if (!('Notification' in window)) return toast('Bu cihaz bildirim desteklemiyor');
   const permission = await Notification.requestPermission();
-  toast(permission === 'granted' ? 'Dinlenme bildirimleri açıldı' : 'Bildirim izni verilmedi');
+  toast(permission === 'granted' ? 'Bildirimler açıldı' : 'Bildirim izni verilmedi');
   await accountView();
 }
 
@@ -451,7 +463,11 @@ async function pollImportJob(importId, immediate = false) {
     await workoutRepository.saveImportPreview(preview);
     if (state.importJobPoll) clearTimeout(state.importJobPoll);
     state.importJobPoll = null;
-    return renderImportPreview(importId);
+    await notifyImportComplete(preview);
+    if (state.view === 'import' || state.view === 'import-preview') return renderImportPreview(importId);
+    toast('Program analizi tamamlandı');
+    if (state.view === 'today') return todayView();
+    return;
   }
   if (body.status === 'failed') {
     if (status) status.innerHTML = importFailureActions(body.errorCode || 'OPENAI_REQUEST_FAILED');
@@ -463,6 +479,26 @@ async function pollImportJob(importId, immediate = false) {
     const currentStatus = document.querySelector('#importStatus');
     if (currentStatus) currentStatus.innerHTML = importFailureActions(error.code || 'OPENAI_REQUEST_FAILED');
   }), 3000);
+}
+
+async function notifyImportComplete(preview) {
+  const importId = preview?.importId;
+  if (!importId || state.notifiedImports.has(importId)) return;
+  state.notifiedImports.add(importId);
+  const programName = preview?.program?.name || preview?.source?.fileName || 'Program';
+  const titleText = 'Program analizi tamamlandı';
+  const body = `${programName} önizlemeye hazır.`;
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      const options = { body, icon: './icons/icon-192.png', badge: './icons/icon-192.png', tag: `a2-import-${importId}`, renotify: true, data: { importId, url: './' } };
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        registration.showNotification(titleText, options);
+      } else {
+        new Notification(titleText, options);
+      }
+    } catch {}
+  }
 }
 
 function importFailureActions(code) {

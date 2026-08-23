@@ -294,6 +294,28 @@ main {
   line-height: 1.45;
 }
 
+.import-ready-card {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.import-pending-card {
+  background: #f8fafc;
+}
+
+.import-ready-card span, .import-pending-card span {
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+
+.import-ready-card h2, .import-pending-card h2 {
+  margin-top: 6px;
+}
+
 .exercise-card.warmup { border-left-color: var(--warn); }
 .exercise-card.simple { border-left-color: var(--stretch); }
 .exercise-card.activation { border-left-color: var(--scap); }

@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v56-raw-file-import-report-copy-2026-08-24';
+const CACHE_VERSION = 'a2-workout-v57-import-complete-notifications-2026-08-24';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=raw-file-import-v2',
+  './app.js?v=import-complete-notifications-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
@@ -54,12 +54,13 @@ self.addEventListener('fetch', event => {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
+  const url = event.notification?.data?.url || './';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
       for (const client of clientList) {
         if ('focus' in client) return client.focus();
       }
-      if (clients.openWindow) return clients.openWindow('./');
+      if (clients.openWindow) return clients.openWindow(url);
       return null;
     })
   );
