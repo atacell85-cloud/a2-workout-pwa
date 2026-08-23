@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v49-youtube-worker-search-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v50-youtube-module-cache-bust-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=youtube-worker-search-v1',
+  './app.js?v=youtube-worker-search-v2',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
@@ -15,7 +15,7 @@ const APP_SHELL = [
   './openai-import-parser.js',
   './auth-service.js',
   './sync-service.js',
-  './youtube-service.js',
+  './youtube-service.js?v=youtube-worker-search-v2',
   './data/public-programs.js',
   './data/exercises.v1.json',
   './manifest.webmanifest',

@@ -3,7 +3,7 @@ import { SCHEMA_VERSION, workoutRepository } from './storage.js';
 import { getCanonicalExercise, loadExerciseDatabase, searchExercises } from './exercise-service.js';
 import { blankDay, blankExercise, blankInstruction, blankProgram, blankSection, normalizeProgram, permanentDayToLegacy, validateProgram } from './program-service.js';
 import { finalizeImport, matchImportExercises, validateImportPreview } from './import-service.js';
-import { createYouTubeSearchService } from './youtube-service.js';
+import { createYouTubeSearchService } from './youtube-service.js?v=youtube-worker-search-v2';
 import { documentExtractor } from './document-extractor.js';
 import { localImportParser } from './local-import-parser.js';
 import { getImportParser, IMPORT_PARSER_PROVIDER } from './import-provider.js';
