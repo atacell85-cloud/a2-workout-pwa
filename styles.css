@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --bg: #f4f6f8;
   --card: #ffffff;
   --ink: #101828;
@@ -19,6 +20,7 @@
 html {
   min-height: 100%;
   background: var(--card);
+  color-scheme: light;
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
 }
@@ -40,8 +42,9 @@ body::before {
   background: var(--bg);
 }
 
-button, input, select {
+button, input, select, textarea {
   font: inherit;
+  color-scheme: light;
 }
 
 button {
@@ -50,8 +53,10 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
-input, select {
+input, select, textarea {
   font-size: 16px;
+  background: var(--card);
+  color: var(--ink);
 }
 
 .app-header {
@@ -877,19 +882,21 @@ th, td {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f141b;
-    --card: #161d27;
-    --ink: #eef2f6;
-    --muted: #a0a8b5;
-    --line: #2b3442;
-    --brand: #8ab4f8;
-    --accent: #3b82f6;
+    color-scheme: light;
+    --bg: #f4f6f8;
+    --card: #ffffff;
+    --ink: #101828;
+    --muted: #667085;
+    --line: #d9dee7;
+    --brand: #1f4e78;
+    --accent: #2563eb;
   }
-  .app-header, .bottom-nav { background: rgba(15, 20, 27, .95); }
-  .hero, .timer, .toast { background: #0b1220; }
-  .last, .metric-grid div { background: #101722; }
-  .set-row input { background: #111827; }
-  .set-row.saved input { background: #10231f; }
-  .secondary-btn, .tab-btn { background: #22304a; color: #d7e3ff; }
-  .nav-btn.active { background: #182942; }
+  html, body, main, .app-header { background: var(--card); color: var(--ink); }
+  body::before { background: var(--bg); }
+  .bottom-nav { background: rgba(255, 255, 255, .94); }
+  input, select, textarea { background: var(--card); color: var(--ink); }
+  .set-row input { background: var(--card); color: var(--ink); }
+  .set-row.saved input { background: #f0fdfa; color: var(--ink); }
+  .secondary-btn, .tab-btn { background: #e9eef8; color: #24385f; }
+  .nav-btn.active { background: #eaf2ff; }
 }
