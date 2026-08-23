@@ -38,6 +38,10 @@ function toast(message) {
 }
 
 function nav(view) {
+  const bottomNav = document.querySelector('.bottom-nav');
+  const historyButton = document.querySelector('#historyBtn');
+  if (bottomNav) bottomNav.hidden = !state.user;
+  if (historyButton) historyButton.hidden = !state.user;
   document.querySelectorAll('.nav-btn').forEach(button => button.classList.toggle('active', button.dataset.nav === view));
 }
 
@@ -53,7 +57,38 @@ function executionExercisesFor(workout) { return state.executionDay ? state.exec
 function executionExercise(exerciseId) { return state.executionExercises.get(exerciseId) || findExercise(exerciseId); }
 
 async function home() {
-  return programsView();
+  return todayView();
+}
+
+async function todayView() {
+  state.view = 'today'; state.workout = null; state.executionDay = null; title.textContent = 'Bugün';
+  const draft = await workoutRepository.getDraft();
+  const programs = await workoutRepository.getPrograms();
+  cachedSessions = await workoutRepository.getSessions();
+  const lastSession = cachedSessions.at(-1);
+  const nextProgram = programs[0];
+  app.innerHTML = `
+    <section class="summary-card"><h2>Programlar</h2><p class="muted">Plan oluşturma, düzenleme ve dosyadan içe aktarma burada. Antrenman başlatmak için Bugün ekranını kullan.</p></section>
+    <section class="sync-status" id="syncStatus">${syncLabel(state.syncStatus)}</section>
+    ${draft ? `<section class="today-hero"><div><span>Devam eden antrenman</span><h2>${escapeHtml(findWorkoutDay(draft.programId, draft.workoutDayId)?.label || 'Antrenman')}</h2><p>Başladığın kaydı sürdürebilirsin.</p></div><button class="primary-btn full" data-action="resume">Devam Et</button></section>` : `<section class="today-hero"><div><span>Bugün</span><h2>${nextProgram ? 'Antrenmana hazır' : 'İlk programını oluştur'}</h2><p>${nextProgram ? 'Bir günü seç, kayıt ekranı açılsın.' : 'AKS önce programını kurar, sonra her gün sadece başlatıp kayıt alırsın.'}</p></div></section>`}
+    ${nextProgram ? todayProgram(nextProgram) : `<section class="summary-card"><h2>Program yok</h2><p class="muted">PDF, Word veya Excel'den aktarabilir ya da elle oluşturabilirsin.</p><button class="primary-btn full" data-action="file-import">Dosyadan Program Oluştur</button><button class="secondary-btn full" data-action="new-program">Elle Program Oluştur</button></section>`}
+    ${lastSession ? `<section class="summary-card"><h2>Son antrenman</h2>${lastSessionSummary(lastSession)}<button class="secondary-btn full" data-action="history">Geçmişi Gör</button></section>` : '<section class="summary-card muted">Henüz tamamlanmış antrenman kaydın yok.</section>'}`;
+  nav('home');
+}
+
+function todayProgram(program) {
+  return `<section class="summary-card"><div class="section-kicker">Aktif program</div><h2>${escapeHtml(program.name)}</h2><p class="muted">${program.days.length} gün. Değişiklik için Programlar sekmesine git.</p></section>
+    <div class="day-grid">${program.days.map(day => `<article class="day-card"><div class="day">${escapeHtml(day.name)}</div><div class="meta">${dayExerciseCount(day)} hareket</div><button class="primary-btn full" data-start-program-day="${program.id}:${day.id}">Başlat</button></article>`).join('')}</div>`;
+}
+
+function dayExerciseCount(day) {
+  return day.sections.reduce((sum, section) => sum + section.items.filter(item => item.itemType === 'exercise').length, 0);
+}
+
+function lastSessionSummary(session) {
+  const summary = session.summary || sessionSummary(session);
+  const day = findWorkoutDay(session.programId, session.workoutDayId);
+  return `<div class="history-metrics">${escapeHtml(day?.label || session.workoutDayId)} • ${summary.completedExercises} hareket • ${summary.setCount} set • ${Math.round(summary.volume)} kg × tekrar</div><div class="small muted">${new Date(session.startedAt).toLocaleString('tr-TR')}</div>`;
 }
 
 async function programsView() {
@@ -111,7 +146,7 @@ async function completeAuth(user, isNew = false) {
   const accountHasContent = Boolean(accountData.programs.length || accountData.sessions.length || accountData.draft || Object.keys(accountData.importPreviews).length);
   if (isNew) return firstProgramView();
   if (!accountHasContent && await workoutRepository.hasLegacyDeviceData()) return legacyMigrationView();
-  return programsView();
+  return todayView();
 }
 
 async function submitAuth(mode) {
@@ -138,6 +173,26 @@ function oauthErrorMessage(code) {
 function legacyMigrationView() { title.textContent = 'Mevcut Veriler'; nav('account'); app.innerHTML = `<section class="summary-card"><h2>Bu cihazda mevcut antrenman verileri bulundu.</h2><p class="muted">Veriler silinmez. İsterseniz bu hesabınıza aktarılır.</p><div class="builder-actions"><button class="secondary-btn" data-action="skip-legacy">Şimdilik Atla</button><button class="primary-btn" data-action="migrate-legacy">Bu verileri hesabıma aktar</button></div></section>`; }
 
 async function accountView() { title.textContent = 'Hesabım'; nav('account'); const legacy = await workoutRepository.hasLegacyDeviceData(); const installed = window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone; app.innerHTML = `<section class="summary-card"><h3>${escapeHtml(state.user?.email || '')}</h3><p id="syncStatus" class="muted">${syncLabel(state.syncStatus)}</p>${!installed ? `<button class="primary-btn full" data-action="install-app">AKS'yi Yükle</button><p class="small muted" id="installHelp" hidden>Safari'de Paylaş düğmesine dokunun → Ana Ekrana Ekle</p>` : ''}<button class="secondary-btn full" data-action="export-csv">CSV Log İndir</button><details><summary>Gelişmiş</summary>${legacy ? `<button class="secondary-btn full" data-action="migrate-legacy">Bu cihazdaki eski verileri içe aktar</button>` : ''}<button class="secondary-btn full" data-action="export-json">Veriyi Dışa Aktar</button><input type="file" id="restoreFile" accept="application/json"><button class="secondary-btn full" data-action="restore-json">JSON'dan Geri Yükle</button></details><button class="secondary-btn full" data-action="logout">Çıkış Yap</button><button class="danger-btn full" data-action="delete-account">Hesabımı Sil</button></section>`; }
+
+async function exercisesView(query = '') {
+  state.view = 'exercises'; title.textContent = 'Hareketler'; nav('exercises');
+  const db = await loadExerciseDatabase();
+  const normalized = query.trim().toLowerCase();
+  const results = normalized ? await searchExercises(normalized, 50) : db.slice(0, 50);
+  app.innerHTML = `<section class="summary-card"><h2>Hareketler</h2><p class="muted">Hareket kütüphanesi ve özel hareketler burada toparlanacak. Şimdilik hızlı arama aktif.</p><input class="exercise-select" id="exerciseLibrarySearch" placeholder="Hareket ara" value="${escapeHtml(query)}"></section><section class="exercise-library" id="exerciseLibraryResults">${results.map(exerciseLibraryCard).join('')}</section>`;
+}
+
+function exerciseLibraryCard(item) {
+  return `<article class="exercise-card"><div class="exercise-head"><div><div class="exercise-name">${escapeHtml(item.nameTr || item.nameEn || item.id)}</div><div class="small muted">${escapeHtml(item.nameEn || '')}</div></div><div class="prescription">${escapeHtml((item.primaryMuscles || []).slice(0, 2).join(', ') || 'Hareket')}</div></div></article>`;
+}
+
+async function updateExerciseLibraryResults(query) {
+  const holder = document.querySelector('#exerciseLibraryResults');
+  if (!holder) return;
+  const normalized = query.trim().toLowerCase();
+  const results = normalized ? await searchExercises(normalized, 50) : (await loadExerciseDatabase()).slice(0, 50);
+  holder.innerHTML = results.map(exerciseLibraryCard).join('');
+}
 
 function fileImportView() {
   state.view = 'import'; title.textContent = 'Dosyadan Oluştur'; nav('programs');
@@ -795,8 +850,8 @@ app.addEventListener('click', async event => {
   if (action === 'resume') return resumeWorkout();
   if (action === 'login') return submitAuth('login');
   if (action === 'register') return submitAuth('register');
-  if (action === 'migrate-legacy') { try { await sync.migrateLegacy(); cachedSessions = await workoutRepository.getSessions(); toast('Mevcut veriler hesabınıza aktarıldı.'); return programsView(); } catch { return toast('Veriler aktarılırken bir sorun oluştu.'); } }
-  if (action === 'skip-legacy') return programsView();
+  if (action === 'migrate-legacy') { try { await sync.migrateLegacy(); cachedSessions = await workoutRepository.getSessions(); toast('Mevcut veriler hesabınıza aktarıldı.'); return todayView(); } catch { return toast('Veriler aktarılırken bir sorun oluştu.'); } }
+  if (action === 'skip-legacy') return todayView();
   if (action === 'install-app') { if (state.installPrompt) { state.installPrompt.prompt(); await state.installPrompt.userChoice; state.installPrompt = null; return accountView(); } const help = document.querySelector('#installHelp'); if (help) help.hidden = false; return; }
   if (action === 'logout') { await authService.logout(); sync.stop(); await workoutRepository.setActiveAccount(null); state.user = null; state.workout = null; state.onboarding = null; state.authMode = 'login'; cachedSessions = []; return welcomeView(); }
   if (action === 'delete-account') { const password = prompt('Hesabı silmek için şifrenizi girin. Bu işlem bulut verilerinizi siler.'); if (password === null) return; if (!confirm('Hesabınızı ve bulut verilerinizi silmek istediğinizi onaylıyor musunuz?')) return; try { await authService.deleteAccount(password); sync.stop(); await workoutRepository.setActiveAccount(null); state.user = null; state.onboarding = null; state.authMode = 'login'; cachedSessions = []; toast('Hesabınız silindi.'); return welcomeView(); } catch { return toast('Hesap silinemedi. Şifrenizi kontrol edin.'); } }
@@ -811,6 +866,7 @@ app.addEventListener('click', async event => {
   if (action === 'resume-builder') return openBuilder();
   if (action === 'save-program') return saveProgram();
   if (action === 'home') return home();
+  if (action === 'exercises') return exercisesView();
   if (action === 'render-workout') return renderWorkout();
   if (action === 'finish') return finishWorkout();
   if (action === 'force-finish') return finishWorkout(true);
@@ -825,6 +881,7 @@ app.addEventListener('click', async event => {
 });
 
 app.addEventListener('input', async event => {
+  if (event.target.id === 'exerciseLibrarySearch') return updateExerciseLibraryResults(event.target.value);
   if (event.target.id === 'importFile') { const file = event.target.files[0]; if (file) return importFile(file); }
   if (state.importId) {
     const preview = await workoutRepository.getImportPreview(state.importId);
@@ -854,7 +911,7 @@ app.addEventListener('change', event => {
 });
 
 document.querySelectorAll('.nav-btn').forEach(button => {
-  button.addEventListener('click', () => ({ home, programs: programsView, history: historyView, account: accountView }[button.dataset.nav]()));
+  button.addEventListener('click', () => ({ home, programs: programsView, exercises: exercisesView, history: historyView, account: accountView }[button.dataset.nav]()));
 });
 document.querySelector('#historyBtn').addEventListener('click', historyView);
 

@@ -208,6 +208,40 @@ main {
   border-left: 4px solid transparent;
 }
 
+.today-hero {
+  background: #101828;
+  color: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  margin: 6px 0 12px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, .12);
+}
+
+.today-hero span, .section-kicker {
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.today-hero span {
+  color: rgba(255, 255, 255, .68);
+}
+
+.today-hero h2 {
+  margin: 6px 0;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.today-hero p {
+  margin: 0;
+  color: rgba(255, 255, 255, .76);
+  line-height: 1.45;
+}
+
 .exercise-card.warmup { border-left-color: var(--warn); }
 .exercise-card.simple { border-left-color: var(--stretch); }
 .exercise-card.activation { border-left-color: var(--scap); }
@@ -548,7 +582,7 @@ th, td {
   right: 0;
   z-index: 20;
   display: flex;
-  gap: 8px;
+  gap: 4px;
   padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, .96);
   backdrop-filter: blur(14px);
@@ -559,7 +593,8 @@ th, td {
   flex: 1;
   border: none;
   border-radius: 8px;
-  padding: 11px 8px;
+  padding: 10px 4px;
+  font-size: 12px;
   font-weight: 850;
   color: var(--muted);
   background: transparent;
