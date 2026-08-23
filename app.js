@@ -386,11 +386,9 @@ async function importFile(file) {
     const normalized = await documentExtractor.extract(file);
     state.pendingNormalizedDocument = normalized; state.pendingImportId = uid();
     await workoutRepository.saveImportPreview({ schemaVersion: '1.1', importId: state.pendingImportId, importedAt: new Date().toISOString(), source: { fileName: normalized.fileName, fileType: normalized.fileType, language: normalized.language, documentTitle: null }, program: { id: null, name: normalized.fileName.replace(/\.[^.]+$/, ''), description: null, sourceType: `${normalized.fileType}-import`, notes: null, days: [] }, warnings: [], unparsedContent: [], normalizedDocument: normalized, parserStatus: 'pending' });
-    status.innerHTML = importLoading('Program analiz ediliyor');
-    const preview = await parseNormalizedDocument(IMPORT_PARSER_PROVIDER);
-    preview.normalizedDocument = normalized;
-    await workoutRepository.saveImportPreview(preview);
-    await renderImportPreview(preview.importId);
+    status.innerHTML = importLoading('Program arka planda analiz ediliyor');
+    await createImportJob(normalized);
+    await pollImportJob(state.pendingImportId, true);
   } catch (error) {
     console.error(error);
     if (IMPORT_PARSER_PROVIDER === 'openai' && state.pendingNormalizedDocument) status.innerHTML = importFailureActions(error.code || 'OPENAI_REQUEST_FAILED');
@@ -407,6 +405,53 @@ async function parseNormalizedDocument(provider) {
 async function resumePendingImport(provider) {
   try { const preview = await parseNormalizedDocument(provider); await workoutRepository.saveImportPreview(preview); await renderImportPreview(preview.importId); }
   catch (error) { console.error(error); toast(importErrorMessage(error.code || 'OPENAI_REQUEST_FAILED')); }
+}
+
+async function createImportJob(normalizedDocument) {
+  const response = await fetch('/api/import/jobs', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ importId: state.pendingImportId, normalizedDocument }) });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw Object.assign(new Error(body.code || 'OPENAI_REQUEST_FAILED'), { code: body.code || 'OPENAI_REQUEST_FAILED' });
+  return body;
+}
+
+async function retryImportAnalysis() {
+  if (!state.pendingImportId || !state.pendingNormalizedDocument) return toast('Tekrar denenecek aktarım bulunamadı');
+  const status = document.querySelector('#importStatus');
+  if (status) status.innerHTML = importLoading('Program tekrar analiz ediliyor');
+  try {
+    const response = await fetch(`/api/import/jobs/${encodeURIComponent(state.pendingImportId)}/retry`, { method: 'POST', credentials: 'same-origin' });
+    if (!response.ok) await createImportJob(state.pendingNormalizedDocument);
+    await pollImportJob(state.pendingImportId, true);
+  } catch (error) {
+    console.error(error);
+    if (status) status.innerHTML = importFailureActions(error.code || 'OPENAI_REQUEST_FAILED');
+  }
+}
+
+async function pollImportJob(importId, immediate = false) {
+  if (state.importJobPoll) clearTimeout(state.importJobPoll);
+  if (!immediate) await new Promise(resolve => setTimeout(resolve, 2500));
+  const response = await fetch(`/api/import/jobs/${encodeURIComponent(importId)}`, { credentials: 'same-origin' });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw Object.assign(new Error(body.code || 'OPENAI_REQUEST_FAILED'), { code: body.code || 'OPENAI_REQUEST_FAILED' });
+  const status = document.querySelector('#importStatus');
+  if (body.status === 'done' && body.preview) {
+    const preview = await matchImportExercises({ ...body.preview, importId, normalizedDocument: state.pendingNormalizedDocument, parserProvider: 'openai-background' });
+    await workoutRepository.saveImportPreview(preview);
+    if (state.importJobPoll) clearTimeout(state.importJobPoll);
+    state.importJobPoll = null;
+    return renderImportPreview(importId);
+  }
+  if (body.status === 'failed') {
+    if (status) status.innerHTML = importFailureActions(body.errorCode || 'OPENAI_REQUEST_FAILED');
+    return;
+  }
+  if (status) status.innerHTML = `${importLoading('Program arka planda analiz ediliyor')}<p class="small muted">Bu ekranı kapatsan da analiz devam eder. Hazır olduğunda önizlemeyi açacağız.</p>`;
+  state.importJobPoll = setTimeout(() => pollImportJob(importId).catch(error => {
+    console.error(error);
+    const currentStatus = document.querySelector('#importStatus');
+    if (currentStatus) currentStatus.innerHTML = importFailureActions(error.code || 'OPENAI_REQUEST_FAILED');
+  }), 3000);
 }
 
 function importFailureActions(code) {
@@ -431,7 +476,7 @@ function reportImportIssue() {
 
 async function resumeImport(importId) {
   const preview = await workoutRepository.getImportPreview(importId);
-  if (preview?.parserStatus === 'pending' && preview.normalizedDocument) { state.pendingImportId = importId; state.pendingNormalizedDocument = preview.normalizedDocument; fileImportView(); const status = document.querySelector('#importStatus'); status.innerHTML = `Aktarım yeniden başlatılmaya hazır.<div class="builder-actions"><button class="primary-btn" data-action="retry-openai">Tekrar Dene</button><button class="secondary-btn" data-action="report-import">Rapor Et</button></div>`; return; }
+  if (preview?.parserStatus === 'pending' && preview.normalizedDocument) { state.pendingImportId = importId; state.pendingNormalizedDocument = preview.normalizedDocument; fileImportView(); const status = document.querySelector('#importStatus'); status.innerHTML = `${importLoading('Program arka planda analiz ediliyor')}<p class="small muted">Aktarım sonucu kontrol ediliyor.</p>`; return pollImportJob(importId, true).catch(() => { status.innerHTML = `Aktarım yeniden başlatılmaya hazır.<div class="builder-actions"><button class="primary-btn" data-action="retry-openai">Tekrar Dene</button><button class="secondary-btn" data-action="report-import">Rapor Et</button></div>`; }); }
   return renderImportPreview(importId);
 }
 
@@ -1255,7 +1300,7 @@ app.addEventListener('click', async event => {
   if (action === 'empty-workout') return toast('Boş antrenman başlatma yakında eklenecek.');
   if (action === 'new-program') return openBuilder(blankProgram());
   if (action === 'file-import') return fileImportView();
-  if (action === 'retry-openai') return resumePendingImport('openai');
+  if (action === 'retry-openai') return retryImportAnalysis();
   if (action === 'report-import') return reportImportIssue();
   if (action === 'finalize-import') {
     try { const ids = new Set((await loadExerciseDatabase()).map(item => item.id)); const result = await workoutRepository.finalizeImportAtomically(state.importId, preview => finalizeImport(preview, ids)); toast(result.existing ? 'Program zaten oluşturulmuştu' : 'Program oluşturuldu'); return openProgram(result.program.id); } catch (error) { console.error(error); return toast('Program oluşturulamadı: çözülmemiş kayıtları kontrol edin'); }

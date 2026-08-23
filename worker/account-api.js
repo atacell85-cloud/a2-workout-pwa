@@ -208,7 +208,7 @@ async function issueSession(env, id, email, status = 201, extraHeaders = {}) {
   return json({ user: { id, email } }, status, { ...extraHeaders, 'Set-Cookie': [sessionCookie(token, expires), ...asArray(extraHeaders['Set-Cookie'])] });
 }
 
-async function currentUser(request, env) {
+export async function currentUser(request, env) {
   const token = cookie(request, 'aks_session'); if (!token) return null;
   const row = await env.DB.prepare('SELECT users.id, users.email FROM auth_sessions JOIN users ON users.id = auth_sessions.user_id WHERE auth_sessions.token_hash = ? AND auth_sessions.expires_at > ? AND users.deleted_at IS NULL').bind(await tokenDigest(token), new Date().toISOString()).first();
   return row || null;

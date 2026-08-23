@@ -1,18 +1,28 @@
-import { handleAccountRequest } from './account-api.js';
+import { currentUser, handleAccountRequest } from './account-api.js';
 
 const OPENAI_URL = 'https://api.openai.com/v1/responses';
 const YOUTUBE_SEARCH_URL = 'https://www.googleapis.com/youtube/v3/search';
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === '/runtime-config.js') return runtimeConfig(request);
     const accountResponse = await handleAccountRequest(request, env, url.pathname);
     if (accountResponse) return accountResponse;
     if (url.pathname === '/api/health') return health(request, env);
     if (url.pathname === '/api/import/parse') return parseImport(request, env);
+    if (url.pathname === '/api/import/jobs') return createImportJob(request, env, ctx);
+    const importJobMatch = url.pathname.match(/^\/api\/import\/jobs\/([^/]+)(?:\/retry)?$/);
+    if (importJobMatch) return handleImportJob(request, env, ctx, importJobMatch[1], url.pathname.endsWith('/retry'));
     if (url.pathname === '/api/youtube/search') return searchYouTube(request, env, url);
     return env.ASSETS.fetch(request);
+  },
+
+  async queue(batch, env) {
+    for (const message of batch.messages) {
+      await processImportJob(env, message.body?.jobId);
+      message.ack();
+    }
   }
 };
 
@@ -50,6 +60,89 @@ async function parseImport(request, env) {
     const metadata = { requestId, model: config.model, attemptCount: error.attempts || 0, durationMs: Date.now() - started, status: code };
     console.warn(JSON.stringify(metadata));
     return json({ code, observability: metadata }, statusFor(code), { 'X-Import-Request-Id': requestId });
+  }
+}
+
+async function createImportJob(request, env, ctx) {
+  if (request.method !== 'POST') return apiError('METHOD_NOT_ALLOWED', 405, { Allow: 'POST' });
+  if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) return apiError('UNSUPPORTED_CONTENT_TYPE', 415);
+  const user = await currentUser(request, env);
+  if (!user) return apiError('AUTH_REQUIRED', 401);
+  if (!sameOrigin(request)) return apiError('AUTH_ORIGIN_INVALID', 403);
+  const config = importConfig(env);
+  const body = await readJson(request, config.maxInputBytes);
+  if (!body?.importId || !body?.normalizedDocument?.blocks?.length) return apiError('OPENAI_INVALID_RESPONSE', 400);
+  const normalizedJson = JSON.stringify(sanitize(body.normalizedDocument));
+  if (bytes(normalizedJson) > config.maxInputBytes) return apiError('DOCUMENT_TOO_LARGE', 413);
+  const now = new Date().toISOString();
+  const source = body.normalizedDocument;
+  await env.DB.prepare(`INSERT INTO import_jobs (id, user_id, status, source_json, normalized_document_json, attempts, created_at, updated_at)
+    VALUES (?, ?, 'queued', ?, ?, 0, ?, ?)
+    ON CONFLICT(user_id, id) DO UPDATE SET status = 'queued', error_code = NULL, preview_json = NULL, observability_json = NULL, normalized_document_json = excluded.normalized_document_json, source_json = excluded.source_json, updated_at = excluded.updated_at`)
+    .bind(body.importId, user.id, JSON.stringify({ fileName: source.fileName, fileType: source.fileType, language: source.language || null }), normalizedJson, now, now)
+    .run();
+  await enqueueImportJob(env, ctx, body.importId);
+  return json({ importId: body.importId, status: 'queued' }, 202);
+}
+
+async function handleImportJob(request, env, ctx, importId, retry) {
+  const user = await currentUser(request, env);
+  if (!user) return apiError('AUTH_REQUIRED', 401);
+  if (retry) {
+    if (request.method !== 'POST') return apiError('METHOD_NOT_ALLOWED', 405, { Allow: 'POST' });
+    if (!sameOrigin(request)) return apiError('AUTH_ORIGIN_INVALID', 403);
+    const row = await env.DB.prepare('SELECT id FROM import_jobs WHERE user_id = ? AND id = ?').bind(user.id, importId).first();
+    if (!row) return apiError('IMPORT_JOB_NOT_FOUND', 404);
+    await env.DB.prepare("UPDATE import_jobs SET status = 'queued', error_code = NULL, updated_at = ? WHERE user_id = ? AND id = ?").bind(new Date().toISOString(), user.id, importId).run();
+    await enqueueImportJob(env, ctx, importId);
+    return json({ importId, status: 'queued' }, 202);
+  }
+  if (request.method !== 'GET') return apiError('METHOD_NOT_ALLOWED', 405, { Allow: 'GET' });
+  const row = await env.DB.prepare('SELECT id, status, error_code, source_json, preview_json, observability_json, attempts, created_at, updated_at, completed_at FROM import_jobs WHERE user_id = ? AND id = ?').bind(user.id, importId).first();
+  if (!row) return apiError('IMPORT_JOB_NOT_FOUND', 404);
+  return json({
+    importId: row.id,
+    status: row.status,
+    errorCode: row.error_code || null,
+    source: parseJson(row.source_json),
+    preview: parseJson(row.preview_json),
+    observability: parseJson(row.observability_json),
+    attempts: row.attempts,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    completedAt: row.completed_at
+  });
+}
+
+async function enqueueImportJob(env, ctx, jobId) {
+  if (env.IMPORT_QUEUE) await env.IMPORT_QUEUE.send({ jobId });
+  else ctx?.waitUntil?.(processImportJob(env, jobId));
+}
+
+async function processImportJob(env, jobId) {
+  if (!jobId) return;
+  const job = await env.DB.prepare('SELECT * FROM import_jobs WHERE id = ?').bind(jobId).first();
+  if (!job || !['queued', 'failed'].includes(job.status)) return;
+  const now = new Date().toISOString();
+  const attempts = Number(job.attempts || 0) + 1;
+  await env.DB.prepare("UPDATE import_jobs SET status = 'processing', attempts = ?, updated_at = ? WHERE id = ?").bind(attempts, now, jobId).run();
+  const config = importConfig(env);
+  try {
+    if (!env.OPENAI_API_KEY) throw coded('OPENAI_API_KEY_MISSING');
+    const normalizedDocument = parseJson(job.normalized_document_json);
+    if (!normalizedDocument?.blocks?.length) throw coded('OPENAI_INVALID_RESPONSE');
+    const requestId = crypto.randomUUID();
+    const started = Date.now();
+    const { payload, upstream, attempts: upstreamAttempts } = await requestOpenAI({ apiKey: env.OPENAI_API_KEY, config, input: { importId: job.id, normalizedDocument }, requestId });
+    let preview;
+    try { preview = JSON.parse(extractStructuredOutput(payload)); } catch (error) { if (error.code) throw error; throw coded('OPENAI_INVALID_RESPONSE'); }
+    validatePreview(preview, job.id, normalizedDocument);
+    const metadata = observability({ requestId, config, payload, upstream, attempts: upstreamAttempts, started, status: 'ok' });
+    await env.DB.prepare("UPDATE import_jobs SET status = 'done', preview_json = ?, observability_json = ?, error_code = NULL, updated_at = ?, completed_at = ? WHERE id = ?").bind(JSON.stringify(preview), JSON.stringify(metadata), new Date().toISOString(), new Date().toISOString(), job.id).run();
+  } catch (error) {
+    const code = error.code || 'OPENAI_REQUEST_FAILED';
+    console.warn(JSON.stringify({ jobId, status: code, attempts }));
+    await env.DB.prepare("UPDATE import_jobs SET status = 'failed', error_code = ?, updated_at = ? WHERE id = ?").bind(code, new Date().toISOString(), job.id).run();
   }
 }
 
@@ -138,6 +231,8 @@ async function readJson(request, limit) { const declared = Number(request.header
 function statusFor(code) { if (code === 'AI_IMPORT_RATE_LIMITED' || code === 'OPENAI_RATE_LIMITED') return 429; if (code === 'DOCUMENT_TOO_LARGE') return 413; if (code === 'OPENAI_API_KEY_MISSING') return 503; if (code === 'OPENAI_AUTH_FAILED') return 502; if (code === 'OPENAI_TIMEOUT') return 504; return 400; }
 function json(body, status = 200, headers = {}) { return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...headers } }); }
 function apiError(code, status, headers) { return json({ code }, status, headers); }
+function sameOrigin(request) { const origin = request.headers.get('origin'); return !origin || origin === new URL(request.url).origin; }
+function parseJson(value) { try { return value ? JSON.parse(value) : null; } catch { return null; } }
 function bytes(value) { return new TextEncoder().encode(value).byteLength; }
 function positive(value, fallback) { return Number(value) > 0 ? Number(value) : fallback; }
 function nonNegative(value, fallback) { return Number.isInteger(Number(value)) && Number(value) >= 0 ? Number(value) : fallback; }

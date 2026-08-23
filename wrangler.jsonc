@@ -24,6 +24,22 @@
       "migrations_dir": "migrations"
     }
   ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "IMPORT_QUEUE",
+        "queue": "a2-import-jobs"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "a2-import-jobs",
+        "max_batch_size": 1,
+        "max_batch_timeout": 5,
+        "max_retries": 2
+      }
+    ]
+  },
   "ratelimits": [
     {
       "name": "AI_IMPORT_LIMITER",
