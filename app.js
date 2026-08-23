@@ -393,7 +393,7 @@ async function importFile(file) {
     await renderImportPreview(preview.importId);
   } catch (error) {
     console.error(error);
-    if (IMPORT_PARSER_PROVIDER === 'openai' && state.pendingNormalizedDocument) status.innerHTML = `${escapeHtml(importErrorMessage(error.code || 'OPENAI_REQUEST_FAILED'))}<br><button class="secondary-btn" data-action="retry-openai">Tekrar Dene</button><button class="primary-btn" data-action="fallback-local">Basit Okuyucu ile Devam Et</button>`;
+    if (IMPORT_PARSER_PROVIDER === 'openai' && state.pendingNormalizedDocument) status.innerHTML = importFailureActions(error.code || 'OPENAI_REQUEST_FAILED');
     else status.textContent = importErrorMessage(error.code || 'PARSER_FAILURE');
   }
 }
@@ -409,9 +409,29 @@ async function resumePendingImport(provider) {
   catch (error) { console.error(error); toast(importErrorMessage(error.code || 'OPENAI_REQUEST_FAILED')); }
 }
 
+function importFailureActions(code) {
+  return `${escapeHtml(importErrorMessage(code))}
+    <div class="builder-actions">
+      <button class="secondary-btn" data-action="retry-openai">Tekrar Dene</button>
+      <button class="primary-btn" data-action="report-import">Rapor Et</button>
+    </div>`;
+}
+
+function reportImportIssue() {
+  // Future implementation note:
+  // If we decide to collect failed import files, require explicit user consent first,
+  // upload the original file to Cloudflare R2 with a short retention policy, and store
+  // only report metadata in D1: user id, email, file name/type/size, importId,
+  // error code, createdAt, status(new/reviewed/fixed), and the R2 object key.
+  // Do not upload user files silently.
+  const fileName = state.pendingNormalizedDocument?.fileName || 'Dosya';
+  const message = `${fileName} için rapor notu oluşturuldu. Şimdilik dosya bize gönderilmiyor; dosya gönderme/inceleme altyapısını daha sonra açık izinli şekilde ekleyeceğiz.`;
+  toast(message);
+}
+
 async function resumeImport(importId) {
   const preview = await workoutRepository.getImportPreview(importId);
-  if (preview?.parserStatus === 'pending' && preview.normalizedDocument) { state.pendingImportId = importId; state.pendingNormalizedDocument = preview.normalizedDocument; fileImportView(); const status = document.querySelector('#importStatus'); status.innerHTML = `Aktarım yeniden başlatılmaya hazır.<br><button class="primary-btn" data-action="retry-openai">Tekrar dene</button><button class="secondary-btn" data-action="fallback-local">Basit okuyucu ile devam et</button>`; return; }
+  if (preview?.parserStatus === 'pending' && preview.normalizedDocument) { state.pendingImportId = importId; state.pendingNormalizedDocument = preview.normalizedDocument; fileImportView(); const status = document.querySelector('#importStatus'); status.innerHTML = `Aktarım yeniden başlatılmaya hazır.<div class="builder-actions"><button class="primary-btn" data-action="retry-openai">Tekrar Dene</button><button class="secondary-btn" data-action="report-import">Rapor Et</button></div>`; return; }
   return renderImportPreview(importId);
 }
 
@@ -1236,7 +1256,7 @@ app.addEventListener('click', async event => {
   if (action === 'new-program') return openBuilder(blankProgram());
   if (action === 'file-import') return fileImportView();
   if (action === 'retry-openai') return resumePendingImport('openai');
-  if (action === 'fallback-local') return resumePendingImport('local');
+  if (action === 'report-import') return reportImportIssue();
   if (action === 'finalize-import') {
     try { const ids = new Set((await loadExerciseDatabase()).map(item => item.id)); const result = await workoutRepository.finalizeImportAtomically(state.importId, preview => finalizeImport(preview, ids)); toast(result.existing ? 'Program zaten oluşturulmuştu' : 'Program oluşturuldu'); return openProgram(result.program.id); } catch (error) { console.error(error); return toast('Program oluşturulamadı: çözülmemiş kayıtları kontrol edin'); }
   }
