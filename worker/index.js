@@ -1,6 +1,7 @@
 import { handleAccountRequest } from './account-api.js';
 
 const OPENAI_URL = 'https://api.openai.com/v1/responses';
+const YOUTUBE_SEARCH_URL = 'https://www.googleapis.com/youtube/v3/search';
 
 export default {
   async fetch(request, env) {
@@ -10,13 +11,14 @@ export default {
     if (accountResponse) return accountResponse;
     if (url.pathname === '/api/health') return health(request, env);
     if (url.pathname === '/api/import/parse') return parseImport(request, env);
+    if (url.pathname === '/api/youtube/search') return searchYouTube(request, env, url);
     return env.ASSETS.fetch(request);
   }
 };
 
 async function health(request, env) {
   if (request.method !== 'GET') return apiError('METHOD_NOT_ALLOWED', 405, { Allow: 'GET' });
-  return json({ ok: true, service: 'a2-workout', aiImportConfigured: Boolean(env.OPENAI_API_KEY) });
+  return json({ ok: true, service: 'a2-workout', aiImportConfigured: Boolean(env.OPENAI_API_KEY), youtubeConfigured: Boolean(env.YOUTUBE_API_KEY) });
 }
 
 function runtimeConfig(request) {
@@ -48,6 +50,30 @@ async function parseImport(request, env) {
     const metadata = { requestId, model: config.model, attemptCount: error.attempts || 0, durationMs: Date.now() - started, status: code };
     console.warn(JSON.stringify(metadata));
     return json({ code, observability: metadata }, statusFor(code), { 'X-Import-Request-Id': requestId });
+  }
+}
+
+async function searchYouTube(request, env, url) {
+  if (request.method !== 'GET') return apiError('METHOD_NOT_ALLOWED', 405, { Allow: 'GET' });
+  const query = String(url.searchParams.get('q') || '').trim().slice(0, 120);
+  if (!env.YOUTUBE_API_KEY) return apiError('YOUTUBE_API_KEY_MISSING', 503);
+  if (!query) return apiError('YOUTUBE_QUERY_MISSING', 400);
+  try {
+    const endpoint = new URL(YOUTUBE_SEARCH_URL);
+    Object.entries({ key: env.YOUTUBE_API_KEY, q: query, part: 'snippet', type: 'video', videoEmbeddable: 'true', safeSearch: 'strict', maxResults: '5', relevanceLanguage: 'en' }).forEach(([key, value]) => endpoint.searchParams.set(key, value));
+    const response = await fetch(endpoint, { headers: { Referer: 'https://a2-workout.antrenmankocu.workers.dev/' } });
+    if (!response.ok) throw coded(`YOUTUBE_${response.status}`);
+    const payload = await response.json();
+    const videos = (payload.items || []).slice(0, 5).map(item => ({
+      videoId: item.id?.videoId || null,
+      title: item.snippet?.title || '',
+      channelTitle: item.snippet?.channelTitle || '',
+      thumbnailUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || ''
+    })).filter(item => item.videoId && item.thumbnailUrl);
+    return json({ query, videos });
+  } catch (error) {
+    console.warn(JSON.stringify({ status: error.code || 'YOUTUBE_REQUEST_FAILED' }));
+    return apiError(error.code || 'YOUTUBE_REQUEST_FAILED', 502);
   }
 }
 

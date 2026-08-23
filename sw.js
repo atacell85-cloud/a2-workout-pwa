@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v48-ai-import-youtube-fallback-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v49-youtube-worker-search-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=ai-import-youtube-fallback-v1',
+  './app.js?v=youtube-worker-search-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
