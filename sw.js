@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v51-exercise-name-video-2026-08-24';
+const CACHE_VERSION = 'a2-workout-v52-import-timeout-copy-2026-08-24';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=exercise-name-video-v1',
+  './app.js?v=import-timeout-copy-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
