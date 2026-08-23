@@ -1,0 +1,199 @@
+{
+  "program": "sample-workout",
+  "days": [
+    {
+      "name": "Upper Day",
+      "sections": [
+        {
+          "title": "Warmup",
+          "exercises": [
+            {
+              "sourceExerciseName": "Wall Slide",
+              "exerciseId": "wall-slide",
+              "matchStatus": "accepted-canonical",
+              "prescription": {
+                "sets": 2,
+                "setsText": null,
+                "repsMin": 10,
+                "repsMax": 10,
+                "repsText": "10",
+                "weight": null,
+                "weightUnit": null,
+                "weightText": null,
+                "rir": null,
+                "rirText": null,
+                "rpe": null,
+                "rpeText": null,
+                "restSeconds": null,
+                "restText": null,
+                "tempo": null,
+                "tempoText": null,
+                "durationSeconds": null,
+                "durationText": null,
+                "distance": null,
+                "distanceUnit": null,
+                "distanceText": null,
+                "individualSets": []
+              }
+            },
+            {
+              "sourceExerciseName": "Band External Rotation",
+              "exerciseId": "band-external-rotation",
+              "matchStatus": "accepted-canonical",
+              "prescription": {
+                "sets": 2,
+                "setsText": null,
+                "repsMin": 12,
+                "repsMax": 12,
+                "repsText": "12",
+                "weight": null,
+                "weightUnit": null,
+                "weightText": null,
+                "rir": null,
+                "rirText": null,
+                "rpe": null,
+                "rpeText": null,
+                "restSeconds": null,
+                "restText": null,
+                "tempo": null,
+                "tempoText": null,
+                "durationSeconds": null,
+                "durationText": null,
+                "distance": null,
+                "distanceUnit": null,
+                "distanceText": null,
+                "individualSets": []
+              }
+            }
+          ]
+        },
+        {
+          "title": "Main Workout",
+          "exercises": [
+            {
+              "sourceExerciseName": "Machine Fly",
+              "exerciseId": "machine-chest-fly",
+              "matchStatus": "accepted-canonical",
+              "prescription": {
+                "sets": 3,
+                "setsText": null,
+                "repsMin": 12,
+                "repsMax": 12,
+                "repsText": "12",
+                "weight": null,
+                "weightUnit": null,
+                "weightText": null,
+                "rir": null,
+                "rirText": null,
+                "rpe": null,
+                "rpeText": null,
+                "restSeconds": null,
+                "restText": null,
+                "tempo": null,
+                "tempoText": null,
+                "durationSeconds": null,
+                "durationText": null,
+                "distance": null,
+                "distanceUnit": null,
+                "distanceText": null,
+                "individualSets": []
+              }
+            },
+            {
+              "sourceExerciseName": "Incline Smith Press",
+              "exerciseId": "incline-smith-machine-press",
+              "matchStatus": "accepted-canonical",
+              "prescription": {
+                "sets": null,
+                "setsText": "2 warmup + 2",
+                "repsMin": 8,
+                "repsMax": 10,
+                "repsText": "8-10",
+                "weight": null,
+                "weightUnit": null,
+                "weightText": null,
+                "rir": null,
+                "rirText": null,
+                "rpe": null,
+                "rpeText": null,
+                "restSeconds": null,
+                "restText": null,
+                "tempo": null,
+                "tempoText": null,
+                "durationSeconds": null,
+                "durationText": null,
+                "distance": null,
+                "distanceUnit": null,
+                "distanceText": null,
+                "individualSets": []
+              }
+            },
+            {
+              "sourceExerciseName": "Lat Pulldown",
+              "exerciseId": "lat-pulldown",
+              "matchStatus": "accepted-canonical",
+              "prescription": {
+                "sets": 3,
+                "setsText": null,
+                "repsMin": 10,
+                "repsMax": 10,
+                "repsText": "10",
+                "weight": null,
+                "weightUnit": null,
+                "weightText": null,
+                "rir": 2,
+                "rirText": null,
+                "rpe": null,
+                "rpeText": null,
+                "restSeconds": 120,
+                "restText": null,
+                "tempo": null,
+                "tempoText": null,
+                "durationSeconds": null,
+                "durationText": null,
+                "distance": null,
+                "distanceUnit": null,
+                "distanceText": null,
+                "individualSets": []
+              }
+            }
+          ]
+        },
+        {
+          "title": "Core",
+          "exercises": [
+            {
+              "sourceExerciseName": "Cable Crunch",
+              "exerciseId": "cable-crunch",
+              "matchStatus": "accepted-canonical",
+              "prescription": {
+                "sets": 3,
+                "setsText": null,
+                "repsMin": 12,
+                "repsMax": 12,
+                "repsText": "12",
+                "weight": null,
+                "weightUnit": null,
+                "weightText": null,
+                "rir": null,
+                "rirText": null,
+                "rpe": null,
+                "rpeText": null,
+                "restSeconds": null,
+                "restText": null,
+                "tempo": null,
+                "tempoText": null,
+                "durationSeconds": null,
+                "durationText": null,
+                "distance": null,
+                "distanceUnit": null,
+                "distanceText": null,
+                "individualSets": []
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

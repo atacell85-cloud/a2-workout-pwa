@@ -1,0 +1,24 @@
+{
+  "fileType": "xlsx",
+  "sheets": [
+    "Program",
+    "Upper"
+  ],
+  "ranges": {
+    "Program": "A1:A4",
+    "Upper": "A1:D10"
+  },
+  "rows": [
+    [
+      "Lat Pulldown",
+      "3",
+      "10",
+      "RIR 2; Rest 120 sec"
+    ],
+    [
+      "Incline Smith Press",
+      "2 warmup + 2",
+      "8-10"
+    ]
+  ]
+}

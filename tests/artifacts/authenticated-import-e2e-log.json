@@ -1,0 +1,75 @@
+[
+  {
+    "step": "STEP 01 browser_started",
+    "timestamp": "2026-08-23T08:43:12.499Z",
+    "elapsedMs": 7174,
+    "status": "ok"
+  },
+  {
+    "step": "STEP 02 public_url_loaded",
+    "timestamp": "2026-08-23T08:43:12.943Z",
+    "elapsedMs": 7617,
+    "status": "ok"
+  },
+  {
+    "step": "STEP 03 authenticated",
+    "timestamp": "2026-08-23T08:43:16.166Z",
+    "elapsedMs": 10840,
+    "status": "ok"
+  },
+  {
+    "step": "STEP 04 file_input_set",
+    "timestamp": "2026-08-23T08:43:16.185Z",
+    "elapsedMs": 10859,
+    "status": "ok"
+  },
+  {
+    "step": "STEP 05 extraction_started",
+    "timestamp": "2026-08-23T08:43:16.185Z",
+    "elapsedMs": 10859,
+    "status": "ok"
+  },
+  {
+    "step": "STEP 06 extraction_completed",
+    "timestamp": "2026-08-23T08:43:16.354Z",
+    "elapsedMs": 11028,
+    "status": "ok"
+  },
+  {
+    "step": "STEP 07 openai_request_started",
+    "timestamp": "2026-08-23T08:43:16.357Z",
+    "elapsedMs": 11031,
+    "status": "ok"
+  },
+  {
+    "step": "STEP 08 openai_response_received",
+    "timestamp": "2026-08-23T08:43:16.359Z",
+    "elapsedMs": 11033,
+    "status": "ok"
+  },
+  {
+    "step": "STEP 09 parser_result_stored",
+    "timestamp": "2026-08-23T08:43:16.361Z",
+    "elapsedMs": 11035,
+    "status": "ok"
+  },
+  {
+    "step": "STEP 10 preview_route_opened",
+    "timestamp": "2026-08-23T08:43:16.363Z",
+    "elapsedMs": 11037,
+    "status": "ok"
+  },
+  {
+    "step": "STEP 11 preview_rendered",
+    "timestamp": "2026-08-23T08:43:16.363Z",
+    "elapsedMs": 11037,
+    "status": "ok"
+  },
+  {
+    "step": "STEP 11 preview_rendered",
+    "timestamp": "2026-08-23T08:43:28.337Z",
+    "elapsedMs": 23011,
+    "status": "failed",
+    "detail": "logout timed out"
+  }
+]

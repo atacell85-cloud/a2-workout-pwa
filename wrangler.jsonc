@@ -1,0 +1,37 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "a2-workout",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-08-15",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./.cloudflare-assets",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/runtime-config.js"]
+  },
+  "vars": {
+    "OPENAI_IMPORT_MODEL": "gpt-4.1-mini",
+    "OPENAI_IMPORT_TIMEOUT_MS": "45000",
+    "OPENAI_IMPORT_MAX_RETRIES": "1",
+    "OPENAI_IMPORT_RETRY_BASE_MS": "750",
+    "OPENAI_IMPORT_MAX_INPUT_BYTES": "180000"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "a2-workout-pilot",
+      "database_id": "0176e2d5-d306-4e4b-beda-4e63f27294fb",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "AI_IMPORT_LIMITER",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 4,
+        "period": 60
+      }
+    }
+  ]
+}

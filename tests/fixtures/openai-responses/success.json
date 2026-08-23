@@ -1,0 +1,6 @@
+{
+  "id": "resp_fixture_123",
+  "model": "gpt-4.1-mini",
+  "output": [{ "type": "message", "content": [{ "type": "output_text", "text": "{\"schemaVersion\":\"1.1\",\"importId\":\"fixture\",\"importedAt\":\"2026-01-01T00:00:00.000Z\",\"source\":{},\"program\":{\"name\":\"Fixture Workout\",\"days\":[]},\"warnings\":[],\"unparsedContent\":[]}" }] }],
+  "usage": { "input_tokens": 10, "output_tokens": 20, "total_tokens": 30 }
+}

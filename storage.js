@@ -1,6 +1,6 @@
-import { findExercise } from './data/programs.js';
+import { findExercise } from './data/public-programs.js';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 5;
 const DB_NAME = 'a2-workout-db';
 const DB_VERSION = 1;
 const LEGACY_STORE_KEY = 'a2WorkoutData.v1';
@@ -8,18 +8,29 @@ const LEGACY_DRAFT_KEY = 'a2WorkoutDraft.v1';
 const FALLBACK_KEY = 'a2WorkoutData.v2.fallback';
 
 let dbPromise;
+let activeAccountId = null;
+let syncHandler = null;
 
 export const workoutRepository = {
+  async setActiveAccount(userId) { activeAccountId = userId || null; },
+  getActiveAccount() { return activeAccountId; },
+  setSyncHandler(handler) { syncHandler = handler || null; },
+  async getSyncMetadata() { return (await readData()).syncMetadata; },
+  async markSyncSucceeded() { const data = await readData(); data.syncMetadata = { ...data.syncMetadata, dirty: false, lastSuccessAt: new Date().toISOString(), lastError: null }; await writeData(data, false); },
+  async markSyncFailed(error) { const data = await readData(); data.syncMetadata = { ...data.syncMetadata, dirty: true, lastAttemptAt: new Date().toISOString(), lastError: String(error?.code || 'SYNC_FAILED') }; await writeData(data, false); },
+  async getLegacyDeviceData() { return normalizeData(await storageGet('appData')); },
+  async hasLegacyDeviceData() { const data = await this.getLegacyDeviceData(); return Boolean(data.sessions.length || data.programs.length || data.draft || data.programBuilderDraft || Object.keys(data.importPreviews).length); },
+  async importLegacyDeviceData() {
+    if (!activeAccountId) throw new Error('AUTH_REQUIRED');
+    const legacy = await this.getLegacyDeviceData(); const account = await readData();
+    const mergeById = (current, incoming) => [...current, ...incoming.filter(item => item?.id && !current.some(existing => existing.id === item.id))];
+    const merged = { ...account, programs: mergeById(account.programs, legacy.programs), sessions: mergeById(account.sessions, legacy.sessions), settings: { ...legacy.settings, ...account.settings }, importHistory: mergeById(account.importHistory, legacy.importHistory) };
+    await writeData(merged); return merged;
+  },
   async init() {
-    const data = await readData();
-    if (!data.migratedFromV1) {
-      const legacy = readLegacy();
-      if (legacy) {
-        const merged = migrateLegacy(legacy, data);
-        merged.migratedFromV1 = true;
-        await writeData(merged);
-      }
-    }
+    // Legacy data remains on-device until its owner explicitly imports it.
+    // Never attach old device data to whichever account happens to sign in.
+    await readData();
   },
 
   async getData() {
@@ -28,7 +39,7 @@ export const workoutRepository = {
 
   async replaceData(candidate) {
     const normalized = normalizeData(candidate);
-    await writeData(normalized);
+    await writeData(normalized, false);
     return normalized;
   },
 
@@ -60,9 +71,7 @@ export const workoutRepository = {
 
   async getDraft() {
     const data = await readData();
-    if (data.draft) return data.draft;
-    const legacyDraft = readLegacyDraft();
-    return legacyDraft ? migrateDraft(legacyDraft) : null;
+    return data.draft;
   },
 
   async saveDraft(draft) {
@@ -78,6 +87,43 @@ export const workoutRepository = {
     localStorage.removeItem(LEGACY_DRAFT_KEY);
   },
 
+  async getPrograms() { return (await readData()).programs; },
+
+  async getProgram(programId) { return (await readData()).programs.find(program => program.id === programId) || null; },
+
+  async saveProgram(program) {
+    const data = await readData();
+    const index = data.programs.findIndex(item => item.id === program.id);
+    if (index >= 0) data.programs[index] = program; else data.programs.push(program);
+    await writeData(data);
+    return program;
+  },
+
+  async saveProgramBuilderDraft(draft) { const data = await readData(); data.programBuilderDraft = draft; await writeData(data); },
+  async getProgramBuilderDraft() { return (await readData()).programBuilderDraft; },
+  async clearProgramBuilderDraft() { const data = await readData(); data.programBuilderDraft = null; await writeData(data); },
+
+  async saveImportPreview(preview) { const data = await readData(); data.importPreviews[preview.importId] = preview; await writeData(data); },
+  async getImportPreview(importId) { return (await readData()).importPreviews[importId] || null; },
+
+  async finalizeImportAtomically(importId, factory) {
+    const data = await readData();
+    if (data.finalizations[importId]) return { program: data.programs.find(item => item.id === data.finalizations[importId]) || null, existing: true };
+    const preview = data.importPreviews[importId];
+    if (!preview) throw Object.assign(new Error('INVALID_IMPORT_SCHEMA'), { code: 'INVALID_IMPORT_SCHEMA' });
+    const program = factory(preview);
+    data.programs.push(program);
+    data.finalizations[importId] = program.id;
+    data.importHistory.push({ importId, finalProgramId: program.id, finalizedAt: new Date().toISOString(), source: preview.source, warnings: preview.warnings || [], dismissedContent: (preview.unparsedContent || []).filter(item => item.resolutionStatus === 'dismissed') });
+    delete data.importPreviews[importId];
+    data.programBuilderDraft = null;
+    await writeData(data);
+    return { program, existing: false };
+  },
+
+  async getYoutubeCache(exerciseId, query) { return (await readData()).youtubeSearchCache[`youtube-search:${exerciseId}:${normalizeQuery(query)}`] || null; },
+  async saveYoutubeCache(entry) { const data = await readData(); data.youtubeSearchCache[`youtube-search:${entry.exerciseId}:${normalizeQuery(entry.query)}`] = entry; await writeData(data); },
+
   async exportBackup() {
     const data = await readData();
     return {
@@ -88,7 +134,7 @@ export const workoutRepository = {
         name: 'A2 Antrenman Takip',
         version: '1.0.0'
       },
-      programs: [{ id: 'a2', name: 'A2 Antrenman' }],
+      programs: data.programs,
       settings: data.settings,
       sessions: data.sessions
     };
@@ -100,13 +146,20 @@ export const workoutRepository = {
 };
 
 async function readData() {
-  const stored = await storageGet('appData');
+  const stored = activeAccountId ? await storageGet(accountKey()) : null;
   return normalizeData(stored);
 }
 
-async function writeData(data) {
-  await storageSet('appData', normalizeData(data));
+async function writeData(data, markDirty = true) {
+  if (!activeAccountId) throw new Error('AUTH_REQUIRED');
+  const normalized = normalizeData(data);
+  if (markDirty) normalized.syncMetadata = { ...normalized.syncMetadata, accountId: activeAccountId, dirty: true, dirtySince: normalized.syncMetadata.dirtySince || new Date().toISOString(), lastAttemptAt: null, localRevision: Number(normalized.syncMetadata.localRevision || 0) + 1 };
+  normalized.syncUpdatedAt = new Date().toISOString();
+  await storageSet(accountKey(), normalized);
+  if (markDirty) syncHandler?.(normalized).catch(() => {});
 }
+
+function accountKey() { return `account:${activeAccountId}:appData`; }
 
 function defaultData() {
   return {
@@ -114,7 +167,15 @@ function defaultData() {
     migratedFromV1: false,
     settings: { rest: 90 },
     sessions: [],
-    draft: null
+    draft: null,
+    programs: [],
+    programBuilderDraft: null,
+    importPreviews: {},
+    importHistory: [],
+    youtubeSearchCache: {},
+    finalizations: {},
+    syncMetadata: { accountId: null, dirty: false, dirtySince: null, lastAttemptAt: null, lastSuccessAt: null, lastError: null, localRevision: 0 }
+    ,syncUpdatedAt: null
   };
 }
 
@@ -124,9 +185,17 @@ function normalizeData(candidate) {
   return {
     schemaVersion: SCHEMA_VERSION,
     migratedFromV1: Boolean(source.migratedFromV1 || nested.migratedFromV1),
-    settings: { rest: Number(nested.settings?.rest || source.settings?.rest) || 90 },
+    settings: { ...(nested.settings || source.settings || {}), rest: Number(nested.settings?.rest || source.settings?.rest) || 90 },
     sessions: Array.isArray(nested.sessions) ? nested.sessions.map(normalizeSession).filter(Boolean) : [],
-    draft: nested.draft ? normalizeDraft(nested.draft) : null
+    draft: nested.draft ? normalizeDraft(nested.draft) : null,
+    programs: Array.isArray(nested.programs) ? nested.programs.filter(item => item?.schemaVersion === '1.0' && item.id) : [],
+    programBuilderDraft: nested.programBuilderDraft && typeof nested.programBuilderDraft === 'object' ? nested.programBuilderDraft : null,
+    importPreviews: nested.importPreviews && typeof nested.importPreviews === 'object' ? nested.importPreviews : {},
+    importHistory: Array.isArray(nested.importHistory) ? nested.importHistory : [],
+    youtubeSearchCache: nested.youtubeSearchCache && typeof nested.youtubeSearchCache === 'object' ? nested.youtubeSearchCache : {},
+    finalizations: nested.finalizations && typeof nested.finalizations === 'object' ? nested.finalizations : {},
+    syncMetadata: { accountId: nested.syncMetadata?.accountId || null, dirty: Boolean(nested.syncMetadata?.dirty), dirtySince: nested.syncMetadata?.dirtySince || null, lastAttemptAt: nested.syncMetadata?.lastAttemptAt || null, lastSuccessAt: nested.syncMetadata?.lastSuccessAt || null, lastError: nested.syncMetadata?.lastError || null, localRevision: Number(nested.syncMetadata?.localRevision || 0) }
+    ,syncUpdatedAt: nested.syncUpdatedAt || null
   };
 }
 
@@ -327,3 +396,5 @@ function transactionDone(tx) {
 function uid() {
   return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
+
+function normalizeQuery(value) { return String(value || '').trim().toLocaleLowerCase('en-US').replace(/\s+/g, ' '); }

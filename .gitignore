@@ -18,3 +18,7 @@ coverage/
 # Local environment
 .env
 .env.*
+.dev.vars
+.dev.vars.*
+.wrangler/
+.cloudflare-assets/

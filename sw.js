@@ -1,11 +1,22 @@
-const CACHE_VERSION = 'a2-workout-v3-2026-08-09';
+const CACHE_VERSION = 'a2-workout-v11-onboarding-2026-08-16';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './app.js',
+  './app.js?v=onboarding-v1',
   './storage.js',
-  './data/programs.js',
+  './exercise-service.js',
+  './program-service.js',
+  './import-service.js',
+  './document-extractor.js',
+  './local-import-parser.js',
+  './import-provider.js',
+  './openai-import-parser.js',
+  './auth-service.js',
+  './sync-service.js',
+  './youtube-service.js',
+  './data/public-programs.js',
+  './data/exercises.v1.json',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png'
@@ -25,6 +36,7 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+  if (new URL(event.request.url).pathname.startsWith('/api/') || new URL(event.request.url).pathname === '/runtime-config.js') return;
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
