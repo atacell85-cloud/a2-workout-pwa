@@ -173,7 +173,7 @@ async function searchYouTube(request, env, url) {
   if (!query) return apiError('YOUTUBE_QUERY_MISSING', 400);
   try {
     const endpoint = new URL(YOUTUBE_SEARCH_URL);
-    Object.entries({ key: env.YOUTUBE_API_KEY, q: query, part: 'snippet', type: 'video', videoEmbeddable: 'true', safeSearch: 'strict', maxResults: '5', relevanceLanguage: 'en' }).forEach(([key, value]) => endpoint.searchParams.set(key, value));
+    Object.entries({ key: env.YOUTUBE_API_KEY, q: query, part: 'snippet', type: 'video', videoEmbeddable: 'true', safeSearch: 'strict', maxResults: '5', relevanceLanguage: 'tr' }).forEach(([key, value]) => endpoint.searchParams.set(key, value));
     const response = await fetch(endpoint, { headers: { Referer: 'https://a2-workout.antrenmankocu.workers.dev/' } });
     if (!response.ok) throw coded(`YOUTUBE_${response.status}`);
     const payload = await response.json();

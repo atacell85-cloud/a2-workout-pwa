@@ -6,7 +6,7 @@ export function createYouTubeSearchService(repository, { apiKey = globalThis.A2_
       const name = String(exercise?.nameEn || exercise?.nameTr || exercise?.name || exercise?.customExerciseName || '').trim();
       if (!name) return { status: 'unavailable', message: 'Bu hareket için video aranamaz.' };
       const exerciseId = exercise?.id || `custom:${name.toLowerCase().replace(/\s+/g, '-')}`;
-      const query = `${name} exercise proper form`;
+      const query = `${name} egzersiz nasıl yapılır doğru form`;
       const searchFallback = { status: 'search', query, url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}` };
       const cached = await repository.getYoutubeCache(exerciseId, query);
       if (cached && new Date(cached.expiresAt) > new Date()) return { status: 'ok', cached: true, ...cached };
@@ -25,7 +25,7 @@ export function createYouTubeSearchService(repository, { apiKey = globalThis.A2_
       }
       try {
         const url = new URL('https://www.googleapis.com/youtube/v3/search');
-        Object.entries({ key: apiKey, q: query, part: 'snippet', type: 'video', videoEmbeddable: 'true', safeSearch: 'strict', maxResults: '5', relevanceLanguage: 'en' }).forEach(([key, value]) => url.searchParams.set(key, value));
+        Object.entries({ key: apiKey, q: query, part: 'snippet', type: 'video', videoEmbeddable: 'true', safeSearch: 'strict', maxResults: '5', relevanceLanguage: 'tr' }).forEach(([key, value]) => url.searchParams.set(key, value));
         const response = await fetch(url);
         if (!response.ok) throw new Error(`YOUTUBE_${response.status}`);
         const payload = await response.json();
