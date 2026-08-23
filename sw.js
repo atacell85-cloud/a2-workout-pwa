@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v42-conditional-prescription-summary-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v43-prefill-planned-workout-values-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=conditional-prescription-summary-v1',
+  './app.js?v=prefill-planned-workout-values-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',

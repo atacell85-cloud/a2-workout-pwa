@@ -515,11 +515,15 @@ function exerciseCard(exercise, sectionType, images = new Map()) {
 }
 
 function setRow(exercise, setNumber, set) {
+  const planned = exercise.planned || {};
+  const weight = set?.weight ?? planned.weight ?? '';
+  const reps = set?.reps ?? planned.reps ?? '';
+  const rir = set?.rir ?? planned.rir ?? '';
   return `<div class="set-row ${set ? 'saved' : ''}">
     <div class="set-n">${setNumber}</div>
-    <input inputmode="decimal" autocomplete="off" pattern="[0-9]*[.,]?[0-9]*" placeholder="kg" id="kg-${exercise.id}-${setNumber}" value="${escapeHtml(set?.weight ?? '')}">
-    <input inputmode="numeric" autocomplete="off" pattern="[0-9]*" placeholder="tekrar" id="rp-${exercise.id}-${setNumber}" value="${escapeHtml(set?.reps ?? '')}">
-    <input inputmode="numeric" autocomplete="off" pattern="[0-9]*" placeholder="RIR" id="ri-${exercise.id}-${setNumber}" value="${escapeHtml(set?.rir ?? '')}">
+    <input inputmode="decimal" autocomplete="off" pattern="[0-9]*[.,]?[0-9]*" placeholder="kg" id="kg-${exercise.id}-${setNumber}" value="${escapeHtml(weight)}">
+    <input inputmode="numeric" autocomplete="off" pattern="[0-9]*" placeholder="tekrar" id="rp-${exercise.id}-${setNumber}" value="${escapeHtml(reps)}">
+    <input inputmode="numeric" autocomplete="off" pattern="[0-9]*" placeholder="RIR" id="ri-${exercise.id}-${setNumber}" value="${escapeHtml(rir)}">
     <div class="set-actions">
       <button class="save-set" data-save-set="${exercise.id}:${setNumber}" aria-label="Set kaydet">${set ? '↻' : '✓'}</button>
       ${set ? `<button class="delete-set" data-delete-set="${exercise.id}:${setNumber}" aria-label="Set sil">×</button>` : ''}

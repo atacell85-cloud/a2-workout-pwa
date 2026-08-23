@@ -87,7 +87,12 @@ export function permanentDayToLegacy(day, exerciseNames = new Map()) {
       exercises: section.items.filter(item => item.itemType === 'exercise').map(item => ({
         id: item.id, canonicalExerciseId: item.exerciseId, name: exerciseNames.get(item.exerciseId) || item.customExerciseName || item.exerciseId,
         setType: item.individualSets?.[0]?.setType || (section.sectionType === 'warmup' ? 'warmup' : section.sectionType === 'core' ? 'core' : 'working'),
-        prescription: { text: prescriptionText(item), plannedSets: item.individualSets?.length || item.sets || 1 }
+        prescription: { text: prescriptionText(item), plannedSets: item.individualSets?.length || item.sets || 1 },
+        planned: {
+          weight: item.weightText || item.weight || '',
+          reps: item.repsText || (item.repsMin != null ? `${item.repsMin}${item.repsMax != null && item.repsMax !== item.repsMin ? `-${item.repsMax}` : ''}` : ''),
+          rir: item.rirText || item.rir || ''
+        }
       }))
     }))
   };
