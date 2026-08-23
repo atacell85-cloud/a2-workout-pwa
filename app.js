@@ -104,18 +104,13 @@ function lastSessionSummary(session) {
 async function workoutHomeView() {
   state.view = 'workout-home'; state.workout = null; state.executionDay = null; title.textContent = 'Antrenman';
   const draft = await workoutRepository.getDraft();
-  const programs = await workoutRepository.getPrograms();
   const draftDay = draft ? await hydrateExecutionDay(draft) : null;
   app.innerHTML = `
     <section class="workout-home">
-      ${draft ? `<button class="start-workout-btn active-draft" data-action="resume"><span>↻</span><b>${escapeHtml(draftDay?.label || 'Devam eden antrenman')}</b></button>` : '<button class="start-workout-btn" data-action="empty-workout"><span>＋</span><b>Boş Antrenmana Başla</b></button>'}
-      <h2>Rutinler</h2>
-      <div class="routine-actions">
-        <button data-action="new-program"><span>▤</span><b>Yeni Rutin</b></button>
-        <button data-action="programs-list"><span>⌕</span><b>Rutinleri Keşfet</b></button>
-      </div>
-      ${programs.length ? `<section class="routine-list"><h3>Programların</h3>${programs.slice(0, 3).map(program => `<article class="program-card"><div><b>${escapeHtml(program.name)}</b><span>${program.days.length} gün</span></div><button class="primary-btn small-btn" data-open-program="${program.id}">Aç</button></article>`).join('')}</section>` : ''}
-      <button class="help-start-card" data-action="file-import"><span>Nasıl başlarım</span><b>→</b></button>
+      ${draft ? `<button class="routine-row active-draft" data-action="resume"><span>${escapeHtml(draftDay?.label || 'Devam eden antrenman')}</span><b>Devam Et</b></button>` : ''}
+      <button class="routine-row" data-action="programs-list"><span>Rutinlerim</span><b>→</b></button>
+      <button class="routine-row" data-action="new-program"><span>Yeni Rutin</span><b>→</b></button>
+      <button class="routine-row" data-action="file-import"><span>Rutinleri Keşfet</span><b>→</b></button>
     </section>`;
   nav('programs');
 }

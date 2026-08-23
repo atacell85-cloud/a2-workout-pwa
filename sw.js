@@ -1,9 +1,9 @@
-const CACHE_VERSION = 'a2-workout-v26-floating-nav-white-zone-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v27-simple-routines-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './app.js?v=floating-nav-white-zone-v1',
+  './app.js?v=simple-routines-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',

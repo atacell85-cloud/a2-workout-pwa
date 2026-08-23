@@ -122,99 +122,39 @@ main {
 
 .workout-home {
   min-height: calc(100dvh - 156px - 108px);
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  align-content: start;
+  gap: 12px;
 }
 
-.start-workout-btn {
+.routine-row {
   width: 100%;
-  min-height: 64px;
+  min-height: 72px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: space-between;
+  gap: 12px;
   border: 0;
   border-radius: 12px;
   background: #f1f3f7;
   color: var(--ink);
-  padding: 14px 22px;
+  padding: 18px 22px;
   text-align: left;
 }
 
-.start-workout-btn span {
-  font-size: 32px;
-  font-weight: 300;
-  line-height: 1;
-}
-
-.start-workout-btn b {
+.routine-row span {
   font-size: 22px;
+  font-weight: 850;
 }
 
-.start-workout-btn.active-draft {
+.routine-row b {
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.routine-row.active-draft {
   background: #101828;
   color: #fff;
-}
-
-.workout-home h2 {
-  margin: 28px 0 22px;
-  font-size: 28px;
-}
-
-.routine-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 22px;
-}
-
-.routine-actions button {
-  min-height: 126px;
-  display: grid;
-  place-items: center;
-  gap: 10px;
-  border: 0;
-  border-radius: 12px;
-  background: #f1f3f7;
-  color: var(--ink);
-  padding: 18px;
-}
-
-.routine-actions span {
-  font-size: 34px;
-  line-height: 1;
-}
-
-.routine-actions b {
-  font-size: 23px;
-  line-height: 1.12;
-}
-
-.routine-list {
-  margin-top: 22px;
-}
-
-.routine-list h3 {
-  margin: 0 0 8px;
-}
-
-.help-start-card {
-  width: 100%;
-  min-height: 80px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: auto;
-  border: 0;
-  border-radius: 12px;
-  background: #eef7ff;
-  color: var(--ink);
-  padding: 20px 22px;
-  font-size: 23px;
-  text-align: left;
-}
-
-.help-start-card b {
-  font-size: 34px;
-  font-weight: 400;
 }
 
 .day-grid {

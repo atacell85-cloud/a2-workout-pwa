@@ -147,6 +147,8 @@ async function scenario() {
   await window.__a2.repository.saveProgram(smokeProgram);
   click('[data-nav="programs"]');
   await sleep(150);
+  click('[data-action="programs-list"]');
+  await sleep(150);
   click('[data-open-program]');
   await sleep(150);
   click('[data-start-program-day]');
@@ -171,6 +173,8 @@ async function scenario() {
   const historyVisible = text().includes('Incline Smith') && text().includes('Lat Pulldown');
 
   click('[data-nav="programs"]');
+  await sleep(150);
+  click('[data-action="programs-list"]');
   await sleep(150);
   click('[data-open-program]');
   await sleep(150);
