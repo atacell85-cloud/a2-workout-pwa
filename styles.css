@@ -603,7 +603,7 @@ th, td {
   font-weight: 850;
   color: var(--muted);
   background: transparent;
-  transform: translateY(-3px);
+  transform: translateY(-6px);
 }
 
 .nav-btn.active {
