@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v45-profile-settings-inline-rest-timer-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v46-persistent-rest-timer-notifications-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=profile-settings-inline-rest-timer-v1',
+  './app.js?v=persistent-rest-timer-notifications-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
@@ -48,6 +48,19 @@ self.addEventListener('fetch', event => {
         }
         return response;
       });
+    })
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus();
+      }
+      if (clients.openWindow) return clients.openWindow('./');
+      return null;
     })
   );
 });

@@ -268,7 +268,13 @@ function normalizeDraft(draft) {
     startedAt: draft.startedAt || new Date().toISOString(),
     status: 'active',
     completedActivities: draft.completedActivities || {},
-    sets: draft.sets || {}
+    sets: draft.sets || {},
+    timer: draft.timer && typeof draft.timer === 'object' ? {
+      exerciseId: draft.timer.exerciseId || null,
+      endsAt: draft.timer.endsAt || null,
+      durationSeconds: Number(draft.timer.durationSeconds) || null,
+      notified: Boolean(draft.timer.notified)
+    } : null
   };
 }
 

@@ -13,7 +13,7 @@ import { createSyncService } from './sync-service.js';
 
 const app = document.querySelector('#app');
 const title = document.querySelector('#pageTitle');
-let state = { view: 'home', workout: null, timer: null, timerLeft: 0, timerExerciseId: null, executionDay: null, executionExercises: new Map(), builder: null, picker: null, video: null, user: null, syncStatus: 'saved', installPrompt: null, onboarding: null, authMode: 'login', authBusy: false };
+let state = { view: 'home', workout: null, timer: null, timerEndsAt: null, timerExerciseId: null, timerNotified: false, executionDay: null, executionExercises: new Map(), builder: null, picker: null, video: null, user: null, syncStatus: 'saved', installPrompt: null, onboarding: null, authMode: 'login', authBusy: false };
 const youtube = createYouTubeSearchService(workoutRepository);
 const sync = createSyncService(workoutRepository, status => { state.syncStatus = status; const indicator = document.querySelector('#syncStatus'); if (indicator) indicator.textContent = syncLabel(status); });
 
@@ -217,6 +217,7 @@ async function accountView() {
   const profile = settings.profile || {};
   const displayName = profile.displayName || state.user?.email?.split('@')[0] || 'Profil';
   const avatar = profile.avatarDataUrl ? `<img src="${escapeHtml(profile.avatarDataUrl)}" alt="">` : `<span>${escapeHtml(displayName.slice(0, 1).toLocaleUpperCase('tr-TR'))}</span>`;
+  const notificationControls = notificationSettingsHtml();
   app.innerHTML = `<section class="summary-card profile-card">
     <label class="profile-avatar">${avatar}<input type="file" id="profileAvatarInput" accept="image/*"></label>
     <div class="profile-info"><input id="displayNameSetting" value="${escapeHtml(profile.displayName || '')}" placeholder="Kullanıcı adı"><p class="small muted">${escapeHtml(state.user?.email || '')}</p><p id="syncStatus" class="muted">${syncLabel(state.syncStatus)}</p></div>
@@ -225,6 +226,7 @@ async function accountView() {
     <h3>Ayarlar</h3>
     <label class="setting-row">Varsayılan dinlenme <input id="restSetting" inputmode="numeric" type="number" min="15" step="5" value="${settings.rest || 90}"><span>saniye</span></label>
     <label class="setting-row">Ağırlık birimi <select id="weightUnitSetting"><option value="kg" ${settings.weightUnit !== 'lb' ? 'selected' : ''}>kg</option><option value="lb" ${settings.weightUnit === 'lb' ? 'selected' : ''}>lbs</option></select></label>
+    ${notificationControls}
     <button class="secondary-btn full" data-action="save-settings">Kaydet</button>
   </section>
   <section class="summary-card">
@@ -235,6 +237,20 @@ async function accountView() {
     <button class="secondary-btn full" data-action="logout">Çıkış Yap</button>
     <button class="danger-btn full" data-action="delete-account">Hesabımı Sil</button>
   </section>`;
+}
+
+function notificationSettingsHtml() {
+  if (!('Notification' in window)) return '<p class="small muted">Bu cihazda dinlenme bildirimi desteklenmiyor.</p>';
+  if (Notification.permission === 'granted') return '<p class="small muted">Dinlenme bildirimleri açık.</p>';
+  if (Notification.permission === 'denied') return '<p class="small muted">Bildirim izni kapalı. Açmak için tarayıcı/site ayarlarını kullanman gerekiyor.</p>';
+  return '<button class="secondary-btn full" data-action="enable-notifications">Dinlenme bildirimlerini aç</button>';
+}
+
+async function enableNotifications() {
+  if (!('Notification' in window)) return toast('Bu cihaz bildirim desteklemiyor');
+  const permission = await Notification.requestPermission();
+  toast(permission === 'granted' ? 'Dinlenme bildirimleri açıldı' : 'Bildirim izni verilmedi');
+  await accountView();
 }
 
 async function exercisesView(query = '') {
@@ -484,6 +500,9 @@ async function renderWorkout() {
   const images = await exerciseImageMap();
   const settings = await workoutRepository.getSettings();
   const counts = workoutCounts(workout);
+  syncTimerFromWorkout();
+  startTimerInterval();
+  if (state.timerEndsAt && timerSecondsLeft() <= 0) setTimeout(checkTimer, 0);
   title.textContent = day.label;
   app.innerHTML = `
     <section class="summary-card">
@@ -500,9 +519,10 @@ async function renderWorkout() {
 }
 
 function timerHtml(exerciseId) {
-  if (state.timerLeft <= 0 || state.timerExerciseId !== exerciseId) return '';
+  const left = timerSecondsLeft();
+  if (left <= 0 || state.timerExerciseId !== exerciseId) return '';
   return `<div class="timer" aria-live="polite">
-    <span>Dinlenme</span><strong id="timerText">${fmt(state.timerLeft)}</strong>
+    <span>Dinlenme</span><strong id="timerText">${fmt(left)}</strong>
     <div><button data-action="timer-reset">Sıfırla</button><button data-action="timer-stop">Atla</button></div>
   </div>`;
 }
@@ -668,22 +688,73 @@ function plannedRestSeconds(exercise) {
   return Math.round(value);
 }
 
+function timerSecondsLeft() {
+  if (!state.timerEndsAt) return 0;
+  const endTime = new Date(state.timerEndsAt).getTime();
+  if (!Number.isFinite(endTime)) return 0;
+  return Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+}
+
+function syncTimerFromWorkout() {
+  const timer = state.workout?.timer;
+  if (!timer?.endsAt) {
+    clearTimerInterval();
+    state.timerEndsAt = null;
+    state.timerExerciseId = null;
+    state.timerNotified = false;
+    return;
+  }
+  state.timerExerciseId = timer.exerciseId;
+  state.timerEndsAt = timer.endsAt;
+  state.timerNotified = Boolean(timer.notified);
+}
+
+function clearTimerInterval() {
+  if (state.timer) clearInterval(state.timer);
+  state.timer = null;
+}
+
+function startTimerInterval() {
+  clearTimerInterval();
+  if (!state.timerEndsAt || timerSecondsLeft() <= 0) return;
+  state.timer = setInterval(checkTimer, 1000);
+}
+
+async function notifyRestComplete() {
+  if (state.timerNotified) return;
+  state.timerNotified = true;
+  if (state.workout?.timer) {
+    state.workout.timer.notified = true;
+    await workoutRepository.saveDraft(state.workout);
+  }
+  const titleText = 'Dinlenme tamam';
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        registration.showNotification(titleText, { body: 'Sonraki sete hazırsın.', icon: './icons/icon-192.png', badge: './icons/icon-192.png', tag: 'a2-rest-timer', renotify: true });
+      } else {
+        new Notification(titleText, { body: 'Sonraki sete hazırsın.' });
+      }
+      return;
+    } catch {}
+  }
+  toast(titleText);
+}
+
 async function startTimer(exerciseId = state.timerExerciseId) {
-  stopTimer(false);
+  clearTimerInterval();
   const settings = await workoutRepository.getSettings();
   const exercise = executionExercise(exerciseId);
+  const seconds = plannedRestSeconds(exercise) || settings.rest || 90;
   state.timerExerciseId = exerciseId;
-  state.timerLeft = plannedRestSeconds(exercise) || settings.rest || 90;
-  state.timer = setInterval(() => {
-    state.timerLeft -= 1;
-    const el = document.querySelector('#timerText');
-    if (el) el.textContent = fmt(state.timerLeft);
-    if (state.timerLeft <= 0) {
-      stopTimer(false);
-      toast('Dinlenme tamam');
-      renderWorkout();
-    }
-  }, 1000);
+  state.timerEndsAt = new Date(Date.now() + seconds * 1000).toISOString();
+  state.timerNotified = false;
+  if (state.workout) {
+    state.workout.timer = { exerciseId, endsAt: state.timerEndsAt, durationSeconds: seconds, notified: false };
+    await workoutRepository.saveDraft(state.workout);
+  }
+  startTimerInterval();
 }
 
 async function resetTimer() {
@@ -691,12 +762,27 @@ async function resetTimer() {
   await renderWorkout();
 }
 
-function stopTimer(rerender = true) {
-  if (state.timer) clearInterval(state.timer);
-  state.timer = null;
-  state.timerLeft = 0;
+async function checkTimer() {
+  if (!state.timerEndsAt) return;
+  const left = timerSecondsLeft();
+  const el = document.querySelector('#timerText');
+  if (el) el.textContent = fmt(left);
+  if (left > 0) return;
+  await notifyRestComplete();
+  await stopTimer(false);
+  await renderWorkout();
+}
+
+async function stopTimer(rerender = true) {
+  clearTimerInterval();
+  state.timerEndsAt = null;
   state.timerExerciseId = null;
-  if (rerender && state.workout) renderWorkout();
+  state.timerNotified = false;
+  if (state.workout?.timer) {
+    delete state.workout.timer;
+    await workoutRepository.saveDraft(state.workout);
+  }
+  if (rerender && state.workout) await renderWorkout();
 }
 
 function fmt(seconds) {
@@ -716,10 +802,10 @@ async function finishWorkout(force = false) {
   }
   const session = buildSession(state.workout);
   session.summary = sessionSummary(session);
+  await stopTimer(false);
   await workoutRepository.addSession(session);
   await workoutRepository.clearDraft();
   cachedSessions = await workoutRepository.getSessions();
-  stopTimer(false);
   state.workout = null;
   renderSummary(session);
 }
@@ -1148,6 +1234,7 @@ app.addEventListener('click', async event => {
   if (action === 'export-csv') return exportCSV();
   if (action === 'restore-json') return restoreJSON();
   if (action === 'save-settings') return saveSettings();
+  if (action === 'enable-notifications') return enableNotifications();
 });
 
 app.addEventListener('input', async event => {
@@ -1205,6 +1292,14 @@ app.addEventListener('change', event => {
   if (state.importId && event.target.dataset.importSectionType) { workoutRepository.getImportPreview(state.importId).then(preview => { const [day, section] = event.target.dataset.importSectionType.split(':').map(Number); preview.program.days[day].sections[section].sectionType = event.target.value; return workoutRepository.saveImportPreview(preview); }); return; }
   if (state.builder && event.target.dataset.builderSectionType) { state.builder.days.flatMap(day => day.sections).find(section => section.id === event.target.dataset.builderSectionType).sectionType = event.target.value; persistBuilder(); return; }
   if (event.target.id === 'exerciseSelect') exerciseHistory(event.target.value);
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) checkTimer();
+});
+
+window.addEventListener('focus', () => {
+  checkTimer();
 });
 
 app.addEventListener('pointerdown', event => {
