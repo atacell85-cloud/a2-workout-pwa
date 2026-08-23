@@ -758,34 +758,37 @@ function ensureMainSection(day) {
 async function openBuilder(program = null) {
   state.builder = program ? structuredClone(program) : (await workoutRepository.getProgramBuilderDraft()) || blankProgram();
   state.builder.days.forEach(ensureMainSection);
+  state.picker = null;
   renderBuilder();
 }
 
 async function persistBuilder() {
+  const nameInput = document.querySelector('#builderName');
+  if (nameInput) state.builder.name = nameInput.value.trim();
+  state.builder.description = null;
   state.builder.days.forEach(ensureMainSection);
   state.builder = normalizeProgram(state.builder);
   await workoutRepository.saveProgramBuilderDraft(state.builder);
 }
 
 function renderBuilder() {
-  const program = state.builder; title.textContent = program.id ? 'Program Builder' : 'Program Oluştur'; nav('programs');
-  app.innerHTML = `<section class="builder-head"><input id="builderName" placeholder="Program adı" value="${escapeHtml(program.name)}"><textarea id="builderDescription" placeholder="Açıklama (opsiyonel)">${escapeHtml(program.description || '')}</textarea><div class="builder-actions"><button class="secondary-btn" data-action="programs">İptal</button><button class="primary-btn" data-action="save-program">Programı Kaydet</button></div></section>
+  const program = state.builder; title.textContent = 'Rutin Oluştur'; nav('programs');
+  app.innerHTML = `<section class="builder-head simple-builder-head"><input id="builderName" placeholder="Rutin adı" value="${escapeHtml(program.name)}"><div class="builder-actions"><button class="secondary-btn" data-action="new-routine-menu">İptal</button><button class="primary-btn" data-action="save-program">Kaydet</button></div></section>
   ${program.days.map((day, dayIndex) => builderDay(day, dayIndex)).join('')}
   <button class="secondary-btn full" data-action="add-day">+ Gün Ekle</button>`;
 }
 
 function builderDay(day, dayIndex) {
   ensureMainSection(day);
-  return `<article class="builder-day"><div class="builder-row"><input data-builder-day-name="${day.id}" value="${escapeHtml(day.name)}" aria-label="Gün adı"><div class="compact-actions"><button class="icon-action" data-copy-day="${day.id}" title="Günü kopyala">Kopyala</button><button class="icon-action" data-delete-day="${day.id}" title="Günü sil">Sil</button></div></div>
-    <div class="order-actions"><button data-move-day="${dayIndex}:-1">Yukarı</button><button data-move-day="${dayIndex}:1">Aşağı</button></div>
+  return `<article class="builder-day simple-builder-day"><div class="builder-row"><label class="simple-day-label"><span>Gün ${dayIndex + 1}</span><input data-builder-day-name="${day.id}" value="${escapeHtml(day.name)}" aria-label="Gün adı"></label>${state.builder.days.length > 1 ? `<button class="icon-action" data-delete-day="${day.id}" title="Günü sil">Sil</button>` : ''}</div>
     ${day.sections.map(section => builderSection(section)).join('')}</article>`;
 }
 
 function builderSection(section) {
-  return `<section class="builder-section builder-section-hidden">
-    ${section.items.map((item, itemIndex) => item.itemType === 'instruction' ? builderInstruction(item) : builderExercise(item, itemIndex)).join('')}
-    <div class="builder-add"><input data-exercise-search="${section.id}" placeholder="Hareket ara veya yaz..."><button class="secondary-btn" data-open-picker="${section.id}">+ Hareket Ekle</button><button data-add-instruction="${section.id}">Talimat Ekle</button></div><div class="search-results" id="search-${section.id}"></div>
-    ${state.picker?.sectionId === section.id ? builderExercisePicker(section) : ''}</section>`;
+  return `<section class="builder-section builder-section-hidden simple-builder-section">
+    ${section.items.filter(item => item.itemType === 'exercise').map((item, itemIndex) => builderExercise(item, itemIndex)).join('')}
+    <div class="builder-add simple-builder-add"><input data-simple-exercise-name="${section.id}" placeholder="Hareket adı yaz..."><button class="secondary-btn" data-custom-exercise="${section.id}">+ Hareket Ekle</button></div>
+    </section>`;
 }
 
 function builderExercisePicker(section) {
@@ -800,10 +803,8 @@ function builderExercisePicker(section) {
 function builderInstruction(item) { return `<div class="instruction-row"><input data-instruction="${item.id}" value="${escapeHtml(item.text)}" placeholder="Talimat"><button data-delete-item="${item.id}">Sil</button></div>`; }
 function builderExercise(item, itemIndex) {
   const name = item.customExerciseName || item.displayName || item.exerciseId || 'Hareket';
-  return `<article class="builder-exercise"><div class="builder-row"><b>${escapeHtml(name)}</b><div class="compact-actions"><button data-copy-item="${item.id}">Kopyala</button><button data-delete-item="${item.id}">Sil</button></div></div>
-    <div class="compact-fields"><label>Set<input data-field="${item.id}:setsText" inputmode="text" value="${escapeHtml(item.setsText ?? item.sets ?? '')}"></label><label>Tekrar<input data-field="${item.id}:repsText" inputmode="text" value="${escapeHtml(item.repsText ?? '')}"></label><button data-toggle-details="${item.id}">+ Ayrıntılar</button></div>
-    <div class="details ${item.showDetails ? 'open' : ''}" id="details-${item.id}"><div class="detail-grid"><label>Kilo<input data-field="${item.id}:weightText" value="${escapeHtml(item.weightText ?? '')}"></label><label>RIR<input data-field="${item.id}:rirText" value="${escapeHtml(item.rirText ?? '')}"></label><label>RPE<input data-field="${item.id}:rpeText" value="${escapeHtml(item.rpeText ?? '')}"></label><label>Dinlenme<input data-field="${item.id}:restText" value="${escapeHtml(item.restText ?? '')}"></label><label>Tempo<input data-field="${item.id}:tempoText" value="${escapeHtml(item.tempoText ?? '')}"></label><label>Süre<input data-field="${item.id}:durationText" value="${escapeHtml(item.durationText ?? '')}"></label><label>Mesafe<input data-field="${item.id}:distanceText" value="${escapeHtml(item.distanceText ?? '')}"></label><label>Not<input data-field="${item.id}:notes" value="${escapeHtml(item.notes ?? '')}"></label></div><button data-add-individual-set="${item.id}">Hareket setlerini ayrı düzenle</button>${(item.individualSets || []).map(set => `<div class="individual-set"><span>${set.setNumber}</span><select data-set-field="${item.id}:${set.id}:setType"><option value="working">Çalışma</option><option value="warmup">Isınma</option><option value="backoff">Backoff</option><option value="drop">Drop</option><option value="custom">Özel</option></select><input data-set-field="${item.id}:${set.id}:repsText" placeholder="Tekrar" value="${escapeHtml(set.repsText || '')}"><input data-set-field="${item.id}:${set.id}:weightText" placeholder="Kilo" value="${escapeHtml(set.weightText || '')}"><input data-set-field="${item.id}:${set.id}:rpeText" placeholder="RPE" value="${escapeHtml(set.rpeText || '')}"><select data-set-field="${item.id}:${set.id}:weightUnit"><option value="">Birim</option><option value="kg" ${set.weightUnit === 'kg' ? 'selected' : ''}>kg</option><option value="lb" ${set.weightUnit === 'lb' ? 'selected' : ''}>lb</option></select><button data-delete-individual-set="${item.id}:${set.id}" aria-label="Seti sil">Sil</button></div>`).join('')}</div>
-    <div class="order-actions"><button data-move-item="${item.id}:${itemIndex}:-1">Yukarı</button><button data-move-item="${item.id}:${itemIndex}:1">Aşağı</button></div></article>`;
+  return `<article class="builder-exercise simple-builder-exercise"><div class="builder-row"><b>${itemIndex + 1}. ${escapeHtml(name)}</b><button data-delete-item="${item.id}">Sil</button></div>
+    <div class="compact-fields"><label>Set<input data-field="${item.id}:setsText" inputmode="text" value="${escapeHtml(item.setsText ?? item.sets ?? '')}"></label><label>Tekrar<input data-field="${item.id}:repsText" inputmode="text" value="${escapeHtml(item.repsText ?? '')}"></label></div></article>`;
 }
 
 function sectionLabel(type) { return ({warmup:'Isınma',activation:'Aktivasyon',strength:'Ana Antrenman',core:'Core',cardio:'Kardiyo',stretch:'Stretch',mobility:'Mobilite',cooldown:'Soğuma',custom:'Özel Bölüm'})[type]; }
@@ -811,7 +812,7 @@ function findBuilderItem(id) { for (const day of state.builder.days) for (const 
 function reorder(items, index, direction) { const target = index + direction; if (target < 0 || target >= items.length) return; [items[index], items[target]] = [items[target], items[index]]; }
 
 async function saveProgram() {
-  state.builder.name = document.querySelector('#builderName').value.trim(); state.builder.description = document.querySelector('#builderDescription').value.trim() || null;
+  state.builder.name = document.querySelector('#builderName').value.trim(); state.builder.description = null;
   const canonicalIds = new Set((await loadExerciseDatabase()).map(item => item.id)); const program = normalizeProgram(state.builder); const errors = validateProgram(program, canonicalIds);
   if (errors.length) return toast(errors[0] === 'NO_WORKOUT_DAYS' ? 'En az bir gün ekleyin' : 'Programda eksik veya geçersiz alan var');
   await workoutRepository.saveProgram(program); await workoutRepository.clearProgramBuilderDraft(); state.builder = null; toast('Program kaydedildi'); await programsView();
@@ -849,7 +850,7 @@ app.addEventListener('click', async event => {
     return renderBuilder();
   }
   if (target.dataset.selectExercise) { const [sectionId, exerciseId] = target.dataset.selectExercise.split(':'); const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === sectionId); const item = blankExercise(section.id, section.items.length + 1, exerciseId); const canonical = await getCanonicalExercise(exerciseId); item.displayName = canonical?.nameTr || canonical?.nameEn || exerciseId; section.items.push(item); state.picker = null; await persistBuilder(); return renderBuilder(); }
-  if (target.dataset.customExercise) { const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === target.dataset.customExercise); const value = document.querySelector(`[data-exercise-search="${section.id}"]`).value.trim(); section.items.push(blankExercise(section.id, section.items.length + 1, null, value)); await persistBuilder(); return renderBuilder(); }
+  if (target.dataset.customExercise) { const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === target.dataset.customExercise); const value = document.querySelector(`[data-simple-exercise-name="${section.id}"]`).value.trim(); if (!value) return toast('Hareket adı yazın'); section.items.push(blankExercise(section.id, section.items.length + 1, null, value)); await persistBuilder(); return renderBuilder(); }
   if (target.dataset.startProgramDay) { const [programId, dayId] = target.dataset.startProgramDay.split(':'); return startProgramWorkout(programId, dayId); }
   if (target.dataset.setActiveProgram) { await workoutRepository.saveSettings({ activeProgramId: target.dataset.setActiveProgram }); toast('Aktif program değişti'); return programsView(); }
   if (target.dataset.openProgram) return openProgram(target.dataset.openProgram);

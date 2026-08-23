@@ -1,12 +1,14 @@
 import http from 'node:http';
-import { createReadStream, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { createReadStream, existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { extname, join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import { spawn } from 'node:child_process';
 
 const root = resolve('.');
 const port = 8090;
+const cdpPort = Number(process.env.SMOKE_CDP_PORT || 9200 + Math.floor(Math.random() * 500));
 const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const userDataDir = join(root, '.tmp-smoke-chrome');
+const userDataDir = process.env.SMOKE_USER_DATA_DIR || mkdtempSync(join(tmpdir(), 'a2-smoke-chrome-'));
 
 const mime = {
   '.html': 'text/html; charset=utf-8',
@@ -37,7 +39,7 @@ const chrome = spawn(chromePath, [
   '--headless=new',
   '--disable-gpu',
   '--no-first-run',
-  '--remote-debugging-port=9224',
+  `--remote-debugging-port=${cdpPort}`,
   `--user-data-dir=${userDataDir}`,
   `http://localhost:${port}`
 ], { stdio: 'ignore' });
@@ -233,7 +235,7 @@ async function scenario() {
 async function waitForWsUrl() {
   for (let i = 0; i < 50; i += 1) {
     try {
-      const response = await fetch('http://127.0.0.1:9224/json/list');
+      const response = await fetch(`http://127.0.0.1:${cdpPort}/json/list`);
       const targets = await response.json();
       const page = targets.find(target => target.type === 'page' && target.url.startsWith(`http://localhost:${port}`));
       if (page) return page.webSocketDebuggerUrl;
