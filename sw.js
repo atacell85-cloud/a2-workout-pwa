@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v40-builder-swipe-delete-drag-target-2026-08-23';
+const CACHE_VERSION = 'a2-workout-v41-builder-extra-fields-toggle-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=builder-swipe-delete-drag-target-v1',
+  './app.js?v=builder-extra-fields-toggle-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
