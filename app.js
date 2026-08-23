@@ -3,7 +3,7 @@ import { SCHEMA_VERSION, workoutRepository } from './storage.js';
 import { getCanonicalExercise, loadExerciseDatabase, searchExercises } from './exercise-service.js';
 import { blankDay, blankExercise, blankInstruction, blankProgram, blankSection, normalizeProgram, permanentDayToLegacy, validateProgram } from './program-service.js';
 import { finalizeImport, matchImportExercises, validateImportPreview } from './import-service.js';
-import { createYouTubeSearchService } from './youtube-service.js?v=youtube-worker-search-v2';
+import { createYouTubeSearchService } from './youtube-service.js?v=custom-exercise-youtube-v1';
 import { documentExtractor } from './document-extractor.js';
 import { localImportParser } from './local-import-parser.js';
 import { getImportParser, IMPORT_PARSER_PROVIDER } from './import-provider.js';
@@ -567,6 +567,8 @@ function importErrorMessage(code) { return ({ UNSUPPORTED_FILE: 'PDF, DOCX veya 
 async function openProgram(programId) {
   const program = await workoutRepository.getProgram(programId);
   if (!program) return toast('Program bulunamadı');
+  state.builder = null;
+  state.picker = null;
   const exerciseDb = await loadExerciseDatabase();
   const names = new Map(exerciseDb.map(item => [item.id, item.nameTr]));
   const exercisesById = new Map(exerciseDb.map(item => [item.id, item]));
@@ -668,9 +670,7 @@ function timerHtml(exerciseId) {
 }
 
 function exerciseHeader(exercise) {
-  const name = exercise.canonicalExerciseId
-    ? `<button class="exercise-name video-name-link" data-video-exercise="${exercise.canonicalExerciseId}">${escapeHtml(exercise.name)}</button>`
-    : `<div class="exercise-name">${escapeHtml(exercise.name)}</div>`;
+  const name = `<button class="exercise-name video-name-link" data-video-exercise="${escapeHtml(exercise.canonicalExerciseId || '')}" data-video-exercise-name="${escapeHtml(exercise.name)}">${escapeHtml(exercise.name)}</button>`;
   return `<div class="exercise-summary">${exerciseThumb({ imageUrl: exercise.imageUrl })}<div>${name}${exercise.setType === 'warmup' ? '<div class="warmup-label">Isınma seti</div>' : ''}</div></div>`;
 }
 
@@ -1189,6 +1189,7 @@ async function persistBuilder() {
 }
 
 function renderBuilder() {
+  state.view = 'builder';
   const program = state.builder; title.textContent = 'Rutin Oluştur'; nav('programs');
   app.innerHTML = `<section class="builder-head simple-builder-head"><input id="builderName" placeholder="Rutin adı" value="${escapeHtml(program.name)}"><div class="builder-actions"><button class="secondary-btn" data-action="new-routine-menu">İptal</button><button class="primary-btn" data-action="save-program">Kaydet</button></div></section>
   ${program.days.map((day, dayIndex) => builderDay(day, dayIndex)).join('')}
@@ -1211,6 +1212,7 @@ function builderSection(section) {
 async function renderExercisePoolPicker() {
   const picker = state.picker;
   if (!state.builder || !picker) return renderBuilder();
+  state.view = 'exercise-picker';
   title.textContent = 'Hareket Seç'; nav('programs');
   const db = await loadExerciseDatabase();
   const source = picker.query?.trim() ? await searchExercises(picker.query, 250) : sortExercisePool(db);
@@ -1264,15 +1266,18 @@ async function saveProgram() {
   await workoutRepository.saveProgram(program); await workoutRepository.clearProgramBuilderDraft(); state.builder = null; toast('Program kaydedildi'); await programsView();
 }
 
-async function showVideo(exerciseId) {
-  const exercise = await getCanonicalExercise(exerciseId); const result = await youtube.search(exercise);
+async function showVideo(exerciseId, exerciseName = '') {
+  const exercise = exerciseId ? await getCanonicalExercise(exerciseId) : null;
+  const fallbackExercise = { id: null, name: exerciseName, nameEn: exerciseName, customExerciseName: exerciseName };
+  const result = await youtube.search(exercise || fallbackExercise);
+  const displayName = exercise?.nameTr || exercise?.nameEn || exerciseName || 'Form Videosu';
   if (result.status === 'search') {
     title.textContent = 'Form Videosu';
-    app.innerHTML = `<section class="summary-card"><b>${escapeHtml(exercise.nameTr)}</b><p class="muted">Bu hareket için YouTube araması açılacak.</p><a class="primary-btn full" href="${escapeHtml(result.url)}" target="_blank" rel="noopener">YouTube'da Ara</a><button class="secondary-btn full" data-action="render-workout">Antrenmana Dön</button></section>`;
+    app.innerHTML = `<section class="summary-card"><b>${escapeHtml(displayName)}</b><p class="muted">Bu hareket için YouTube araması açılacak.</p><a class="primary-btn full" href="${escapeHtml(result.url)}" target="_blank" rel="noopener">YouTube'da Ara</a><button class="secondary-btn full" data-action="render-workout">Antrenmana Dön</button></section>`;
     return;
   }
   if (result.status !== 'ok') return toast(result.message);
-  state.video = { ...result, exerciseName: exercise.nameTr || exercise.nameEn || exercise.id };
+  state.video = { ...result, exerciseName: displayName };
   renderVideoResults();
 }
 
@@ -1317,7 +1322,7 @@ app.addEventListener('click', async event => {
   if (target.dataset.setActiveProgram) { await workoutRepository.saveSettings({ activeProgramId: target.dataset.setActiveProgram }); toast('Aktif program değişti'); return programsView(); }
   if (target.dataset.openProgram) return openProgram(target.dataset.openProgram);
   if (target.dataset.editProgram) return openBuilder(await workoutRepository.getProgram(target.dataset.editProgram));
-  if (target.dataset.videoExercise) return showVideo(target.dataset.videoExercise);
+  if (target.dataset.videoExercise !== undefined) return showVideo(target.dataset.videoExercise, target.dataset.videoExerciseName || '');
   if (target.dataset.openVideo) return openVideo(target.dataset.openVideo);
   if (target.dataset.addDay) { state.builder.days.push(blankDayWithMainSection(state.builder.id, state.builder.days.length + 1)); await persistBuilder(); return renderBuilder(); }
   if (target.dataset.addSection) { const [dayId, type] = target.dataset.addSection.split(':'); const day = state.builder.days.find(item => item.id === dayId); day.sections.push(blankSection(day.id, type, day.sections.length + 1)); await persistBuilder(); return renderBuilder(); }
@@ -1459,7 +1464,7 @@ window.addEventListener('focus', () => {
 app.addEventListener('pointerdown', event => {
   const handle = event.target.closest('[data-drag-exercise]');
   const swipeCard = event.target.closest('[data-swipe-exercise]');
-  if (state.builder && handle) {
+  if (state.view === 'builder' && state.builder && handle) {
     const [sectionId, itemId] = handle.dataset.dragExercise.split(':');
     const shell = document.querySelector(`[data-builder-exercise-card="${itemId}"]`);
     if (!shell) return;
@@ -1471,7 +1476,7 @@ app.addEventListener('pointerdown', event => {
     document.body.classList.add('is-dragging-builder-exercise');
     return;
   }
-  if (state.builder && swipeCard && !event.target.closest('input, button, [data-drag-exercise]')) {
+  if (state.view === 'builder' && state.builder && swipeCard && !event.target.closest('input, button, [data-drag-exercise]')) {
     state.builderSwipe = { itemId: swipeCard.dataset.swipeExercise, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, active: false };
     swipeCard.setPointerCapture?.(event.pointerId);
   }
@@ -1536,10 +1541,11 @@ app.addEventListener('pointerup', async event => {
 });
 
 app.addEventListener('pointercancel', () => {
+  const wasBuilderGesture = Boolean(state.builderDrag || state.builderSwipe);
   state.builderDrag = null;
   state.builderSwipe = null;
   document.body.classList.remove('is-dragging-builder-exercise');
-  renderBuilder();
+  if (wasBuilderGesture && state.view === 'builder' && state.builder) renderBuilder();
 });
 
 document.querySelectorAll('.nav-btn').forEach(button => {

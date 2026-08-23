@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v58-strict-ai-import-2026-08-24';
+const CACHE_VERSION = 'a2-workout-v59-custom-youtube-scroll-fix-2026-08-24';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=strict-ai-import-v1',
+  './app.js?v=custom-youtube-scroll-fix-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
@@ -15,7 +15,7 @@ const APP_SHELL = [
   './openai-import-parser.js',
   './auth-service.js',
   './sync-service.js',
-  './youtube-service.js?v=youtube-worker-search-v2',
+  './youtube-service.js?v=custom-exercise-youtube-v1',
   './data/public-programs.js',
   './data/exercises.v1.json',
   './manifest.webmanifest',
