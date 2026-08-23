@@ -780,14 +780,14 @@ function renderBuilder() {
 
 function builderDay(day, dayIndex) {
   ensureMainSection(day);
-  return `<article class="builder-day simple-builder-day"><div class="builder-row"><label class="simple-day-label"><span>Gün ${dayIndex + 1}</span><input data-builder-day-name="${day.id}" value="${escapeHtml(day.name)}" aria-label="Gün adı"></label>${state.builder.days.length > 1 ? `<button class="icon-action" data-delete-day="${day.id}" title="Günü sil">Sil</button>` : ''}</div>
+  return `<article class="builder-day simple-builder-day"><div class="builder-row"><label class="simple-day-label"><span>Gün ${dayIndex + 1}</span><input data-builder-day-name="${day.id}" value="${escapeHtml(day.name)}" aria-label="Gün adı"></label></div>
     ${day.sections.map(section => builderSection(section)).join('')}</article>`;
 }
 
 function builderSection(section) {
   return `<section class="builder-section builder-section-hidden simple-builder-section">
     ${section.items.filter(item => item.itemType === 'exercise').map((item, itemIndex) => builderExercise(item, itemIndex)).join('')}
-    <div class="builder-add simple-builder-add"><input data-simple-exercise-name="${section.id}" placeholder="Hareket adı yaz..."><button class="secondary-btn" data-custom-exercise="${section.id}">+ Hareket Ekle</button></div>
+    <div class="builder-add simple-builder-add"><input data-exercise-search="${section.id}" placeholder="Hareket ara veya yaz..." autocomplete="off"><button class="secondary-btn" data-custom-exercise="${section.id}">Hareket Seç</button></div><div class="search-results" id="search-${section.id}"></div>
     </section>`;
 }
 
@@ -800,10 +800,10 @@ function builderExercisePicker(section) {
   return `<div class="exercise-picker" aria-label="Hareket seçici"><div class="builder-row"><b>Hareket Ekle</b><button data-close-picker>Kapalı</button></div><input data-exercise-search="${section.id}" value="${escapeHtml(picker.query || '')}" placeholder="Hareket ara veya yaz..." autocomplete="off"><div class="picker-filters" aria-label="Kas grubu filtresi">${muscleFilters.map(([value,label]) => `<button class="${picker.muscle === value ? 'active' : ''}" data-picker-muscle="${section.id}:${value}">${label}</button>`).join('')}</div><div class="picker-filters" aria-label="Ekipman filtresi">${equipmentFilters.map(([value,label]) => `<button class="${picker.equipment === value ? 'active' : ''}" data-picker-equipment="${section.id}:${value}">${label}</button>`).join('')}</div><div class="search-results" id="search-${section.id}">${result || '<span class="muted small">Bu filtrelerle hareket bulunamadı.</span>'}${custom}</div></div>`;
 }
 
-function builderInstruction(item) { return `<div class="instruction-row"><input data-instruction="${item.id}" value="${escapeHtml(item.text)}" placeholder="Talimat"><button data-delete-item="${item.id}">Sil</button></div>`; }
+function builderInstruction(item) { return `<div class="instruction-row"><input data-instruction="${item.id}" value="${escapeHtml(item.text)}" placeholder="Talimat"></div>`; }
 function builderExercise(item, itemIndex) {
   const name = item.customExerciseName || item.displayName || item.exerciseId || 'Hareket';
-  return `<article class="builder-exercise simple-builder-exercise"><div class="builder-row"><b>${itemIndex + 1}. ${escapeHtml(name)}</b><button data-delete-item="${item.id}">Sil</button></div>
+  return `<article class="builder-exercise simple-builder-exercise"><div class="builder-row"><b>${itemIndex + 1}. ${escapeHtml(name)}</b></div>
     <div class="compact-fields"><label>Set<input data-field="${item.id}:setsText" inputmode="text" value="${escapeHtml(item.setsText ?? item.sets ?? '')}"></label><label>Tekrar<input data-field="${item.id}:repsText" inputmode="text" value="${escapeHtml(item.repsText ?? '')}"></label></div></article>`;
 }
 
@@ -850,7 +850,7 @@ app.addEventListener('click', async event => {
     return renderBuilder();
   }
   if (target.dataset.selectExercise) { const [sectionId, exerciseId] = target.dataset.selectExercise.split(':'); const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === sectionId); const item = blankExercise(section.id, section.items.length + 1, exerciseId); const canonical = await getCanonicalExercise(exerciseId); item.displayName = canonical?.nameTr || canonical?.nameEn || exerciseId; section.items.push(item); state.picker = null; await persistBuilder(); return renderBuilder(); }
-  if (target.dataset.customExercise) { const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === target.dataset.customExercise); const value = document.querySelector(`[data-simple-exercise-name="${section.id}"]`).value.trim(); if (!value) return toast('Hareket adı yazın'); section.items.push(blankExercise(section.id, section.items.length + 1, null, value)); await persistBuilder(); return renderBuilder(); }
+  if (target.dataset.customExercise) { const section = state.builder.days.flatMap(day => day.sections).find(item => item.id === target.dataset.customExercise); const value = document.querySelector(`[data-exercise-search="${section.id}"]`).value.trim(); if (!value) return toast('Hareket adı yazın'); section.items.push(blankExercise(section.id, section.items.length + 1, null, value)); await persistBuilder(); return renderBuilder(); }
   if (target.dataset.startProgramDay) { const [programId, dayId] = target.dataset.startProgramDay.split(':'); return startProgramWorkout(programId, dayId); }
   if (target.dataset.setActiveProgram) { await workoutRepository.saveSettings({ activeProgramId: target.dataset.setActiveProgram }); toast('Aktif program değişti'); return programsView(); }
   if (target.dataset.openProgram) return openProgram(target.dataset.openProgram);
@@ -947,7 +947,7 @@ app.addEventListener('input', async event => {
   if (event.target.dataset.exerciseSearch) {
     const sectionId = event.target.dataset.exerciseSearch; const query = event.target.value; const results = await searchExercises(query, 24); const holder = document.querySelector(`#search-${sectionId}`);
     if (state.picker?.sectionId === sectionId) state.picker = { ...state.picker, query, results };
-    holder.innerHTML = results.map(item => `<button data-select-exercise="${sectionId}:${item.id}"><b>${escapeHtml(item.nameTr)}</b><span>${escapeHtml(item.nameEn)} · ${(item.primaryMuscles || []).join(', ') || 'Diğer'}</span></button>`).join('') + (query.trim() ? `<button data-custom-exercise="${sectionId}">"${escapeHtml(query.trim())}" adlı özel hareket oluştur</button>` : '');
+    holder.innerHTML = query.trim() ? results.map(item => `<button data-select-exercise="${sectionId}:${item.id}"><b>${escapeHtml(item.nameTr)}</b><span>${escapeHtml(item.nameEn)} · ${(item.primaryMuscles || []).join(', ') || 'Diğer'}</span></button>`).join('') : '';
   }
 });
 
