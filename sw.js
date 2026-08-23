@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v36-emergency-recovery-link-2026-08-24';
+const CACHE_VERSION = 'a2-workout-v37-workout-exercise-images-2026-08-23';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=simple-builder-v2',
+  './app.js?v=workout-exercise-images-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',

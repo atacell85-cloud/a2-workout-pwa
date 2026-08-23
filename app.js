@@ -65,8 +65,11 @@ async function hydrateExecutionDay(workout) {
   const program = await workoutRepository.getProgram(workout.programId);
   const day = program?.days.find(item => item.id === workout.workoutDayId);
   if (!day) return null;
-  const names = new Map((await loadExerciseDatabase()).map(item => [item.id, item.nameTr]));
+  const exerciseDb = await loadExerciseDatabase();
+  const names = new Map(exerciseDb.map(item => [item.id, item.nameTr]));
+  const images = new Map(exerciseDb.map(item => [item.id, item.media?.image || null]));
   state.executionDay = permanentDayToLegacy(day, names);
+  state.executionDay.sections.forEach(section => section.exercises.forEach(exercise => { exercise.imageUrl = images.get(exercise.canonicalExerciseId) || null; }));
   state.executionExercises = new Map(state.executionDay.sections.flatMap(section => section.exercises).map(item => [item.id, item]));
   return state.executionDay;
 }
@@ -229,6 +232,10 @@ function exerciseMeta(item) {
   return [item.nameEn !== item.nameTr ? item.nameEn : '', ...(item.equipment || []).slice(0, 2)].filter(Boolean).join(' · ');
 }
 
+async function exerciseImageMap() {
+  return new Map((await loadExerciseDatabase()).map(item => [item.id, item.media?.image || null]));
+}
+
 async function updateExerciseLibraryResults(query) {
   const holder = document.querySelector('#exerciseLibraryResults');
   if (!holder) return;
@@ -302,10 +309,19 @@ function importErrorMessage(code) { return ({ UNSUPPORTED_FILE: 'PDF, DOCX veya 
 async function openProgram(programId) {
   const program = await workoutRepository.getProgram(programId);
   if (!program) return toast('Program bulunamadı');
-  const names = new Map((await loadExerciseDatabase()).map(item => [item.id, item.nameTr]));
+  const exerciseDb = await loadExerciseDatabase();
+  const names = new Map(exerciseDb.map(item => [item.id, item.nameTr]));
+  const exercisesById = new Map(exerciseDb.map(item => [item.id, item]));
   title.textContent = program.name;
-  app.innerHTML = `<section class="summary-card"><b>${escapeHtml(program.name)}</b><div class="small muted">Bir günü başlatarak kayıt akışına geç.</div></section>${program.days.map(day => `<article class="day-card program-day"><div class="day">${escapeHtml(day.name)}</div>${day.sections.map(section => `<div class="program-section"><b>${escapeHtml(section.title)}</b>${section.items.filter(item => item.itemType === 'exercise').map(item => `<div class="program-exercise"><span>${escapeHtml(names.get(item.exerciseId) || item.customExerciseName || item.exerciseId)}</span><small>${escapeHtml(programPrescription(item))}</small></div>`).join('')}</div>`).join('')}<button class="primary-btn full" data-start-program-day="${program.id}:${day.id}">Başlat</button></article>`).join('')}`;
+  app.innerHTML = `<section class="summary-card"><b>${escapeHtml(program.name)}</b><div class="small muted">Bir günü başlatarak kayıt akışına geç.</div></section>${program.days.map(day => `<article class="day-card program-day"><div class="day">${escapeHtml(day.name)}</div>${day.sections.map(section => `<div class="program-section"><b>${escapeHtml(section.title)}</b>${section.items.filter(item => item.itemType === 'exercise').map(item => programExerciseRow(item, names, exercisesById)).join('')}</div>`).join('')}<button class="primary-btn full" data-start-program-day="${program.id}:${day.id}">Başlat</button></article>`).join('')}`;
   state.openProgram = { program, names }; nav('programs');
+}
+
+function programExerciseRow(item, names, exercisesById) {
+  const canonical = exercisesById.get(item.exerciseId);
+  const displayItem = canonical || { imageUrl: item.imageUrl };
+  const name = names.get(item.exerciseId) || item.customExerciseName || item.displayName || item.exerciseId || 'Hareket';
+  return `<div class="program-exercise"><div class="exercise-summary">${exerciseThumb(displayItem)}<span>${escapeHtml(name)}</span></div><small>${escapeHtml(programPrescription(item))}</small></div>`;
 }
 
 function programPrescription(item) {
@@ -352,6 +368,7 @@ async function resumeWorkout() {
 async function renderWorkout() {
   const workout = state.workout;
   const day = executionDayFor(workout);
+  const images = await exerciseImageMap();
   const counts = workoutCounts(workout);
   title.textContent = day.label;
   app.innerHTML = `
@@ -361,7 +378,7 @@ async function renderWorkout() {
       <div class="progress"><div style="width:${Math.min(100, counts.done / counts.total * 100)}%"></div></div>
       <div class="small muted">${counts.done}/${counts.total} hareket/blok kayıtlandı • Başlangıç ${new Date(workout.startedAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</div>
     </section>
-    ${day.sections.map(section => `<div class="section-title ${section.type}">${escapeHtml(section.name)}</div>${section.exercises.map(exercise => exerciseCard(exercise, section.type)).join('')}`).join('')}
+    ${day.sections.map(section => `<div class="section-title ${section.type}">${escapeHtml(section.name)}</div>${section.exercises.map(exercise => exerciseCard(exercise, section.type, images)).join('')}`).join('')}
     <div class="workout-toolbar">
       <button class="secondary-btn" data-action="home">Kapat</button>
       <button class="primary-btn" data-action="finish">Antrenmanı Bitir</button>
@@ -377,11 +394,16 @@ function timerHtml() {
   </div>`;
 }
 
-function exerciseCard(exercise, sectionType) {
+function exerciseHeader(exercise) {
+  return `<div class="exercise-summary">${exerciseThumb({ imageUrl: exercise.imageUrl })}<div><div class="exercise-name">${escapeHtml(exercise.name)}</div>${exercise.setType === 'warmup' ? '<div class="warmup-label">Isınma seti</div>' : ''}</div></div>`;
+}
+
+function exerciseCard(exercise, sectionType, images = new Map()) {
+  exercise.imageUrl ||= images.get(exercise.canonicalExerciseId || exercise.id) || null;
   if (['activation', 'stretch'].includes(exercise.setType)) {
     const done = Boolean(state.workout.completedActivities[exercise.id]);
     return `<article class="exercise-card simple ${sectionType}">
-      <div class="exercise-head"><div class="exercise-name">${escapeHtml(exercise.name)}</div><div class="prescription">Plan: ${escapeHtml(exercise.prescription.text)}</div></div>
+      <div class="exercise-head">${exerciseHeader(exercise)}<div class="prescription">Plan: ${escapeHtml(exercise.prescription.text)}</div></div>
       <div class="simple-done">
         ${done ? '<span class="done-badge">Tamamlandı</span>' : '<span class="muted small">Aktivasyon / süre çalışması</span>'}
         <button class="secondary-btn" data-toggle-activity="${exercise.id}">${done ? 'Geri Al' : 'Tamam'}</button>
@@ -392,7 +414,7 @@ function exerciseCard(exercise, sectionType) {
   const rows = Array.from({ length: exercise.prescription.plannedSets }, (_, i) => setRow(exercise, i + 1, current[i + 1])).join('');
   return `<article class="exercise-card ${exercise.setType}" id="ex-${exercise.id}">
     <div class="exercise-head">
-      <div><div class="exercise-name">${escapeHtml(exercise.name)}</div>${exercise.setType === 'warmup' ? '<div class="warmup-label">Isınma seti</div>' : ''}</div>
+      ${exerciseHeader(exercise)}
       <div class="prescription">Plan: ${escapeHtml(exercise.prescription.text)}</div>
     </div>
     <div data-last="${exercise.id}">${lastBlock(exercise.canonicalExerciseId || exercise.id)}</div>
@@ -960,8 +982,17 @@ app.addEventListener('input', async event => {
   if (event.target.dataset.exerciseSearch) {
     const sectionId = event.target.dataset.exerciseSearch; const query = event.target.value; const results = await searchExercises(query, 24); const holder = document.querySelector(`#search-${sectionId}`);
     if (state.picker?.sectionId === sectionId) state.picker = { ...state.picker, query, results };
-    holder.innerHTML = query.trim() ? results.map(item => exerciseSearchResult(sectionId, item)).join('') : '';
+    holder.innerHTML = results.map(item => exerciseSearchResult(sectionId, item)).join('');
   }
+});
+
+app.addEventListener('focusin', async event => {
+  if (!state.builder || !event.target.dataset.exerciseSearch) return;
+  const sectionId = event.target.dataset.exerciseSearch;
+  const holder = document.querySelector(`#search-${sectionId}`);
+  if (!holder || holder.innerHTML.trim()) return;
+  const results = await searchExercises(event.target.value, 24);
+  holder.innerHTML = results.map(item => exerciseSearchResult(sectionId, item)).join('');
 });
 
 app.addEventListener('change', event => {
