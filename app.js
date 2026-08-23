@@ -229,8 +229,8 @@ async function updateExerciseLibraryResults(query) {
 }
 
 function fileImportView() {
-  state.view = 'import'; title.textContent = 'Dosyadan Oluştur'; nav('programs');
-  app.innerHTML = `<section class="summary-card import-upload"><h3>Antrenman programı dosyanızı yükleyin</h3><p class="muted">PDF, Word veya Excel</p><p class="small muted">Yapay zekâ analizi seçildiğinde dosyadan çıkarılan program içeriği analiz için OpenAI'ye gönderilir. Dosyanın kendisi gönderilmez.</p><input id="importFile" type="file" accept=".pdf,.docx,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><div id="importStatus" class="small muted"></div><button class="secondary-btn full" data-action="programs">Geri</button></section>`;
+  state.view = 'import'; title.textContent = 'Rutin yükle'; nav('programs');
+  app.innerHTML = `<button class="text-btn" data-action="new-routine-menu">← Yeni Rutin Oluştur</button><section class="import-upload"><label class="routine-row upload-row" for="importFile"><span>Yükle +</span></label><input id="importFile" type="file" accept=".pdf,.docx,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><div id="importStatus" class="small muted"></div></section>`;
 }
 
 async function importFile(file) {

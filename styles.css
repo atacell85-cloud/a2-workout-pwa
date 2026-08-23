@@ -720,8 +720,9 @@ th, td {
   box-shadow: 0 6px 18px rgba(37, 99, 235, .12);
 }
 .create-program-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
-.import-upload { text-align: center; }
-.import-upload input { width: 100%; margin: 14px 0 8px; }
+.import-upload { display: grid; gap: 12px; }
+.import-upload input[type="file"] { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; pointer-events: none; }
+.upload-row { cursor: pointer; }
 .import-warning { border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 10px 0; font-size: 13px; }
 .import-warning.warning { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
 .import-warning.error { background: #fef2f2; border-color: #fecaca; color: var(--danger); }
