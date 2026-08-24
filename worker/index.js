@@ -302,7 +302,7 @@ Your only job:
 2. Determine each day name exactly from the source when present. If a day has no clear name, use "Gün 1", "Gün 2", etc.
 3. For each day, list only exercise names in their original order.
 4. For each exercise, extract sets and reps when clearly stated.
-5. Extract optional fields only when explicitly stated next to that exercise: weight, RIR, RPE, rest, tempo, duration, distance, notes.
+5. Extract optional fields only when explicitly stated next to that exercise: weight, RIR, RPE, rest, tempo, duration, distance.
 
 Hard rules:
 - Do not create advice, coaching text, warmup suggestions, cooldowns, substitutions, explanations, goals, weekly plans, progression, volume comments, safety notes, or recommendations.
@@ -312,6 +312,8 @@ Hard rules:
 - exerciseMatch must always be null. AKS will match exercise names against its own exercise database after extraction.
 - If an exercise is not clearly an exercise name, omit it.
 - Keep sourceExerciseName as written in the file. normalizedExerciseName may be a cleaned spelling of the same exercise, but must not be a different exercise.
+- Do not put set count inside repsText. For "3x15", output sets=3, setsText="3", repsText="15".
+- Do not extract exercise notes. Set every notes field to null.
 - warnings and unparsedContent must be empty arrays unless the file contains no usable workout days.`; }
 function sanitize(document) { return { fileName: document.fileName, fileType: document.fileType, language: document.language || null, blocks: document.blocks.filter(block => block?.type && (block.text || block.rows)).slice(0, 1000) }; }
 function validatePreview(value, importId, document) { if (!value || value.schemaVersion !== '1.1' || !value.program?.name || !Array.isArray(value.program.days) || !value.program.days.length || !value.program.days.some(day => day.sections?.some(section => section.items?.some(item => item.itemType === 'exercise')))) throw coded('OPENAI_SCHEMA_VALIDATION_FAILED'); value.importId = importId; value.importedAt ||= new Date().toISOString(); value.source ||= { fileName: document.fileName, fileType: document.fileType, language: document.language || null, documentTitle: null }; value.warnings = []; value.unparsedContent = []; }
@@ -349,7 +351,6 @@ function exerciseFromInstruction(item) {
   const target = match[3].trim().replace(/\s+/g, '');
   const duration = /\d+\s*(?:sn|saniye|sec|dk|dakika|min)/i.test(target);
   const repsRange = duration ? null : target.match(/^(\d+)(?:[-–](\d+))?$/);
-  const note = raw.split(/\r?\n/).slice(1).join('\n').trim() || null;
   return {
     itemType: 'exercise',
     order: Number(item.order) || 1,
@@ -380,7 +381,7 @@ function exerciseFromInstruction(item) {
       distanceText: null,
       individualSets: []
     },
-    notes: note,
+    notes: null,
     sourceReference: item.sourceReference || nullRef()
   };
 }
@@ -391,6 +392,7 @@ function normalizeExerciseItem(item, order) {
     const text = String(value || '').trim();
     return text && text !== '-' ? text : null;
   };
+  const normalizedPrescription = normalizePrescriptionFields(prescription, clean);
   return {
     itemType: 'exercise',
     order,
@@ -398,11 +400,11 @@ function normalizeExerciseItem(item, order) {
     normalizedExerciseName: clean(item.normalizedExerciseName || item.sourceExerciseName) || clean(item.sourceExerciseName) || 'Hareket',
     exerciseMatch: null,
     prescription: {
-      sets: Number.isInteger(Number(prescription.sets)) ? Number(prescription.sets) : null,
-      setsText: clean(prescription.setsText),
-      repsMin: Number.isInteger(Number(prescription.repsMin)) ? Number(prescription.repsMin) : null,
-      repsMax: Number.isInteger(Number(prescription.repsMax)) ? Number(prescription.repsMax) : null,
-      repsText: clean(prescription.repsText),
+      sets: normalizedPrescription.sets,
+      setsText: normalizedPrescription.setsText,
+      repsMin: normalizedPrescription.repsMin,
+      repsMax: normalizedPrescription.repsMax,
+      repsText: normalizedPrescription.repsText,
       weight: Number.isFinite(Number(prescription.weight)) ? Number(prescription.weight) : null,
       weightUnit: ['kg', 'lb'].includes(prescription.weightUnit) ? prescription.weightUnit : null,
       weightText: clean(prescription.weightText),
@@ -419,11 +421,51 @@ function normalizeExerciseItem(item, order) {
       distance: Number.isFinite(Number(prescription.distance)) ? Number(prescription.distance) : null,
       distanceUnit: ['m', 'km', 'mi'].includes(prescription.distanceUnit) ? prescription.distanceUnit : null,
       distanceText: clean(prescription.distanceText),
-      individualSets: Array.isArray(prescription.individualSets) ? prescription.individualSets : []
+      individualSets: Array.isArray(prescription.individualSets) ? prescription.individualSets.map(set => ({ ...set, notes: null })) : []
     },
-    notes: clean(item.notes),
+    notes: null,
     sourceReference: item.sourceReference || nullRef()
   };
+}
+function normalizePrescriptionFields(prescription, clean) {
+  let sets = Number.isInteger(Number(prescription.sets)) ? Number(prescription.sets) : null;
+  let setsText = clean(prescription.setsText);
+  let repsMin = Number.isInteger(Number(prescription.repsMin)) ? Number(prescription.repsMin) : null;
+  let repsMax = Number.isInteger(Number(prescription.repsMax)) ? Number(prescription.repsMax) : null;
+  let repsText = clean(prescription.repsText);
+  const repsSetMatch = parseSetTargetText(repsText);
+  if (repsSetMatch) {
+    sets ||= repsSetMatch.sets;
+    setsText ||= String(sets);
+    repsText = repsSetMatch.target;
+  }
+  const setsTextMatch = parseSetTargetText(setsText);
+  if (setsTextMatch) {
+    sets = setsTextMatch.sets;
+    setsText = String(sets);
+    repsText ||= setsTextMatch.target;
+  }
+  const repsRange = repsText?.match(/^(\d+)(?:[-–](\d+))?$/);
+  if (repsRange) {
+    repsMin = Number(repsRange[1]);
+    repsMax = Number(repsRange[2] || repsRange[1]);
+  }
+  return { sets, setsText, repsMin, repsMax, repsText };
+}
+function parseSetTargetText(value) {
+  const text = String(value || '').trim();
+  if (!text) return null;
+  const target = '([0-9]+(?:\\s*[-–]\\s*[0-9]+)?\\s*(?:sn|saniye|sec|dk|dakika|min)?|amrap|maks(?:imum)?|failure)';
+  const patterns = [
+    new RegExp(`^(\\d+)\\s*[xX×*]\\s*${target}$`, 'i'),
+    new RegExp(`^(\\d+)\\s*(?:set|sets)\\s*(?:x|of)?\\s*${target}(?:\\s*(?:tekrar|reps?))?$`, 'i'),
+    new RegExp(`^(\\d+)\\s*(?:set|sets)\\s+${target}\\s*(?:tekrar|reps?)$`, 'i')
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return { sets: Number(match[1]), target: match[2].replace(/\s+/g, '') };
+  }
+  return null;
 }
 function nullRef() { return { page: null, sheet: null, cellRange: null, text: null }; }
 function retryable(error) { return error.code === 'OPENAI_RATE_LIMITED' || error.code === 'OPENAI_NETWORK_ERROR' || (error.code === 'OPENAI_REQUEST_FAILED' && error.status >= 500); }

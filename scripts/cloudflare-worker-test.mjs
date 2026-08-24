@@ -1,4 +1,4 @@
-import worker from '../worker/index.js';
+import worker, { normalizeImportedPreview } from '../worker/index.js';
 
 const baseEnv = {
   ASSETS: { fetch: async () => new Response('<!doctype html><title>A2</title>', { headers: { 'Content-Type': 'text/html' } }) },
@@ -20,10 +20,77 @@ globalThis.fetch = originalFetch;
 const googleOauthUnconfigured = await worker.fetch(new Request('https://a2.example/api/auth/oauth/google/start'), baseEnv);
 const appleOauthUnconfigured = await worker.fetch(new Request('https://a2.example/api/auth/oauth/apple/start'), baseEnv);
 const youtubeOkBody = await youtubeOk.json();
+const sourceReference = { page: null, sheet: null, cellRange: null, text: null };
+const normalizedImport = normalizeImportedPreview({
+  schemaVersion: '1.1',
+  importId: 'fixture',
+  importedAt: '2026-08-25T00:00:00.000Z',
+  source: { fileName: 'fixture.pdf', fileType: 'pdf', language: 'tr', documentTitle: null },
+  program: {
+    id: null,
+    name: 'Fixture',
+    description: 'ignore me',
+    sourceType: 'pdf-import',
+    notes: 'ignore me',
+    days: [{
+      name: 'Alt',
+      order: 1,
+      notes: 'ignore me',
+      sourceReference,
+      sections: [{
+        title: 'Anything',
+        sectionType: 'strength',
+        order: 1,
+        notes: 'ignore me',
+        sourceReference,
+        items: [
+          {
+            itemType: 'exercise',
+            order: 1,
+            sourceExerciseName: 'Hip Abd',
+            normalizedExerciseName: 'Hip Abd',
+            exerciseMatch: null,
+            notes: 'Dış bacakta ayal',
+            sourceReference,
+            prescription: { sets: 3, setsText: '3', repsMin: null, repsMax: null, repsText: '3x15', weight: null, weightUnit: null, weightText: null, rir: null, rirText: null, rpe: null, rpeText: null, restSeconds: null, restText: null, tempo: null, tempoText: null, durationSeconds: null, durationText: null, distance: null, distanceUnit: null, distanceText: null, individualSets: [{ setNumber: 1, setType: 'working', reps: null, repsText: '15', weight: null, weightUnit: null, weightText: null, rir: null, rirText: null, rpe: null, rpeText: null, restSeconds: null, restText: null, notes: 'ignore me' }] }
+          },
+          {
+            itemType: 'exercise',
+            order: 2,
+            sourceExerciseName: 'Plank',
+            normalizedExerciseName: 'Plank',
+            exerciseMatch: null,
+            notes: 'ignore me',
+            sourceReference,
+            prescription: { sets: null, setsText: '4 set 30-40 sn', repsMin: null, repsMax: null, repsText: null, weight: null, weightUnit: null, weightText: null, rir: null, rirText: null, rpe: null, rpeText: null, restSeconds: null, restText: null, tempo: null, tempoText: null, durationSeconds: null, durationText: null, distance: null, distanceUnit: null, distanceText: null, individualSets: [] }
+          }
+        ]
+      }]
+    }]
+  },
+  warnings: [{ code: 'x', message: 'ignore me' }],
+  unparsedContent: [{ text: 'ignore me' }]
+});
+const normalizedItems = normalizedImport.program.days[0].sections[0].items;
+const importNormalizationOk = normalizedImport.program.description === null
+  && normalizedImport.program.notes === null
+  && normalizedImport.program.days[0].notes === null
+  && normalizedItems[0].notes === null
+  && normalizedItems[0].prescription.sets === 3
+  && normalizedItems[0].prescription.setsText === '3'
+  && normalizedItems[0].prescription.repsText === '15'
+  && normalizedItems[0].prescription.repsMin === 15
+  && normalizedItems[0].prescription.repsMax === 15
+  && normalizedItems[0].prescription.individualSets[0].notes === null
+  && normalizedItems[1].prescription.sets === 4
+  && normalizedItems[1].prescription.setsText === '4'
+  && normalizedItems[1].prescription.repsText === '30-40sn'
+  && normalizedImport.warnings.length === 0
+  && normalizedImport.unparsedContent.length === 0;
 
 const result = {
-  ok: health.ok && staticAsset.ok && invalidMethod.status === 405 && invalidContentType.status === 415 && missingSecret.status === 503 && oversized.status === 413 && limited.status === 429 && youtubeMissingSecret.status === 503 && youtubeOk.ok && youtubeOkBody.videos?.[0]?.videoId === 'abc123' && googleOauthUnconfigured.status === 303 && appleOauthUnconfigured.status === 303,
-  health: await health.json(), staticAsset: staticAsset.headers.get('content-type'), invalidMethod: invalidMethod.status, invalidContentType: invalidContentType.status, missingSecret: (await missingSecret.json()).code, oversized: (await oversized.json()).code, limited: (await limited.json()).code, youtubeMissingSecret: (await youtubeMissingSecret.json()).code, youtubeOk: youtubeOkBody.videos?.length || 0, googleOauthUnconfigured: googleOauthUnconfigured.headers.get('location'), appleOauthUnconfigured: appleOauthUnconfigured.headers.get('location')
+  ok: health.ok && staticAsset.ok && invalidMethod.status === 405 && invalidContentType.status === 415 && missingSecret.status === 503 && oversized.status === 413 && limited.status === 429 && youtubeMissingSecret.status === 503 && youtubeOk.ok && youtubeOkBody.videos?.[0]?.videoId === 'abc123' && googleOauthUnconfigured.status === 303 && appleOauthUnconfigured.status === 303 && importNormalizationOk,
+  health: await health.json(), staticAsset: staticAsset.headers.get('content-type'), invalidMethod: invalidMethod.status, invalidContentType: invalidContentType.status, missingSecret: (await missingSecret.json()).code, oversized: (await oversized.json()).code, limited: (await limited.json()).code, youtubeMissingSecret: (await youtubeMissingSecret.json()).code, youtubeOk: youtubeOkBody.videos?.length || 0, googleOauthUnconfigured: googleOauthUnconfigured.headers.get('location'), appleOauthUnconfigured: appleOauthUnconfigured.headers.get('location'), importNormalizationOk
 };
 console.log(JSON.stringify(result, null, 2));
 if (!result.ok) process.exitCode = 1;

@@ -662,8 +662,7 @@ function importExercise(dayIndex, sectionIndex, itemIndex, item) {
     ['Dinlenme', 'restText', p.restText],
     ['Tempo', 'tempoText', p.tempoText],
     ['Süre', 'durationText', p.durationText],
-    ['Mesafe', 'distanceText', p.distanceText],
-    ['Not', 'notes', item.notes]
+    ['Mesafe', 'distanceText', p.distanceText]
   ].filter(([, , value]) => value !== undefined && value !== null && String(value).trim() !== '');
   const field = (label, key, value) => `<label>${label}<input data-import-field="${dayIndex}:${sectionIndex}:${itemIndex}:${key}" value="${escapeHtml(value || '')}"></label>`;
   return `<article class="builder-exercise import-exercise">

@@ -63,8 +63,8 @@ function finalizeItem(item, order) {
     weight: prescription.weight, weightUnit: prescription.weightUnit, weightText: prescription.weightText, rir: prescription.rir, rirText: prescription.rirText,
     rpe: prescription.rpe, rpeText: prescription.rpeText, restSeconds: prescription.restSeconds, restText: prescription.restText,
     tempoText: prescription.tempoText ?? prescription.tempo, durationSeconds: prescription.durationSeconds, durationText: prescription.durationText,
-    distance: prescription.distance, distanceUnit: prescription.distanceUnit, distanceText: prescription.distanceText, notes: item.notes,
+    distance: prescription.distance, distanceUnit: prescription.distanceUnit, distanceText: prescription.distanceText, notes: null,
     groupId: null, groupType: null,
-    individualSets: (prescription.individualSets || []).map(set => ({ ...set, id: uid(), exercisePrescriptionId: id }))
+    individualSets: (prescription.individualSets || []).map(set => ({ ...set, id: uid(), exercisePrescriptionId: id, notes: null }))
   };
 }
