@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>A2 Veri Kurtarma</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #101827;
+      --muted: #657085;
+      --line: #dfe5ef;
+      --primary: #2563eb;
+      --danger: #b42318;
+      --ok: #027a48;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    main {
+      width: min(760px, 100%);
+      margin: 0 auto;
+      padding: 28px 18px 48px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+      margin: 14px 0;
+    }
+    h1 {
+      font-size: 34px;
+      letter-spacing: -0.04em;
+      margin: 8px 0 6px;
+    }
+    h2 {
+      font-size: 18px;
+      margin: 0 0 10px;
+    }
+    p { margin: 8px 0; color: var(--muted); }
+    .notice {
+      color: var(--ok);
+      font-weight: 700;
+    }
+    .warning {
+      color: var(--danger);
+      font-weight: 700;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 16px;
+      font-weight: 800;
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #eaf1ff;
+      color: #174ea6;
+    }
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+    pre, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfcff;
+      color: var(--text);
+      padding: 12px;
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    textarea {
+      min-height: 260px;
+      resize: vertical;
+    }
+    .small {
+      font-size: 13px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="small">A2 / eski adres veri kurtarma</p>
+    <h1>Veri Kurtarma</h1>
+
+    <section class="card">
+      <h2>Ne yapar?</h2>
+      <p class="notice">Bu sayfa sadece okur; hiçbir veriyi silmez veya değiştirmez.</p>
+      <p>Chrome’da bu eski adrese ait kalan kayıtları tarar. Bulursa JSON olarak indirmeni veya kopyalamanı sağlar.</p>
+      <p class="small">Eski veriler telefondaki Chrome’da duruyorsa bu sayfayı aynı telefonda ve Chrome ile açmak gerekir.</p>
+      <div class="actions">
+        <button id="scanButton" type="button">Veriyi Tara</button>
+        <button id="downloadButton" class="secondary" type="button" disabled>JSON indir</button>
+        <button id="copyButton" class="secondary" type="button" disabled>Panoya kopyala</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Sonuç</h2>
+      <pre id="summary">Henüz tarama yapılmadı.</pre>
+    </section>
+
+    <section id="rawSection" class="card hidden">
+      <h2>Kurtarma çıktısı</h2>
+      <p class="small">Kopyalama veya indirme çalışmazsa aşağıdaki metni seçip manuel olarak kopyalayabilirsin.</p>
+      <textarea id="rawDump" spellcheck="false" readonly></textarea>
+    </section>
+  </main>
+
+  <script>
+    const DB_NAME = "a2-workout-db";
+    const STORE_NAME = "kv";
+    const IMPORTANT_LOCAL_KEYS = [
+      "a2WorkoutData.v1",
+      "a2WorkoutDraft.v1",
+      "a2WorkoutData.v2.fallback"
+    ];
+
+    const scanButton = document.getElementById("scanButton");
+    const downloadButton = document.getElementById("downloadButton");
+    const copyButton = document.getElementById("copyButton");
+    const summaryEl = document.getElementById("summary");
+    const rawDumpEl = document.getElementById("rawDump");
+    const rawSection = document.getElementById("rawSection");
+
+    let latestDump = null;
+
+    function safeJsonParse(value) {
+      if (typeof value !== "string") return value;
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
+    }
+
+    function summarizeValue(value) {
+      const parsed = safeJsonParse(value);
+      const data = parsed && typeof parsed === "object" && parsed.appData ? parsed.appData : parsed;
+      const result = {
+        type: Array.isArray(parsed) ? "array" : typeof parsed,
+        programs: null,
+        sessions: null,
+        exercises: null,
+        draft: false,
+        schemaVersion: null,
+        updatedAt: null
+      };
+
+      if (!data || typeof data !== "object") return result;
+
+      if (Array.isArray(data.programs)) result.programs = data.programs.length;
+      if (Array.isArray(data.sessions)) result.sessions = data.sessions.length;
+      if (Array.isArray(data.exercises)) result.exercises = data.exercises.length;
+      result.draft = Boolean(data.draft || data.programDraft || data.builderDraft);
+      result.schemaVersion = data.schemaVersion || parsed.schemaVersion || null;
+      result.updatedAt = data.updatedAt || data.syncUpdatedAt || parsed.updatedAt || parsed.savedAt || null;
+      return result;
+    }
+
+    function requestToPromise(request) {
+      return new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function databaseExists(name) {
+      if (!indexedDB.databases) return true;
+      const databases = await indexedDB.databases();
+      return databases.some((database) => database.name === name);
+    }
+
+    async function readIndexedDb() {
+      if (!("indexedDB" in window)) {
+        return { supported: false, error: "IndexedDB bu tarayıcıda yok." };
+      }
+
+      try {
+        const exists = await databaseExists(DB_NAME);
+        if (!exists) {
+          return { supported: true, exists: false, records: [] };
+        }
+      } catch (error) {
+        return { supported: true, exists: "unknown", error: String(error && error.message ? error.message : error) };
+      }
+
+      return new Promise((resolve) => {
+        const openRequest = indexedDB.open(DB_NAME);
+
+        openRequest.onupgradeneeded = () => {
+          try {
+            openRequest.transaction.abort();
+          } catch {}
+          resolve({ supported: true, exists: false, records: [], error: "Veritabanı bulunamadı veya boş." });
+        };
+
+        openRequest.onerror = () => {
+          resolve({ supported: true, exists: true, error: String(openRequest.error || "IndexedDB açılamadı.") });
+        };
+
+        openRequest.onsuccess = async () => {
+          const db = openRequest.result;
+          try {
+            const stores = Array.from(db.objectStoreNames);
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              resolve({ supported: true, exists: true, stores, records: [] });
+              return;
+            }
+
+            const transaction = db.transaction(STORE_NAME, "readonly");
+            const store = transaction.objectStore(STORE_NAME);
+            const keys = await requestToPromise(store.getAllKeys());
+            const values = await requestToPromise(store.getAll());
+            const records = keys.map((key, index) => ({
+              key: String(key),
+              summary: summarizeValue(values[index]),
+              value: values[index]
+            }));
+
+            resolve({ supported: true, exists: true, stores, records });
+          } catch (error) {
+            resolve({ supported: true, exists: true, error: String(error && error.message ? error.message : error) });
+          } finally {
+            db.close();
+          }
+        };
+      });
+    }
+
+    function readLocalStorage() {
+      const records = {};
+      for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        const value = localStorage.getItem(key);
+        records[key] = {
+          important: IMPORTANT_LOCAL_KEYS.includes(key),
+          summary: summarizeValue(value),
+          value
+        };
+      }
+      return records;
+    }
+
+    function buildSummary(dump) {
+      const lines = [];
+      lines.push(`Adres: ${dump.href}`);
+      lines.push(`Tarama zamanı: ${dump.exportedAt}`);
+      lines.push("");
+
+      const localKeys = Object.keys(dump.localStorage);
+      lines.push(`LocalStorage kayıt sayısı: ${localKeys.length}`);
+      localKeys.forEach((key) => {
+        const item = dump.localStorage[key];
+        const s = item.summary;
+        lines.push(`- ${key}: program=${s.programs ?? "-"}, antrenman=${s.sessions ?? "-"}, hareket=${s.exercises ?? "-"}, draft=${s.draft ? "var" : "yok"}`);
+      });
+
+      lines.push("");
+      if (!dump.indexedDB.supported) {
+        lines.push("IndexedDB: desteklenmiyor");
+      } else if (dump.indexedDB.error && !dump.indexedDB.records?.length) {
+        lines.push(`IndexedDB: ${dump.indexedDB.error}`);
+      } else {
+        lines.push(`IndexedDB kayıt sayısı: ${dump.indexedDB.records.length}`);
+        dump.indexedDB.records.forEach((record) => {
+          const s = record.summary;
+          lines.push(`- ${record.key}: program=${s.programs ?? "-"}, antrenman=${s.sessions ?? "-"}, hareket=${s.exercises ?? "-"}, draft=${s.draft ? "var" : "yok"}`);
+        });
+      }
+
+      const hasUsefulData = localKeys.length > 0 || (dump.indexedDB.records && dump.indexedDB.records.length > 0);
+      lines.push("");
+      lines.push(hasUsefulData ? "Veri bulundu. JSON çıktısını indir veya kopyala." : "Bu tarayıcıda bu adrese ait veri görünmedi.");
+      return lines.join("\n");
+    }
+
+    async function scan() {
+      scanButton.disabled = true;
+      downloadButton.disabled = true;
+      copyButton.disabled = true;
+      summaryEl.textContent = "Taranıyor...";
+
+      latestDump = {
+        exportedAt: new Date().toISOString(),
+        origin: location.origin,
+        href: location.href,
+        userAgent: navigator.userAgent,
+        note: "A2 eski GitHub Pages adresindeki tarayıcı depolama kurtarma çıktısı. Sayfa sadece okuma yapar.",
+        localStorage: readLocalStorage(),
+        indexedDB: await readIndexedDb()
+      };
+
+      const raw = JSON.stringify(latestDump, null, 2);
+      summaryEl.textContent = buildSummary(latestDump);
+      rawDumpEl.value = raw;
+      rawSection.classList.remove("hidden");
+      downloadButton.disabled = false;
+      copyButton.disabled = false;
+      scanButton.disabled = false;
+    }
+
+    function downloadDump() {
+      if (!latestDump) return;
+      const blob = new Blob([JSON.stringify(latestDump, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `a2-veri-kurtarma-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }
+
+    async function copyDump() {
+      if (!latestDump) return;
+      const raw = JSON.stringify(latestDump, null, 2);
+      try {
+        await navigator.clipboard.writeText(raw);
+        copyButton.textContent = "Kopyalandı";
+        setTimeout(() => { copyButton.textContent = "Panoya kopyala"; }, 1400);
+      } catch {
+        rawDumpEl.focus();
+        rawDumpEl.select();
+        summaryEl.textContent += "\n\nOtomatik kopyalama engellendi. Alttaki metni manuel seçip kopyala.";
+      }
+    }
+
+    scanButton.addEventListener("click", scan);
+    downloadButton.addEventListener("click", downloadDump);
+    copyButton.addEventListener("click", copyDump);
+  </script>
+</body>
+</html>
