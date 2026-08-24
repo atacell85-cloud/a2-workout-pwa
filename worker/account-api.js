@@ -123,7 +123,7 @@ async function register(request, env) {
   const id = crypto.randomUUID(); const now = new Date().toISOString();
   const salt = randomToken(16); const passwordHash = await passwordDigest(password, salt);
   await env.DB.prepare('INSERT INTO users (id, email, password_hash, password_salt, created_at) VALUES (?, ?, ?, ?, ?)').bind(id, normalizedEmail, passwordHash, salt, now).run();
-  return issueSession(env, id, normalizedEmail);
+  return issueSession(env, id, normalizedEmail, 201, mobileClient(request) ? { 'X-Reptrio-Client': 'mobile' } : {});
 }
 
 async function login(request, env) {
@@ -132,13 +132,13 @@ async function login(request, env) {
   const { email, password } = await body(request); const normalizedEmail = normalizeEmail(email);
   const user = normalizedEmail && await env.DB.prepare('SELECT id, email, password_hash, password_salt FROM users WHERE email = ? AND deleted_at IS NULL').bind(normalizedEmail).first();
   if (!user || !validPassword(password) || !constantEqual(await passwordDigest(password, user.password_salt), user.password_hash)) return error('AUTH_INVALID_CREDENTIALS', 401);
-  return issueSession(env, user.id, user.email);
+  return issueSession(env, user.id, user.email, 201, mobileClient(request) ? { 'X-Reptrio-Client': 'mobile' } : {});
 }
 
 async function logout(request, env) {
   if (request.method !== 'POST') return error('METHOD_NOT_ALLOWED', 405, { Allow: 'POST' });
   if (!sameOrigin(request)) return error('AUTH_ORIGIN_INVALID', 403);
-  const token = cookie(request, 'aks_session');
+  const token = sessionToken(request);
   if (token) await env.DB.prepare('DELETE FROM auth_sessions WHERE token_hash = ?').bind(await tokenDigest(token)).run();
   return json({ ok: true }, 200, { 'Set-Cookie': clearCookie() });
 }
@@ -205,17 +205,21 @@ async function deleteAccount(request, env) {
 async function issueSession(env, id, email, status = 201, extraHeaders = {}) {
   const token = randomToken(32); const now = new Date(); const expires = new Date(now.getTime() + SESSION_DAYS * 86400000);
   await env.DB.prepare('INSERT INTO auth_sessions (id, user_id, token_hash, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').bind(crypto.randomUUID(), id, await tokenDigest(token), now.toISOString(), expires.toISOString()).run();
-  return json({ user: { id, email } }, status, { ...extraHeaders, 'Set-Cookie': [sessionCookie(token, expires), ...asArray(extraHeaders['Set-Cookie'])] });
+  const mobile = extraHeaders['X-Reptrio-Client'] === 'mobile';
+  const publicHeaders = { ...extraHeaders };
+  delete publicHeaders['X-Reptrio-Client'];
+  return json({ user: { id, email }, ...(mobile ? { sessionToken: token, expiresAt: expires.toISOString() } : {}) }, status, { ...publicHeaders, 'Set-Cookie': [sessionCookie(token, expires), ...asArray(publicHeaders['Set-Cookie'])] });
 }
 
 export async function currentUser(request, env) {
-  const token = cookie(request, 'aks_session'); if (!token) return null;
+  const token = sessionToken(request); if (!token) return null;
   const row = await env.DB.prepare('SELECT users.id, users.email FROM auth_sessions JOIN users ON users.id = auth_sessions.user_id WHERE auth_sessions.token_hash = ? AND auth_sessions.expires_at > ? AND users.deleted_at IS NULL').bind(await tokenDigest(token), new Date().toISOString()).first();
   return row || null;
 }
 
 function isJsonPost(request) { return request.method === 'POST' && request.headers.get('content-type')?.toLowerCase().startsWith('application/json'); }
 function sameOrigin(request) { const origin = request.headers.get('origin'); return !origin || origin === new URL(request.url).origin; }
+function mobileClient(request) { return request.headers.get('x-reptrio-client') === 'mobile'; }
 function methodOrTypeError(request) { return request.method !== 'POST' ? error('METHOD_NOT_ALLOWED', 405, { Allow: 'POST' }) : error('UNSUPPORTED_CONTENT_TYPE', 415); }
 async function body(request) { try { return await request.json(); } catch { return {}; } }
 function normalizeEmail(value) { const email = String(value || '').trim().toLowerCase(); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254 ? email : null; }
@@ -227,6 +231,8 @@ function base64Url(bytes) { let text = ''; bytes.forEach(byte => { text += Strin
 function fromBase64Url(value) { const text = value.replaceAll('-', '+').replaceAll('_', '/').padEnd(Math.ceil(value.length / 4) * 4, '='); const binary = atob(text); return Uint8Array.from(binary, char => char.charCodeAt(0)); }
 function constantEqual(a, b) { if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false; let result = 0; for (let index = 0; index < a.length; index += 1) result |= a.charCodeAt(index) ^ b.charCodeAt(index); return result === 0; }
 function cookie(request, name) { return request.headers.get('cookie')?.split(';').map(value => value.trim()).find(value => value.startsWith(`${name}=`))?.slice(name.length + 1) || null; }
+function bearer(request) { const value = request.headers.get('authorization') || ''; const match = value.match(/^Bearer\s+(.+)$/i); return match ? match[1].trim() : null; }
+function sessionToken(request) { return bearer(request) || cookie(request, 'aks_session'); }
 function sessionCookie(token, expires) { return `aks_session=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Expires=${expires.toUTCString()}`; }
 function clearCookie() { return 'aks_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0'; }
 function shortCookie(name, value) { return `${name}=${value}; Path=/api/auth/oauth/; HttpOnly; Secure; SameSite=None; Max-Age=600`; }

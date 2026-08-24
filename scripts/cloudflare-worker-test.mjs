@@ -20,6 +20,11 @@ globalThis.fetch = originalFetch;
 const googleOauthUnconfigured = await worker.fetch(new Request('https://a2.example/api/auth/oauth/google/start'), baseEnv);
 const appleOauthUnconfigured = await worker.fetch(new Request('https://a2.example/api/auth/oauth/apple/start'), baseEnv);
 const youtubeOkBody = await youtubeOk.json();
+const mobileDb = mockAccountDb();
+const mobileRegister = await worker.fetch(new Request('https://a2.example/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Reptrio-Client': 'mobile' }, body: JSON.stringify({ email: 'mobile@example.test', password: 'password123' }) }), { ...baseEnv, DB: mobileDb });
+const mobileRegisterBody = await mobileRegister.json();
+const mobileMe = await worker.fetch(new Request('https://a2.example/api/me', { headers: { Authorization: `Bearer ${mobileRegisterBody.sessionToken || ''}` } }), { ...baseEnv, DB: mobileDb });
+const mobileMeBody = await mobileMe.json();
 const sourceReference = { page: null, sheet: null, cellRange: null, text: null };
 const normalizedImport = normalizeImportedPreview({
   schemaVersion: '1.1',
@@ -89,8 +94,38 @@ const importNormalizationOk = normalizedImport.program.description === null
   && normalizedImport.unparsedContent.length === 0;
 
 const result = {
-  ok: health.ok && staticAsset.ok && invalidMethod.status === 405 && invalidContentType.status === 415 && missingSecret.status === 503 && oversized.status === 413 && limited.status === 429 && youtubeMissingSecret.status === 503 && youtubeOk.ok && youtubeOkBody.videos?.[0]?.videoId === 'abc123' && googleOauthUnconfigured.status === 303 && appleOauthUnconfigured.status === 303 && importNormalizationOk,
-  health: await health.json(), staticAsset: staticAsset.headers.get('content-type'), invalidMethod: invalidMethod.status, invalidContentType: invalidContentType.status, missingSecret: (await missingSecret.json()).code, oversized: (await oversized.json()).code, limited: (await limited.json()).code, youtubeMissingSecret: (await youtubeMissingSecret.json()).code, youtubeOk: youtubeOkBody.videos?.length || 0, googleOauthUnconfigured: googleOauthUnconfigured.headers.get('location'), appleOauthUnconfigured: appleOauthUnconfigured.headers.get('location'), importNormalizationOk
+  ok: health.ok && staticAsset.ok && invalidMethod.status === 405 && invalidContentType.status === 415 && missingSecret.status === 503 && oversized.status === 413 && limited.status === 429 && youtubeMissingSecret.status === 503 && youtubeOk.ok && youtubeOkBody.videos?.[0]?.videoId === 'abc123' && googleOauthUnconfigured.status === 303 && appleOauthUnconfigured.status === 303 && importNormalizationOk && mobileRegister.ok && Boolean(mobileRegisterBody.sessionToken) && mobileMe.ok && mobileMeBody.user?.email === 'mobile@example.test',
+  health: await health.json(), staticAsset: staticAsset.headers.get('content-type'), invalidMethod: invalidMethod.status, invalidContentType: invalidContentType.status, missingSecret: (await missingSecret.json()).code, oversized: (await oversized.json()).code, limited: (await limited.json()).code, youtubeMissingSecret: (await youtubeMissingSecret.json()).code, youtubeOk: youtubeOkBody.videos?.length || 0, googleOauthUnconfigured: googleOauthUnconfigured.headers.get('location'), appleOauthUnconfigured: appleOauthUnconfigured.headers.get('location'), importNormalizationOk, mobileTokenAuthOk: Boolean(mobileRegisterBody.sessionToken) && mobileMeBody.user?.email === 'mobile@example.test'
 };
 console.log(JSON.stringify(result, null, 2));
 if (!result.ok) process.exitCode = 1;
+
+function mockAccountDb() {
+  const state = { users: [], sessions: [] };
+  return {
+    prepare(sql) {
+      return {
+        bind(...values) {
+          return {
+            async first() {
+              if (sql.includes('SELECT id FROM users WHERE email = ?')) return state.users.find(user => user.email === values[0] && !user.deleted_at) || null;
+              if (sql.includes('SELECT users.id, users.email FROM auth_sessions JOIN users')) {
+                const session = state.sessions.find(item => item.token_hash === values[0] && item.expires_at > values[1]);
+                const user = session && state.users.find(item => item.id === session.user_id && !item.deleted_at);
+                return user ? { id: user.id, email: user.email } : null;
+              }
+              return null;
+            },
+            async run() {
+              if (sql.startsWith('INSERT INTO users')) state.users.push({ id: values[0], email: values[1], password_hash: values[2], password_salt: values[3], created_at: values[4], deleted_at: null });
+              if (sql.startsWith('INSERT INTO auth_sessions')) state.sessions.push({ id: values[0], user_id: values[1], token_hash: values[2], created_at: values[3], expires_at: values[4] });
+              if (sql.startsWith('DELETE FROM auth_sessions WHERE token_hash')) state.sessions = state.sessions.filter(item => item.token_hash !== values[0]);
+              return { success: true };
+            }
+          };
+        }
+      };
+    },
+    async batch(items) { return Promise.all(items.map(item => item.run())); }
+  };
+}
