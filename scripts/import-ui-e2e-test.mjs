@@ -80,7 +80,7 @@ try {
   mark('STEP 02 public_url_loaded');
   await waitFor(() => evaluate(cdp, 'Boolean(window.__a2)'), 'application startup', 15000);
 
-  await waitFor(async () => (await evaluate(cdp, 'document.body?.innerText || ""')).includes("AKS'ye hoş geldin") || await evaluate(cdp, "Boolean(document.querySelector('#authEmail'))"), 'welcome or authentication screen');
+  await waitFor(async () => (await evaluate(cdp, 'document.body?.innerText || ""')).includes("Reptrio'ya hoş geldin") || await evaluate(cdp, "Boolean(document.querySelector('#authEmail'))"), 'welcome or authentication screen');
   if (!(await evaluate(cdp, "Boolean(document.querySelector('#authEmail'))"))) {
     await beginOnboarding(cdp);
   }

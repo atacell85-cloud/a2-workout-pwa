@@ -93,7 +93,7 @@ Hard rules:
 - Do not infer missing exercises, missing sets, missing reps, missing rest, missing RIR/RPE, or missing weights.
 - Do not split a day into multiple sections. Every day must contain exactly one section titled "Ana Antrenman" with sectionType "strength".
 - Do not output instruction items. Every section item must be an exercise.
-- exerciseMatch must always be null. AKS will match exercise names against its own exercise database after extraction.
+- exerciseMatch must always be null. Reptrio will match exercise names against its own exercise database after extraction.
 - If an exercise is not clearly an exercise name, omit it.
 - Keep sourceExerciseName as written in the file. normalizedExerciseName may be a cleaned spelling of the same exercise, but must not be a different exercise.
 - warnings and unparsedContent must be empty arrays unless the file contains no usable workout days.`; }

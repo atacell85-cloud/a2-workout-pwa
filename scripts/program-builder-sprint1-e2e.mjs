@@ -19,7 +19,7 @@ try {
   await cdp.send('Runtime.enable'); await cdp.send('Page.enable');
   await cdp.send('Emulation.setDeviceMetricsOverride', { mobile: true, width: 375, height: 812, deviceScaleFactor: 1 });
   await cdp.send('Page.navigate', { url: base });
-  await until(async () => (await text()).includes("AKS'ye hoş geldin") || await ev("Boolean(document.querySelector('#authEmail'))"), 'welcome or auth');
+  await until(async () => (await text()).includes("Reptrio'ya hoş geldin") || await ev("Boolean(document.querySelector('#authEmail'))"), 'welcome or auth');
   if (!(await ev("Boolean(document.querySelector('#authEmail'))"))) await beginOnboarding();
   await until(() => ev("Boolean(document.querySelector('#authEmail'))"), 'auth');
   stage = 'register'; await ev(`fill('#authEmail', ${JSON.stringify(email)}); fill('#authPassword', ${JSON.stringify(password)}); document.querySelector('[data-action=register]').click()`);

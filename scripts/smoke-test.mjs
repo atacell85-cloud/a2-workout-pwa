@@ -101,12 +101,12 @@ async function scenario() {
   };
   const database = await window.__a2.loadExerciseDatabase();
   const aliasSearch = await window.__a2.searchExercises('db bench press');
-  const canonicalDbOk = database.length === 250 && database.some(item => item.id === 'barbell-bench-press');
-  const aliasSearchOk = aliasSearch.some(item => item.id === 'dumbbell-bench-press');
+  const canonicalDbOk = database.length === 250 && database.some(item => item.id === 'bench-press');
+  const aliasSearchOk = aliasSearch.some(item => item.id === 'db-bench-press');
   const sourceReference = { page: null, sheet: null, cellRange: null, text: null };
   const importPreview = {
     schemaVersion: '1.1', importId: 'smoke-import-1', importedAt: new Date().toISOString(), source: { fileName: 'test.xlsx', fileType: 'xlsx', language: null, documentTitle: null }, warnings: [], unparsedContent: [],
-    program: { id: null, name: 'İçe Aktarılan', description: null, sourceType: 'xlsx-import', notes: null, days: [{ name: 'Gün 1', order: 1, notes: null, sourceReference, sections: [{ title: 'Ana Antrenman', sectionType: 'strength', order: 1, notes: null, sourceReference, items: [{ itemType: 'exercise', order: 1, sourceExerciseName: 'DB Bench Press', normalizedExerciseName: 'DB Bench Press', resolutionStatus: 'accepted-canonical', exerciseMatch: { status: 'matched', exerciseId: 'dumbbell-bench-press', matchedName: 'Dumbbell Bench Press', score: 1, candidates: [] }, notes: null, sourceReference, prescription: { sets: 3, setsText: null, repsMin: null, repsMax: null, repsText: '8-10', weight: null, weightUnit: 'kg', weightText: null, rir: null, rirText: null, rpe: null, rpeText: null, restSeconds: null, restText: null, tempo: null, tempoText: null, durationSeconds: null, durationText: null, distance: null, distanceUnit: null, distanceText: null, individualSets: [{ setNumber: 1, setType: 'working', reps: null, repsText: '8', weight: 20, weightUnit: 'kg', weightText: null, rir: null, rirText: null, rpe: 8, rpeText: null, restSeconds: null, restText: null, notes: null }] } }] }] }] }
+    program: { id: null, name: 'İçe Aktarılan', description: null, sourceType: 'xlsx-import', notes: null, days: [{ name: 'Gün 1', order: 1, notes: null, sourceReference, sections: [{ title: 'Ana Antrenman', sectionType: 'strength', order: 1, notes: null, sourceReference, items: [{ itemType: 'exercise', order: 1, sourceExerciseName: 'DB Bench Press', normalizedExerciseName: 'DB Bench Press', resolutionStatus: 'accepted-canonical', exerciseMatch: { status: 'matched', exerciseId: 'db-bench-press', matchedName: 'Dumbbell Bench Press', score: 1, candidates: [] }, notes: null, sourceReference, prescription: { sets: 3, setsText: null, repsMin: null, repsMax: null, repsText: '8-10', weight: null, weightUnit: 'kg', weightText: null, rir: null, rirText: null, rpe: null, rpeText: null, restSeconds: null, restText: null, tempo: null, tempoText: null, durationSeconds: null, durationText: null, distance: null, distanceUnit: null, distanceText: null, individualSets: [{ setNumber: 1, setType: 'working', reps: null, repsText: '8', weight: 20, weightUnit: 'kg', weightText: null, rir: null, rirText: null, rpe: 8, rpeText: null, restSeconds: null, restText: null, notes: null }] } }] }] }] }
   };
   const finalProgram = window.__a2.finalizeImport(importPreview, new Set(database.map(item => item.id)));
   const importFinalizationOk = finalProgram.days[0].sections[0].items[0].individualSets[0].rpe === 8 && finalProgram.days[0].sections[0].items[0].individualSets[0].weightUnit === 'kg';
@@ -115,7 +115,7 @@ async function scenario() {
   const pdfFile = new File(['%PDF-1.4\nstream\nBT (Upper Day) Tj ET\nendstream\n%%EOF'], 'sample-workout.pdf', { type: 'application/pdf' });
   const pdfExtraction = await window.__a2.documentExtractor.extract(pdfFile);
   const pdfExtractionOk = pdfExtraction.blocks.some(block => block.text.includes('Upper Day'));
-  const parsedFixture = await window.__a2.localImportParser.parse({ fileName: 'sample-workout.xlsx', fileType: 'xlsx', extractedAt: new Date().toISOString(), language: null, blocks: [{ type: 'paragraph', text: 'Upper Day', sourceReference }, { type: 'paragraph', text: 'Main Workout', sourceReference }, { type: 'table', rows: [['Machine Fly', '3', '12'], ['Incline Smith Press', '2 warmup + 2', '8-10'], ['Lat Pulldown', '3', '10']], sourceReference }] });
+  const parsedFixture = await window.__a2.localImportParser.parse({ fileName: 'sample-workout.xlsx', fileType: 'xlsx', extractedAt: new Date().toISOString(), language: null, blocks: [{ type: 'paragraph', text: 'Upper Day', sourceReference }, { type: 'paragraph', text: 'Main Workout', sourceReference }, { type: 'table', rows: [['Machine Fly', '3', '12'], ['Incline Barbell Press', '2 warmup + 2', '8-10'], ['Lat Pulldown', '3', '10']], sourceReference }] });
   const parserOk = parsedFixture.schemaVersion === '1.1' && parsedFixture.program.days[0].sections[0].items.length === 3;
   const unsupportedOk = await window.__a2.documentExtractor.extract(new File(['x'], 'notes.txt', { type: 'text/plain' })).then(() => false, error => error.code === 'UNSUPPORTED_FILE');
 
@@ -139,7 +139,7 @@ async function scenario() {
           notes: null,
           sourceReference,
           items: [
-            { itemType: 'exercise', order: 1, sourceExerciseName: 'Incline Smith Press', normalizedExerciseName: 'Incline Smith Press', resolutionStatus: 'accepted-canonical', exerciseMatch: { status: 'matched', exerciseId: 'incline-smith-machine-press', matchedName: 'Incline Smith Machine Press', score: 1, candidates: [] }, notes: null, sourceReference, prescription: { sets: 2, setsText: '2', repsMin: null, repsMax: null, repsText: '8-10', weight: null, weightUnit: 'kg', weightText: null, rir: null, rirText: null, rpe: null, rpeText: null, restSeconds: null, restText: null, tempo: null, tempoText: null, durationSeconds: null, durationText: null, distance: null, distanceUnit: null, distanceText: null, individualSets: [] } },
+            { itemType: 'exercise', order: 1, sourceExerciseName: 'Incline Barbell Press', normalizedExerciseName: 'Incline Barbell Press', resolutionStatus: 'accepted-canonical', exerciseMatch: { status: 'matched', exerciseId: 'incline-bench-press', matchedName: 'Incline Barbell Bench Press', score: 1, candidates: [] }, notes: null, sourceReference, prescription: { sets: 2, setsText: '2', repsMin: null, repsMax: null, repsText: '8-10', weight: null, weightUnit: 'kg', weightText: null, rir: null, rirText: null, rpe: null, rpeText: null, restSeconds: null, restText: null, tempo: null, tempoText: null, durationSeconds: null, durationText: null, distance: null, distanceUnit: null, distanceText: null, individualSets: [] } },
             { itemType: 'exercise', order: 2, sourceExerciseName: 'Lat Pulldown', normalizedExerciseName: 'Lat Pulldown', resolutionStatus: 'accepted-canonical', exerciseMatch: { status: 'matched', exerciseId: 'lat-pulldown', matchedName: 'Lat Pulldown', score: 1, candidates: [] }, notes: null, sourceReference, prescription: { sets: 1, setsText: '1', repsMin: null, repsMax: null, repsText: '10', weight: null, weightUnit: 'kg', weightText: null, rir: null, rirText: null, rpe: null, rpeText: null, restSeconds: null, restText: null, tempo: null, tempoText: null, durationSeconds: null, durationText: null, distance: null, distanceUnit: null, distanceText: null, individualSets: [] } }
           ]
         }]
@@ -156,9 +156,9 @@ async function scenario() {
   click('[data-start-program-day]');
   await sleep(150);
 
-  saveSetByCard('Incline Smith', 1, '60', '10', '2');
+  saveSetByCard('Incline Barbell', 1, '60', '10', '2');
   await sleep(100);
-  saveSetByCard('Incline Smith', 2, '60', '9', '1');
+  saveSetByCard('Incline Barbell', 2, '60', '9', '1');
   await sleep(100);
   saveSetByCard('Lat Pulldown', 1, '55', '10', '2');
   await sleep(100);
@@ -172,7 +172,7 @@ async function scenario() {
   const summaryVisible = text().includes('Antrenman Kaydedildi') && text().includes('1690');
   click('[data-action="history"]');
   await sleep(250);
-  const historyVisible = text().includes('Incline Smith') && text().includes('Lat Pulldown');
+  const historyVisible = text().includes('Incline Barbell') && text().includes('Lat Pulldown');
 
   click('[data-nav="programs"]');
   await sleep(150);
@@ -182,18 +182,18 @@ async function scenario() {
   await sleep(150);
   click('[data-start-program-day]');
   await sleep(250);
-  const previousVisible = Boolean(exerciseCardByName('Incline Smith')?.innerText.includes('60 kg × 10 @ RIR 2'));
+  const previousVisible = Boolean(exerciseCardByName('Incline Barbell')?.innerText.includes('60 kg × 10 @ RIR 2'));
 
-  saveSetByCard('Incline Smith', 1, '62', '9', '2');
+  saveSetByCard('Incline Barbell', 1, '62', '9', '2');
   await sleep(100);
-  saveSetByCard('Incline Smith', 2, '62', '8', '1');
+  saveSetByCard('Incline Barbell', 2, '62', '8', '1');
   await sleep(100);
-  exerciseCardByName('Incline Smith').querySelectorAll('[data-delete-set]')[1].click();
+  exerciseCardByName('Incline Barbell').querySelectorAll('[data-delete-set]')[1].click();
   await sleep(150);
-  const inclineRows = exerciseCardByName('Incline Smith').querySelectorAll('.set-row');
+  const inclineRows = exerciseCardByName('Incline Barbell').querySelectorAll('.set-row');
   const editDeletePersist = inclineRows[0].querySelectorAll('input')[1].value === '9'
-    && inclineRows[1].querySelectorAll('input')[1].value === ''
-    && exerciseCardByName('Incline Smith').querySelectorAll('.set-row.saved').length === 1;
+    && !inclineRows[1].classList.contains('saved')
+    && exerciseCardByName('Incline Barbell').querySelectorAll('.set-row.saved').length === 1;
 
   const backup = await window.__a2.repository.exportBackup();
   await window.__a2.repository.replaceData({ schemaVersion: 2, sessions: [], settings: { rest: 90 } });
@@ -204,7 +204,7 @@ async function scenario() {
     && restoredSessions[0].sets.length === backup.sessions[0].sets.length;
   const csv = window.__a2.buildCsv(await window.__a2.repository.getData());
   const csvOk = csv.includes('"SessionId","ProgramId","WorkoutDayId"')
-    && csv.includes('"incline-smith-machine-press"')
+    && csv.includes('"incline-bench-press"')
     && csv.includes('"working"')
     && csv.includes('"60"');
   const serviceWorkerRegistered = 'serviceWorker' in navigator;

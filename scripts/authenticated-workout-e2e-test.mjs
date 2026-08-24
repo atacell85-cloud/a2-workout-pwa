@@ -26,7 +26,7 @@ try {
   await cdp.send('Network.enable');
   await cdp.send('Emulation.setDeviceMetricsOverride', { mobile: true, width: 375, height: 812, deviceScaleFactor: 1 });
   await cdp.send('Page.navigate', { url: base });
-  await until(async () => (await text()).includes("AKS'ye hoş geldin") || await ev("Boolean(document.querySelector('#authEmail'))"), 'welcome or auth');
+  await until(async () => (await text()).includes("Reptrio'ya hoş geldin") || await ev("Boolean(document.querySelector('#authEmail'))"), 'welcome or auth');
   if (!await ev("Boolean(document.querySelector('#authEmail'))")) await beginOnboarding();
   await until(() => ev("Boolean(document.querySelector('#authEmail'))"), 'auth');
 
@@ -79,9 +79,9 @@ try {
   await ev("document.querySelector('[data-nav=account]').click()");
   await until(() => ev("Boolean(document.querySelector('[data-action=logout]'))"), 'account');
   await ev("document.querySelector('[data-action=logout]').click()");
-  await until(async () => (await text()).includes("AKS'ye hoş geldin") || await ev("Boolean(document.querySelector('#authEmail'))"), 'logout');
+  await until(async () => (await text()).includes("Reptrio'ya hoş geldin") || await ev("Boolean(document.querySelector('#authEmail'))"), 'logout');
   await cdp.send('Page.reload', { ignoreCache: true });
-  await until(async () => (await text()).includes("AKS'ye hoş geldin") || await ev("Boolean(document.querySelector('#authEmail'))"), 'post-logout reload');
+  await until(async () => (await text()).includes("Reptrio'ya hoş geldin") || await ev("Boolean(document.querySelector('#authEmail'))"), 'post-logout reload');
   if (!await ev("Boolean(document.querySelector('#authEmail'))")) await ev("document.querySelector('[data-action=returning-login]').click()");
   await fill('#authEmail', email);
   await fill('#authPassword', password);

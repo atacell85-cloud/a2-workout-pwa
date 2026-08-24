@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v60-turkish-youtube-search-2026-08-24';
+const CACHE_VERSION = 'a2-workout-v61-reptrio-brand-2026-08-24';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=turkish-youtube-search-v1',
+  './app.js?v=reptrio-brand-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',

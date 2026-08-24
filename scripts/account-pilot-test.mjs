@@ -24,8 +24,8 @@ try {
   await cdp.send('Page.enable');
   await cdp.send('Emulation.setDeviceMetricsOverride', { mobile: true, width: 375, height: 812, deviceScaleFactor: 1 });
   await cdp.send('Page.navigate', { url: base });
-  await waitFor(() => text().then(value => value.includes("AKS'ye hoş geldin")), 'fresh welcome screen');
-  if ((await text()).includes('A2 Antrenman')) throw new Error('bundled personal program visible to fresh user');
+  await waitFor(() => text().then(value => value.includes("Reptrio'ya hoş geldin")), 'fresh welcome screen');
+  if ((await text()).includes('Pilot UI Program')) throw new Error('bundled personal program visible to fresh user');
 
   stage = 'register user A'; await beginOnboarding(); await auth('register', emailA);
   await waitFor(() => evaluate(`Boolean(document.querySelector('[data-action="programs"]'))`), 'first program handoff');
@@ -46,11 +46,11 @@ try {
   await evaluate(`document.querySelector('[data-nav="account"]').click()`);
   await waitFor(() => evaluate(`Boolean(document.querySelector('[data-action="logout"]'))`), 'account screen');
   await evaluate(`document.querySelector('[data-action="logout"]').click()`);
-  await waitFor(async () => (await text()).includes("AKS'ye hoş geldin") || await evaluate(`Boolean(document.querySelector('#authEmail'))`), 'logout');
+  await waitFor(async () => (await text()).includes("Reptrio'ya hoş geldin") || await evaluate(`Boolean(document.querySelector('#authEmail'))`), 'logout');
 
   stage = 'register user B';
   await cdp.send('Page.reload', { ignoreCache: true });
-  await waitFor(() => text().then(value => value.includes("AKS'ye hoş geldin")), 'user B welcome');
+  await waitFor(() => text().then(value => value.includes("Reptrio'ya hoş geldin")), 'user B welcome');
   await beginOnboarding();
   await auth('register', emailB);
   await waitFor(() => text().then(value => value.includes('İlk programını oluştur') || value.includes('Henüz programınız yok.')), 'user B post-register landing');
@@ -63,11 +63,11 @@ try {
   await evaluate(`document.querySelector('[data-nav="account"]').click()`);
   await waitFor(() => evaluate(`Boolean(document.querySelector('[data-action="logout"]'))`), 'user B account');
   await evaluate(`document.querySelector('[data-action="logout"]').click()`);
-  await waitFor(async () => (await text()).includes("AKS'ye hoş geldin") || await evaluate(`Boolean(document.querySelector('#authEmail'))`), 'user B logout');
+  await waitFor(async () => (await text()).includes("Reptrio'ya hoş geldin") || await evaluate(`Boolean(document.querySelector('#authEmail'))`), 'user B logout');
 
   stage = 'login user A';
   await cdp.send('Page.reload', { ignoreCache: true });
-  await waitFor(async () => (await text()).includes("AKS'ye hoş geldin") || await evaluate(`Boolean(document.querySelector('#authEmail'))`), 'login landing');
+  await waitFor(async () => (await text()).includes("Reptrio'ya hoş geldin") || await evaluate(`Boolean(document.querySelector('#authEmail'))`), 'login landing');
   await auth('login', emailA);
   await waitFor(() => text().then(value => value.includes('Pilot UI Program')), 'user A cloud restore');
   const overflow = await evaluate(`document.documentElement.scrollWidth <= window.innerWidth`);

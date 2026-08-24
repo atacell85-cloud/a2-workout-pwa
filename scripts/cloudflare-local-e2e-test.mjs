@@ -14,7 +14,7 @@ try {
     fetch(`${baseUrl}/`).then(response => response.text()),
     fetch(`${baseUrl}/sw.js`).then(response => response.text())
   ]);
-  if (!health.ok || !health.aiImportConfigured || !home.includes('A2 Antrenman') || !workerScript.includes('CACHE_VERSION')) throw new Error('Cloudflare static or health check failed');
+  if (!health.ok || !health.aiImportConfigured || !home.includes('Reptrio') || !workerScript.includes('CACHE_VERSION')) throw new Error('Cloudflare static or health check failed');
   const result = await run(process.execPath, ['scripts/import-ui-e2e-test.mjs'], { ...process.env, A2_E2E_BASE_URL: baseUrl });
   if (result !== 0) process.exitCode = result;
 } catch (error) {

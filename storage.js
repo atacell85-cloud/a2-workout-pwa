@@ -132,7 +132,7 @@ export const workoutRepository = {
       exportedAt: new Date().toISOString(),
       app: {
         id: 'a2-workout-pwa',
-        name: 'A2 Antrenman Takip',
+        name: 'Reptrio',
         version: '1.0.0'
       },
       programs: data.programs,

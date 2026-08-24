@@ -92,7 +92,7 @@ async function todayView() {
   app.innerHTML = `
     <section class="sync-status" id="syncStatus">${syncLabel(state.syncStatus)}</section>
     ${importNotice}
-    ${draft ? `<section class="today-hero"><div><span>Devam eden antrenman</span><h2>${escapeHtml(draftDay?.label || 'Antrenman')}</h2><p>Başladığın kaydı sürdürebilirsin.</p></div><button class="primary-btn full" data-action="resume">Devam Et</button></section>` : `<section class="today-hero"><div><span>Bugün</span><h2>${hasProgram ? 'Antrenmana hazır' : 'İlk programını oluştur'}</h2><p>${hasProgram ? 'Programlar sekmesinden bir gün seçip antrenmanı başlat.' : 'AKS önce programını kurar, sonra her gün sadece başlatıp kayıt alırsın.'}</p></div>${hasProgram ? '<button class="primary-btn full" data-action="programs">Programlara Git</button>' : ''}</section>`}
+    ${draft ? `<section class="today-hero"><div><span>Devam eden antrenman</span><h2>${escapeHtml(draftDay?.label || 'Antrenman')}</h2><p>Başladığın kaydı sürdürebilirsin.</p></div><button class="primary-btn full" data-action="resume">Devam Et</button></section>` : `<section class="today-hero"><div><span>Bugün</span><h2>${hasProgram ? 'Antrenmana hazır' : 'İlk programını oluştur'}</h2><p>${hasProgram ? 'Programlar sekmesinden bir gün seçip antrenmanı başlat.' : 'Reptrio önce programını kurar, sonra her gün sadece başlatıp kayıt alırsın.'}</p></div>${hasProgram ? '<button class="primary-btn full" data-action="programs">Programlara Git</button>' : ''}</section>`}
     ${hasProgram ? '' : `<section class="summary-card"><h2>Program yok</h2><p class="muted">PDF, Word veya Excel'den aktarabilir ya da elle oluşturabilirsin.</p><button class="primary-btn full" data-action="file-import">Dosyadan Program Oluştur</button><button class="secondary-btn full" data-action="new-program">Elle Program Oluştur</button></section>`}
     ${lastSession ? `<section class="summary-card"><h2>Son antrenman</h2>${lastSessionSummary(lastSession, lastSessionLabel)}<button class="secondary-btn full" data-action="history">Geçmişi Gör</button></section>` : '<section class="summary-card muted">Henüz tamamlanmış antrenman kaydın yok.</section>'}`;
   nav('home');
@@ -165,8 +165,8 @@ async function programsView() { return myRoutinesView(); }
 function syncLabel(status) { return ({ saved: 'Kaydedildi', syncing: 'Senkronize ediliyor...', offline: 'Çevrimdışı — sonra senkronize edilecek', pending: 'Senkronizasyon bekliyor' })[status] || 'Kaydedildi'; }
 
 function welcomeView() {
-  state.view = 'welcome'; state.onboarding = null; title.textContent = 'AKS'; nav('');
-  app.innerHTML = `<section class="onboarding-screen welcome-screen"><div class="onboarding-mark">AKS</div><h2>AKS'ye hoş geldin</h2><p class="muted">Programını oluştur, antrenmanını takip et ve gelişimini hatırla. Hazır programını PDF, Word veya Excel'den de aktarabilirsin.</p><button class="primary-btn full" data-action="onboarding-start">Başla</button><button class="text-btn full" data-action="returning-login">Zaten hesabım var</button></section>`;
+  state.view = 'welcome'; state.onboarding = null; title.textContent = 'Reptrio'; nav('');
+  app.innerHTML = `<section class="onboarding-screen welcome-screen"><div class="onboarding-mark"><span class="brand-mark large" aria-hidden="true"><span></span><span></span><span></span></span><span>Reptrio</span></div><h2>Reptrio'ya hoş geldin</h2><p class="muted">Programını oluştur, antrenmanını takip et ve gelişimini hatırla. Hazır programını PDF, Word veya Excel'den de aktarabilirsin.</p><button class="primary-btn full" data-action="onboarding-start">Başla</button><button class="text-btn full" data-action="returning-login">Zaten hesabım var</button></section>`;
 }
 
 const onboardingSteps = [
@@ -180,7 +180,7 @@ const onboardingSteps = [
 ];
 
 function onboardingView() {
-  const index = state.onboarding.step; const step = onboardingSteps[index]; state.view = 'onboarding'; title.textContent = 'AKS'; nav('');
+  const index = state.onboarding.step; const step = onboardingSteps[index]; state.view = 'onboarding'; title.textContent = 'Reptrio'; nav('');
   const selected = state.onboarding[step.key]; const progress = `${index + 1} / ${onboardingSteps.length}`;
   const body = step.options ? `<div class="choice-grid">${step.options.map(([value, label]) => `<button class="choice-card ${selected === value ? 'selected' : ''}" data-onboarding-value="${step.key}:${value}">${label}</button>`).join('')}</div>` : `<label class="onboarding-input"><span>${step.placeholder}</span><input id="onboardingInput" type="${step.input}" inputmode="decimal" step="${step.step || '1'}" value="${escapeHtml(selected || '')}" placeholder="${step.placeholder}"></label>`;
   app.innerHTML = `<section class="onboarding-screen"><div class="progress-label">${progress}</div><div class="progress"><div style="width:${((index + 1) / onboardingSteps.length) * 100}%"></div></div><h2>${step.title}</h2>${step.optional ? '<p class="small muted">Bu bilgi isteğe bağlı.</p>' : ''}${body}<div class="onboarding-actions"><button class="secondary-btn" data-action="onboarding-back">Geri</button>${step.optional ? '<button class="text-btn" data-action="onboarding-skip">Atla</button>' : ''}<button class="primary-btn" data-action="onboarding-next" ${step.options && !selected ? 'disabled' : ''}>Devam et</button></div></section>`;
@@ -250,7 +250,7 @@ async function accountView() {
     <button class="secondary-btn full" data-action="save-settings">Kaydet</button>
   </section>
   <section class="summary-card">
-    ${!installed ? `<button class="primary-btn full" data-action="install-app">AKS'yi Yükle</button><p class="small muted" id="installHelp" hidden>Safari'de Paylaş düğmesine dokunun → Ana Ekrana Ekle</p>` : ''}
+    ${!installed ? `<button class="primary-btn full" data-action="install-app">Reptrio'yu Yükle</button><p class="small muted" id="installHelp" hidden>Safari'de Paylaş düğmesine dokunun → Ana Ekrana Ekle</p>` : ''}
     <button class="secondary-btn full" data-action="export-csv">CSV Log İndir</button>
     <details><summary>Gelişmiş</summary>${legacy ? `<button class="secondary-btn full" data-action="migrate-legacy">Bu cihazdaki eski verileri içe aktar</button>` : ''}<button class="secondary-btn full" data-action="export-json">Veriyi Dışa Aktar</button><input type="file" id="restoreFile" accept="application/json"><button class="secondary-btn full" data-action="restore-json">JSON'dan Geri Yükle</button></details>
     <p class="small muted">Exercise data by <a href="https://repdb.co" target="_blank" rel="noopener">RepDB (repdb.co)</a></p>
@@ -511,7 +511,7 @@ function importFailureActions(code) {
 
 function reportImportIssue() {
   // Future implementation note:
-  // Raw files are sent to OpenAI for background analysis, but they are not stored by AKS yet.
+  // Raw files are sent to OpenAI for background analysis, but they are not stored by Reptrio yet.
   // To inspect failed uploads later, enable Cloudflare R2 and attach the stored object key
   // to an import report queue with a clear retention policy.
   const fileName = state.pendingNormalizedDocument?.fileName || 'Dosya';
