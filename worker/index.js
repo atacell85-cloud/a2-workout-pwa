@@ -315,7 +315,7 @@ Hard rules:
 - warnings and unparsedContent must be empty arrays unless the file contains no usable workout days.`; }
 function sanitize(document) { return { fileName: document.fileName, fileType: document.fileType, language: document.language || null, blocks: document.blocks.filter(block => block?.type && (block.text || block.rows)).slice(0, 1000) }; }
 function validatePreview(value, importId, document) { if (!value || value.schemaVersion !== '1.1' || !value.program?.name || !Array.isArray(value.program.days) || !value.program.days.length || !value.program.days.some(day => day.sections?.some(section => section.items?.some(item => item.itemType === 'exercise')))) throw coded('OPENAI_SCHEMA_VALIDATION_FAILED'); value.importId = importId; value.importedAt ||= new Date().toISOString(); value.source ||= { fileName: document.fileName, fileType: document.fileType, language: document.language || null, documentTitle: null }; value.warnings = []; value.unparsedContent = []; }
-function normalizeImportedPreview(value) {
+export function normalizeImportedPreview(value) {
   if (!value?.program?.days) return value;
   value.program.description = null;
   value.program.notes = null;
@@ -324,15 +324,67 @@ function normalizeImportedPreview(value) {
   value.program.days = value.program.days.map((day, dayIndex) => {
     const exercises = [];
     for (const section of day.sections || []) for (const item of section.items || []) {
-      if (item.itemType !== 'exercise') continue;
-      const name = String(item.sourceExerciseName || item.normalizedExerciseName || '').trim();
+      const exerciseItem = item.itemType === 'exercise' ? item : exerciseFromInstruction(item);
+      if (!exerciseItem) continue;
+      const name = String(exerciseItem.sourceExerciseName || exerciseItem.normalizedExerciseName || '').trim();
       if (!name) continue;
-      exercises.push(normalizeExerciseItem(item, exercises.length + 1));
+      exercises.push(normalizeExerciseItem(exerciseItem, exercises.length + 1));
     }
     return { ...day, name: String(day.name || `Gün ${dayIndex + 1}`).trim(), order: dayIndex + 1, notes: null, sections: [{ title: 'Ana Antrenman', sectionType: 'strength', order: 1, notes: null, sourceReference: day.sourceReference || nullRef(), items: exercises }] };
   }).filter(day => day.sections[0].items.length);
   return value;
 }
+
+function exerciseFromInstruction(item) {
+  if (item?.itemType !== 'instruction') return null;
+  const raw = String(item.text || '').trim();
+  const firstLine = raw.split(/\r?\n/).map(line => line.trim()).find(Boolean) || '';
+  const line = firstLine.replace(/^[•·*-]\s*/, '').replace(/\s+/g, ' ').trim();
+  if (!line || /^(antrenman|kardiyo|dinlenme|ısınma ve|negatif|gün planlaması)\b/i.test(line)) return null;
+  const match = line.match(/^(.+?)\s*(?:→|:|-)?\s+(\d+)\s*x\s*([0-9]+(?:\s*[-–]\s*[0-9]+)?\s*(?:sn|saniye|sec|dk|dakika|min)?|amrap|maks(?:imum)?|failure)$/i);
+  if (!match) return null;
+  const name = match[1].trim().replace(/[→:–-]+$/, '').trim();
+  if (!name || name.length < 3 || /^\d/.test(name)) return null;
+  const sets = Number(match[2]);
+  const target = match[3].trim().replace(/\s+/g, '');
+  const duration = /\d+\s*(?:sn|saniye|sec|dk|dakika|min)/i.test(target);
+  const repsRange = duration ? null : target.match(/^(\d+)(?:[-–](\d+))?$/);
+  const note = raw.split(/\r?\n/).slice(1).join('\n').trim() || null;
+  return {
+    itemType: 'exercise',
+    order: Number(item.order) || 1,
+    sourceExerciseName: name,
+    normalizedExerciseName: name,
+    exerciseMatch: null,
+    prescription: {
+      sets,
+      setsText: `${sets}`,
+      repsMin: repsRange ? Number(repsRange[1]) : null,
+      repsMax: repsRange ? Number(repsRange[2] || repsRange[1]) : null,
+      repsText: duration ? null : target,
+      weight: null,
+      weightUnit: null,
+      weightText: null,
+      rir: null,
+      rirText: null,
+      rpe: null,
+      rpeText: null,
+      restSeconds: null,
+      restText: null,
+      tempo: null,
+      tempoText: null,
+      durationSeconds: null,
+      durationText: duration ? target : null,
+      distance: null,
+      distanceUnit: null,
+      distanceText: null,
+      individualSets: []
+    },
+    notes: note,
+    sourceReference: item.sourceReference || nullRef()
+  };
+}
+
 function normalizeExerciseItem(item, order) {
   const prescription = item.prescription || {};
   const clean = value => {
@@ -416,8 +468,7 @@ const set = closed({ setNumber: { type: 'integer' }, setType: { type: 'string', 
 const prescription = closed({ sets: n('integer'), setsText: n('string'), repsMin: n('integer'), repsMax: n('integer'), repsText: n('string'), weight: n('number'), weightUnit: { type: ['string', 'null'], enum: ['kg', 'lb', null] }, weightText: n('string'), rir: n('number'), rirText: n('string'), rpe: n('number'), rpeText: n('string'), restSeconds: n('integer'), restText: n('string'), tempo: n('string'), tempoText: n('string'), durationSeconds: n('integer'), durationText: n('string'), distance: n('number'), distanceUnit: { type: ['string', 'null'], enum: ['m', 'km', 'mi', null] }, distanceText: n('string'), individualSets: { type: 'array', items: set } });
 const match = closed({ status: { type: 'string', enum: ['matched', 'probable', 'unmatched', 'custom'] }, exerciseId: n('string'), matchedName: n('string'), score: n('number'), candidates: { type: 'array', items: closed({ exerciseId: { type: 'string' }, name: { type: 'string' }, score: { type: 'number' } }) } });
 const exercise = closed({ itemType: { type: 'string', enum: ['exercise'] }, order: { type: 'integer' }, sourceExerciseName: { type: 'string' }, normalizedExerciseName: { type: 'string' }, exerciseMatch: { type: ['object', 'null'], additionalProperties: false, properties: match.properties, required: match.required }, prescription, notes: n('string'), sourceReference: ref });
-const instruction = closed({ itemType: { type: 'string', enum: ['instruction'] }, order: { type: 'integer' }, text: { type: 'string' }, sourceReference: ref });
-const section = closed({ title: { type: 'string' }, sectionType: { type: 'string', enum: ['warmup', 'activation', 'strength', 'core', 'cardio', 'stretch', 'mobility', 'cooldown', 'custom'] }, order: { type: 'integer' }, notes: n('string'), sourceReference: ref, items: { type: 'array', items: { anyOf: [exercise, instruction] } } });
+const section = closed({ title: { type: 'string' }, sectionType: { type: 'string', enum: ['warmup', 'activation', 'strength', 'core', 'cardio', 'stretch', 'mobility', 'cooldown', 'custom'] }, order: { type: 'integer' }, notes: n('string'), sourceReference: ref, items: { type: 'array', items: exercise } });
 const day = closed({ name: { type: 'string' }, order: { type: 'integer' }, notes: n('string'), sourceReference: ref, sections: { type: 'array', items: section } });
 const warning = closed({ code: { type: 'string' }, severity: { type: 'string', enum: ['info', 'warning', 'error'] }, message: { type: 'string' }, dayOrder: n('integer'), sectionOrder: n('integer'), exerciseOrder: n('integer'), sourceReference: ref });
 const unparsed = closed({ text: { type: 'string' }, reason: { type: 'string' }, sourceReference: ref });
