@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v62-empty-local-remote-restore-2026-08-24';
+const CACHE_VERSION = 'a2-workout-v63-import-log-2026-08-25';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=reptrio-brand-v1',
+  './app.js?v=import-log-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
