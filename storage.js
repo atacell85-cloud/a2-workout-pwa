@@ -105,6 +105,11 @@ export const workoutRepository = {
 
   async saveImportPreview(preview) { const data = await readData(); data.importPreviews[preview.importId] = preview; await writeData(data); },
   async getImportPreview(importId) { return (await readData()).importPreviews[importId] || null; },
+  async deleteImportPreview(importId) {
+    const data = await readData();
+    delete data.importPreviews[importId];
+    await writeData(data);
+  },
 
   async finalizeImportAtomically(importId, factory) {
     const data = await readData();

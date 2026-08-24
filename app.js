@@ -101,9 +101,9 @@ async function todayView() {
 function importNoticeCard(importPreviews = {}) {
   const previews = Object.values(importPreviews || {}).filter(Boolean).sort((a, b) => String(b.importedAt || '').localeCompare(String(a.importedAt || '')));
   const ready = previews.find(item => item.importId && !item.parserStatus && item.program?.days?.length);
-  if (ready) return `<section class="summary-card import-ready-card"><span>Program analizi tamamlandı</span><h2>${escapeHtml(ready.program?.name || ready.source?.fileName || 'Yüklenen program')}</h2><p class="muted">Önizlemeyi kontrol edip programı oluşturabilirsin.</p><button class="primary-btn full" data-resume-import="${escapeHtml(ready.importId)}">Önizlemeyi Aç</button></section>`;
+  if (ready) return `<section class="summary-card import-ready-card"><span>Program analizi tamamlandı</span><h2>${escapeHtml(ready.program?.name || ready.source?.fileName || 'Yüklenen program')}</h2><p class="muted">Önizlemeyi kontrol edip programı oluşturabilirsin.</p><button class="primary-btn full" data-resume-import="${escapeHtml(ready.importId)}">Önizlemeyi Aç</button><button class="danger-btn full" data-delete-import="${escapeHtml(ready.importId)}">Bu yüklemeyi sil</button></section>`;
   const pending = previews.find(item => item.importId && item.parserStatus === 'pending');
-  if (pending) return `<section class="summary-card import-pending-card"><span>Program analizi sürüyor</span><h2>${escapeHtml(pending.program?.name || pending.source?.fileName || 'Yüklenen program')}</h2><p class="muted">Arka planda devam ediyor. Hazır olduğunda burada görünecek.</p><button class="secondary-btn full" data-resume-import="${escapeHtml(pending.importId)}">Durumu Kontrol Et</button></section>`;
+  if (pending) return `<section class="summary-card import-pending-card"><span>Program analizi sürüyor</span><h2>${escapeHtml(pending.program?.name || pending.source?.fileName || 'Yüklenen program')}</h2><p class="muted">Arka planda devam ediyor. Hazır olduğunda burada görünecek.</p><button class="secondary-btn full" data-resume-import="${escapeHtml(pending.importId)}">Durumu Kontrol Et</button><button class="danger-btn full" data-delete-import="${escapeHtml(pending.importId)}">Bu yüklemeyi sil</button></section>`;
   return '';
 }
 
@@ -529,10 +529,23 @@ async function renderImportPreview(importId) {
   const preview = await workoutRepository.getImportPreview(importId); if (!preview) return programsView();
   state.importId = importId; state.view = 'import-preview'; title.textContent = 'Aktarım Önizlemesi'; nav('programs');
   const errors = validateImportPreview(preview, new Set((await loadExerciseDatabase()).map(item => item.id)));
-  app.innerHTML = `<section class="builder-head"><input data-import-program-name value="${escapeHtml(preview.program.name)}" aria-label="Program adı"><div class="small muted">${escapeHtml(preview.source.fileName)} · ${escapeHtml(preview.source.fileType.toUpperCase())}</div></section>
+  app.innerHTML = `<section class="builder-head"><input data-import-program-name value="${escapeHtml(preview.program.name)}" aria-label="Program adı"><div class="small muted">${escapeHtml(preview.source.fileName)} · ${escapeHtml(preview.source.fileType.toUpperCase())}</div><button class="danger-btn full" data-delete-import="${escapeHtml(preview.importId)}">Bu yüklemeyi sil</button></section>
     ${preview.program.days.map((day, dayIndex) => importDay(preview, day, dayIndex)).join('')}
     ${errors.length ? `<div class="import-warning error">Çözüm bekleyen kayıtlar var: ${escapeHtml(errors.join(', '))}</div>` : ''}
     <div class="workout-toolbar"><button class="secondary-btn" data-action="programs">Sonra Devam Et</button><button class="primary-btn" data-action="finalize-import">Programı Oluştur</button></div>`;
+}
+
+async function deleteImportPreview(importId) {
+  if (!importId) return;
+  if (!confirm('Bu program yüklemesini silmek istiyor musun? Oluşturulmuş programlar ve antrenman geçmişi silinmez.')) return;
+  await workoutRepository.deleteImportPreview(importId);
+  if (state.importId === importId) state.importId = null;
+  if (state.pendingImportId === importId) {
+    state.pendingImportId = null;
+    state.pendingNormalizedDocument = null;
+  }
+  toast('Yükleme silindi');
+  return todayView();
 }
 
 function importDay(preview, day, dayIndex) { return `<article class="builder-day import-day"><input data-import-day="${dayIndex}" value="${escapeHtml(day.name)}" aria-label="Gün adı">${day.sections.map((section, sectionIndex) => `<section class="builder-section import-simple-section">${section.items.filter(item => item.itemType === 'exercise').map((item, itemIndex) => importExercise(dayIndex, sectionIndex, itemIndex, item)).join('')}</section>`).join('')}</article>`; }
@@ -1299,6 +1312,7 @@ app.addEventListener('click', async event => {
   if (target.dataset.onboardingValue) { const [key, value] = target.dataset.onboardingValue.split(':'); state.onboarding[key] = value; return onboardingView(); }
   if (target.dataset.startDay) return startWorkout(target.dataset.startDay);
   if (target.dataset.resumeImport) return resumeImport(target.dataset.resumeImport);
+  if (target.dataset.deleteImport) return deleteImportPreview(target.dataset.deleteImport);
   if (target.dataset.importCustom) { const [day, section, item] = target.dataset.importCustom.split(':').map(Number); const exercise = (await workoutRepository.getImportPreview(state.importId)).program.days[day].sections[section].items[item]; exercise.resolutionStatus = 'accepted-custom'; exercise.userEditedExerciseName = exercise.userEditedExerciseName || exercise.normalizedExerciseName || exercise.sourceExerciseName; await workoutRepository.saveImportPreview(await workoutRepository.getImportPreview(state.importId)); return renderImportPreview(state.importId); }
   if (target.dataset.importSelect) { const [day, section, item, exerciseId] = target.dataset.importSelect.split(':'); const preview = await workoutRepository.getImportPreview(state.importId); const exercise = preview.program.days[Number(day)].sections[Number(section)].items[Number(item)]; const canonical = await getCanonicalExercise(exerciseId); exercise.exerciseMatch = { status: 'matched', exerciseId, matchedName: canonical?.nameTr || exerciseId, score: 1, candidates: [] }; exercise.resolutionStatus = 'accepted-canonical'; exercise.userEditedExerciseName = null; await workoutRepository.saveImportPreview(preview); return renderImportPreview(state.importId); }
   if (target.dataset.unparsed) { const [index, resolution] = target.dataset.unparsed.split(':'); const preview = await workoutRepository.getImportPreview(state.importId); const item = preview.unparsedContent[Number(index)]; item.resolutionStatus = resolution === 'note' ? 'assigned' : resolution; if (resolution === 'instruction') { const section = preview.program.days[0]?.sections[0]; if (section) section.items.push({ itemType: 'instruction', order: section.items.length + 1, text: item.text, sourceReference: item.sourceReference }); } else if (resolution === 'note') preview.program.notes = `${preview.program.notes ? `${preview.program.notes}\n` : ''}${item.text}`; await workoutRepository.saveImportPreview(preview); return renderImportPreview(state.importId); }
