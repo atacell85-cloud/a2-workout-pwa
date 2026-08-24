@@ -385,9 +385,16 @@ function pickerMuscleFilters(items, picker) {
 async function fileImportView() {
   state.view = 'import'; title.textContent = 'Rutin yükle'; nav('programs');
   const data = await workoutRepository.getData();
+  const latest = latestImportEntry(data);
   app.innerHTML = `<button class="text-btn" data-action="new-routine-menu">← Yeni Rutin Oluştur</button>
+    ${latestImportStatusCard(latest)}
     <section class="import-upload"><label class="routine-row upload-row" for="importFile"><span>Yükle +</span></label><input id="importFile" type="file" accept=".pdf,.docx,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><div id="importStatus" class="import-status" aria-live="polite"></div></section>
     ${importLogSection(data)}`;
+  if (latest?.kind === 'preview' && latest.item.parserStatus === 'pending' && latest.item.normalizedDocument) {
+    state.pendingImportId = latest.item.importId;
+    state.pendingNormalizedDocument = latest.item.normalizedDocument;
+    pollImportJob(latest.item.importId, true).catch(error => console.warn('Import status refresh failed', error));
+  }
 }
 
 function importLoading(message) {
@@ -402,6 +409,33 @@ function importLogSection(data) {
     ...history.map(importHistoryLogRow)
   ];
   return `<section class="summary-card import-log"><h2>Yükleme Geçmişi</h2><p class="muted">Program yüklemelerinin son durumunu buradan takip edebilirsin.</p>${rows.length ? `<div class="import-log-list">${rows.join('')}</div>` : '<div class="muted">Henüz program yüklemedin.</div>'}</section>`;
+}
+
+function latestImportEntry(data) {
+  const previews = Object.values(data.importPreviews || {}).filter(Boolean).map(item => ({ kind: 'preview', item, time: item.importedAt || item.failedAt || '' }));
+  const history = (data.importHistory || []).map(item => ({ kind: 'history', item, time: item.finalizedAt || '' }));
+  return [...previews, ...history].sort((a, b) => String(b.time).localeCompare(String(a.time)))[0] || null;
+}
+
+function latestImportStatusCard(entry) {
+  if (!entry) return `<section class="summary-card import-latest-card"><span>Son yükleme</span><h2>Henüz yükleme yok</h2><p class="muted">Program yüklediğinde analiz durumu burada görünecek.</p></section>`;
+  if (entry.kind === 'history') {
+    const item = entry.item;
+    const name = item.source?.fileName || item.finalProgramId || 'Oluşturulan program';
+    const date = item.finalizedAt ? new Date(item.finalizedAt).toLocaleString('tr-TR') : '';
+    return `<section class="summary-card import-latest-card done"><span>Son yükleme</span><h2>${escapeHtml(name)}</h2><p class="muted">Programa dönüştürüldü${date ? ` · ${escapeHtml(date)}` : ''}</p>${item.finalProgramId ? `<button class="primary-btn full" data-open-program="${escapeHtml(item.finalProgramId)}">Programı Aç</button>` : ''}</section>`;
+  }
+  const preview = entry.item;
+  const status = importPreviewStatus(preview);
+  const stats = importPreviewStats(preview);
+  const name = preview.program?.name || preview.source?.fileName || 'Yüklenen program';
+  const date = preview.importedAt ? new Date(preview.importedAt).toLocaleString('tr-TR') : '';
+  const actions = status.key === 'ready'
+    ? `<button class="primary-btn full" data-resume-import="${escapeHtml(preview.importId)}">Önizlemeyi Aç</button><button class="danger-btn full" data-delete-import="${escapeHtml(preview.importId)}">Sil</button>`
+    : status.key === 'pending'
+      ? `<button class="secondary-btn full" data-check-import="${escapeHtml(preview.importId)}">Durumu Kontrol Et</button><button class="danger-btn full" data-delete-import="${escapeHtml(preview.importId)}">Sil</button>`
+      : `<button class="secondary-btn full" data-retry-import="${escapeHtml(preview.importId)}">Tekrar Dene</button><button class="danger-btn full" data-delete-import="${escapeHtml(preview.importId)}">Sil</button>`;
+  return `<section class="summary-card import-latest-card ${status.key}"><span>Son yükleme</span><h2>${escapeHtml(name)}</h2><p class="muted">${escapeHtml(status.label)}${stats ? ` · ${escapeHtml(stats)}` : ''}${date ? ` · ${escapeHtml(date)}` : ''}</p>${actions}</section>`;
 }
 
 function importPreviewLogRow(preview) {

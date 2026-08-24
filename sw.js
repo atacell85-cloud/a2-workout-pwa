@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v63-import-log-2026-08-25';
+const CACHE_VERSION = 'a2-workout-v64-import-latest-2026-08-25';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=import-log-v1',
+  './app.js?v=import-latest-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
