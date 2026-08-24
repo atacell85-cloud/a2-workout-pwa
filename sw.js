@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'a2-workout-v61-reptrio-brand-2026-08-24';
+const CACHE_VERSION = 'a2-workout-v62-empty-local-remote-restore-2026-08-24';
 const APP_SHELL = [
   './',
   './index.html',

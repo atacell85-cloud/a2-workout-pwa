@@ -14,7 +14,13 @@ export function createSyncService(repository, onStatus = () => {}) {
       if (!navigator.onLine) return setStatus('offline');
       const remote = await request('/pull');
       const localMeta = await repository.getSyncMetadata();
-      if (remote.data && !localMeta.dirty) await repository.replaceData(remote.data);
+      const localData = await repository.getData();
+      const localIsEmpty = !localData.programs.length
+        && !localData.sessions.length
+        && !localData.draft
+        && !localData.programBuilderDraft
+        && !Object.keys(localData.importPreviews || {}).length;
+      if (remote.data && (!localMeta.dirty || localIsEmpty)) await repository.replaceData(remote.data);
       syncVersion = remote.syncVersion || 0;
       setStatus('saved');
     },
