@@ -881,6 +881,26 @@ th, td {
 .video-result img { width: 104px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 5px; }
 .video-result b, .video-result small { display: block; overflow-wrap: anywhere; }
 .video-player iframe { border: 0; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; }
+.recovery-link {
+  position: fixed;
+  left: 50%;
+  bottom: calc(94px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 80;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid #f4b4ab;
+  border-radius: 999px;
+  background: #fff1f0;
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(180, 35, 24, .12);
+}
 
 .progress {
   height: 7px;
