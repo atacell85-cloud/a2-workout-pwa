@@ -189,67 +189,101 @@
       });
     }
 
-    async function databaseExists(name) {
-      if (!indexedDB.databases) return true;
-      const databases = await indexedDB.databases();
-      return databases.some((database) => database.name === name);
-    }
-
-    async function readIndexedDb() {
+    async function listIndexedDbNames() {
       if (!("indexedDB" in window)) {
-        return { supported: false, error: "IndexedDB bu tarayıcıda yok." };
+        return { supported: false, names: [], error: "IndexedDB bu tarayıcıda yok." };
       }
 
       try {
-        const exists = await databaseExists(DB_NAME);
-        if (!exists) {
-          return { supported: true, exists: false, records: [] };
+        if (!indexedDB.databases) {
+          return { supported: true, names: [DB_NAME], note: "Tarayıcı veritabanı listesini vermiyor; bilinen eski isim taranacak." };
         }
+        const databases = await indexedDB.databases();
+        return {
+          supported: true,
+          names: databases.map((database) => database.name).filter(Boolean)
+        };
       } catch (error) {
-        return { supported: true, exists: "unknown", error: String(error && error.message ? error.message : error) };
+        return { supported: true, names: [DB_NAME], error: String(error && error.message ? error.message : error) };
       }
+    }
 
+    async function readIndexedDbDatabase(name) {
       return new Promise((resolve) => {
-        const openRequest = indexedDB.open(DB_NAME);
+        const openRequest = indexedDB.open(name);
 
         openRequest.onupgradeneeded = () => {
           try {
             openRequest.transaction.abort();
           } catch {}
-          resolve({ supported: true, exists: false, records: [], error: "Veritabanı bulunamadı veya boş." });
+          resolve({ name, exists: false, stores: [], records: [], error: "Veritabanı bulunamadı veya boş." });
         };
 
         openRequest.onerror = () => {
-          resolve({ supported: true, exists: true, error: String(openRequest.error || "IndexedDB açılamadı.") });
+          resolve({ name, exists: true, stores: [], records: [], error: String(openRequest.error || "IndexedDB açılamadı.") });
         };
 
         openRequest.onsuccess = async () => {
           const db = openRequest.result;
           try {
             const stores = Array.from(db.objectStoreNames);
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-              resolve({ supported: true, exists: true, stores, records: [] });
-              return;
+            const records = [];
+
+            for (const storeName of stores) {
+              try {
+                const transaction = db.transaction(storeName, "readonly");
+                const store = transaction.objectStore(storeName);
+                const keys = await requestToPromise(store.getAllKeys());
+                const values = await requestToPromise(store.getAll());
+                keys.forEach((key, index) => {
+                  records.push({
+                    store: storeName,
+                    key: String(key),
+                    summary: summarizeValue(values[index]),
+                    value: values[index]
+                  });
+                });
+              } catch (storeError) {
+                records.push({
+                  store: storeName,
+                  key: "__STORE_READ_ERROR__",
+                  summary: { type: "error" },
+                  error: String(storeError && storeError.message ? storeError.message : storeError)
+                });
+              }
             }
 
-            const transaction = db.transaction(STORE_NAME, "readonly");
-            const store = transaction.objectStore(STORE_NAME);
-            const keys = await requestToPromise(store.getAllKeys());
-            const values = await requestToPromise(store.getAll());
-            const records = keys.map((key, index) => ({
-              key: String(key),
-              summary: summarizeValue(values[index]),
-              value: values[index]
-            }));
-
-            resolve({ supported: true, exists: true, stores, records });
+            resolve({ name, exists: true, stores, records });
           } catch (error) {
-            resolve({ supported: true, exists: true, error: String(error && error.message ? error.message : error) });
+            resolve({ name, exists: true, stores: [], records: [], error: String(error && error.message ? error.message : error) });
           } finally {
             db.close();
           }
         };
       });
+    }
+
+    async function readIndexedDb() {
+      const listing = await listIndexedDbNames();
+      if (!listing.supported) return listing;
+
+      const uniqueNames = Array.from(new Set(listing.names.filter(Boolean)));
+      const databases = [];
+      for (const name of uniqueNames) {
+        databases.push(await readIndexedDbDatabase(name));
+      }
+
+      return {
+        supported: true,
+        listedNames: uniqueNames,
+        note: listing.note || null,
+        listError: listing.error || null,
+        databases,
+        records: databases.flatMap((database) => database.records.map((record) => ({
+          database: database.name,
+          ...record
+        })))
+      };
     }
 
     function readLocalStorage() {
@@ -264,6 +298,46 @@
         };
       }
       return records;
+    }
+
+    function readSessionStorage() {
+      const records = {};
+      for (let index = 0; index < sessionStorage.length; index += 1) {
+        const key = sessionStorage.key(index);
+        const value = sessionStorage.getItem(key);
+        records[key] = {
+          summary: summarizeValue(value),
+          value
+        };
+      }
+      return records;
+    }
+
+    async function readCacheStorage() {
+      if (!("caches" in window)) return { supported: false, names: [] };
+      try {
+        return { supported: true, names: await caches.keys() };
+      } catch (error) {
+        return { supported: true, names: [], error: String(error && error.message ? error.message : error) };
+      }
+    }
+
+    async function readServiceWorkers() {
+      if (!("serviceWorker" in navigator)) return { supported: false, registrations: [] };
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        return {
+          supported: true,
+          registrations: registrations.map((registration) => ({
+            scope: registration.scope,
+            activeScript: registration.active && registration.active.scriptURL,
+            waitingScript: registration.waiting && registration.waiting.scriptURL,
+            installingScript: registration.installing && registration.installing.scriptURL
+          }))
+        };
+      } catch (error) {
+        return { supported: true, registrations: [], error: String(error && error.message ? error.message : error) };
+      }
     }
 
     function buildSummary(dump) {
@@ -286,14 +360,30 @@
       } else if (dump.indexedDB.error && !dump.indexedDB.records?.length) {
         lines.push(`IndexedDB: ${dump.indexedDB.error}`);
       } else {
+        lines.push(`IndexedDB veritabanı sayısı: ${dump.indexedDB.listedNames?.length ?? 0}`);
+        if (dump.indexedDB.listedNames?.length) {
+          lines.push(`Veritabanları: ${dump.indexedDB.listedNames.join(", ")}`);
+        }
         lines.push(`IndexedDB kayıt sayısı: ${dump.indexedDB.records.length}`);
         dump.indexedDB.records.forEach((record) => {
           const s = record.summary;
-          lines.push(`- ${record.key}: program=${s.programs ?? "-"}, antrenman=${s.sessions ?? "-"}, hareket=${s.exercises ?? "-"}, draft=${s.draft ? "var" : "yok"}`);
+          lines.push(`- ${record.database}/${record.store}/${record.key}: program=${s.programs ?? "-"}, antrenman=${s.sessions ?? "-"}, hareket=${s.exercises ?? "-"}, draft=${s.draft ? "var" : "yok"}`);
         });
       }
 
-      const hasUsefulData = localKeys.length > 0 || (dump.indexedDB.records && dump.indexedDB.records.length > 0);
+      lines.push("");
+      const sessionKeys = Object.keys(dump.sessionStorage || {});
+      lines.push(`SessionStorage kayıt sayısı: ${sessionKeys.length}`);
+      sessionKeys.forEach((key) => {
+        const s = dump.sessionStorage[key].summary;
+        lines.push(`- ${key}: program=${s.programs ?? "-"}, antrenman=${s.sessions ?? "-"}, hareket=${s.exercises ?? "-"}, draft=${s.draft ? "var" : "yok"}`);
+      });
+
+      lines.push("");
+      lines.push(`Cache kayıtları: ${dump.cacheStorage?.names?.length ? dump.cacheStorage.names.join(", ") : "yok"}`);
+      lines.push(`Service worker: ${dump.serviceWorkers?.registrations?.length ? "var" : "yok"}`);
+
+      const hasUsefulData = localKeys.length > 0 || sessionKeys.length > 0 || (dump.indexedDB.records && dump.indexedDB.records.length > 0);
       lines.push("");
       lines.push(hasUsefulData ? "Veri bulundu. JSON çıktısını indir veya kopyala." : "Bu tarayıcıda bu adrese ait veri görünmedi.");
       return lines.join("\n");
@@ -312,7 +402,10 @@
         userAgent: navigator.userAgent,
         note: "A2 eski GitHub Pages adresindeki tarayıcı depolama kurtarma çıktısı. Sayfa sadece okuma yapar.",
         localStorage: readLocalStorage(),
-        indexedDB: await readIndexedDb()
+        sessionStorage: readSessionStorage(),
+        indexedDB: await readIndexedDb(),
+        cacheStorage: await readCacheStorage(),
+        serviceWorkers: await readServiceWorkers()
       };
 
       const raw = JSON.stringify(latestDump, null, 2);
