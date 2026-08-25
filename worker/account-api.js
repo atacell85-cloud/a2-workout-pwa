@@ -3,10 +3,14 @@ const SESSION_DAYS = 30;
 const MAX_SYNC_BYTES = 4_000_000;
 const OAUTH_STATE_COOKIE = 'aks_oauth_state';
 const OAUTH_NONCE_COOKIE = 'aks_oauth_nonce';
+const OAUTH_CLIENT_COOKIE = 'aks_oauth_client';
+const OAUTH_REDIRECT_COOKIE = 'aks_oauth_redirect';
+const MOBILE_OAUTH_CODE_MINUTES = 5;
 // Cloudflare Workers caps WebCrypto PBKDF2 at 100,000 iterations.
 const PBKDF2_ITERATIONS = 100_000;
 
 export async function handleAccountRequest(request, env, pathname) {
+  if (pathname === '/api/auth/oauth/mobile/exchange') return mobileOAuthExchange(request, env);
   const oauthMatch = pathname.match(/^\/api\/auth\/oauth\/(google|apple)\/(start|callback)$/);
   if (oauthMatch) return oauth(request, env, oauthMatch[1], oauthMatch[2]);
   if (pathname === '/api/auth/register') return register(request, env);
@@ -31,6 +35,8 @@ async function oauthStart(request, env, provider) {
   const url = new URL(request.url);
   const state = randomToken(32);
   const nonce = randomToken(32);
+  const mobile = url.searchParams.get('client') === 'mobile';
+  const mobileRedirect = mobileRedirectUri(url.searchParams.get('redirect_uri'));
   const redirectUri = oauthRedirectUri(request, provider);
   const destination = new URL(config.authorizationUrl);
   destination.searchParams.set('client_id', config.clientId);
@@ -43,6 +49,8 @@ async function oauthStart(request, env, provider) {
   const headers = new Headers({ Location: destination.toString() });
   headers.append('Set-Cookie', shortCookie(OAUTH_STATE_COOKIE, state));
   headers.append('Set-Cookie', shortCookie(OAUTH_NONCE_COOKIE, nonce));
+  if (mobile) headers.append('Set-Cookie', shortCookie(OAUTH_CLIENT_COOKIE, 'mobile'));
+  if (mobile && mobileRedirect) headers.append('Set-Cookie', shortCookie(OAUTH_REDIRECT_COOKIE, mobileRedirect));
   headers.append('Cache-Control', 'no-store');
   return new Response(null, { status: 302, headers });
 }
@@ -52,10 +60,12 @@ async function oauthCallback(request, env, provider) {
   const values = request.method === 'POST' ? await request.formData().then(form => Object.fromEntries(form.entries())).catch(() => ({})) : Object.fromEntries(new URL(request.url).searchParams.entries());
   const expectedState = cookie(request, OAUTH_STATE_COOKIE);
   const expectedNonce = cookie(request, OAUTH_NONCE_COOKIE);
-  const clearHeaders = [clearNamedCookie(OAUTH_STATE_COOKIE), clearNamedCookie(OAUTH_NONCE_COOKIE)];
-  if (!values.code || !values.state || !expectedState || !constantEqual(String(values.state), expectedState)) return oauthErrorRedirect(request, 'OAUTH_STATE_INVALID', clearHeaders);
+  const mobile = cookie(request, OAUTH_CLIENT_COOKIE) === 'mobile';
+  const mobileRedirect = mobileRedirectUri(cookie(request, OAUTH_REDIRECT_COOKIE));
+  const clearHeaders = [clearNamedCookie(OAUTH_STATE_COOKIE), clearNamedCookie(OAUTH_NONCE_COOKIE), clearNamedCookie(OAUTH_CLIENT_COOKIE), clearNamedCookie(OAUTH_REDIRECT_COOKIE)];
+  if (!values.code || !values.state || !expectedState || !constantEqual(String(values.state), expectedState)) return oauthErrorRedirect(request, 'OAUTH_STATE_INVALID', clearHeaders, mobileRedirect);
   const config = oauthConfig(env, provider);
-  if (!config.ready) return oauthErrorRedirect(request, 'OAUTH_PROVIDER_NOT_CONFIGURED', clearHeaders);
+  if (!config.ready) return oauthErrorRedirect(request, 'OAUTH_PROVIDER_NOT_CONFIGURED', clearHeaders, mobileRedirect);
   try {
     const token = await exchangeOAuthCode(request, config, provider, String(values.code));
     const claims = await decodeAndVerifyIdToken(token.id_token, config);
@@ -63,10 +73,32 @@ async function oauthCallback(request, env, provider) {
     const email = normalizeEmail(claims.email);
     if (!email) throw coded('OAUTH_EMAIL_MISSING');
     const user = await upsertOAuthUser(env, provider, String(claims.sub), email);
+    if (mobile && mobileRedirect) return issueMobileOAuthCode(env, user.id, mobileRedirect, clearHeaders);
     return issueSession(env, user.id, user.email, 303, { Location: new URL('/', request.url).toString(), 'Set-Cookie': clearHeaders });
   } catch (error) {
-    return oauthErrorRedirect(request, error.code || 'OAUTH_FAILED', clearHeaders);
+    return oauthErrorRedirect(request, error.code || 'OAUTH_FAILED', clearHeaders, mobileRedirect);
   }
+}
+
+async function mobileOAuthExchange(request, env) {
+  if (!isJsonPost(request)) return methodOrTypeError(request);
+  if (!sameOrigin(request)) return error('AUTH_ORIGIN_INVALID', 403);
+  if (!mobileClient(request)) return error('MOBILE_CLIENT_REQUIRED', 403);
+  const { code } = await body(request);
+  const codeText = String(code || '').trim();
+  if (!codeText) return error('OAUTH_CODE_INVALID', 400);
+  const hash = await tokenDigest(codeText);
+  const now = new Date().toISOString();
+  const row = await env.DB.prepare(`SELECT mobile_oauth_codes.id, mobile_oauth_codes.user_id, users.email
+    FROM mobile_oauth_codes
+    JOIN users ON users.id = mobile_oauth_codes.user_id
+    WHERE mobile_oauth_codes.code_hash = ?
+      AND mobile_oauth_codes.expires_at > ?
+      AND mobile_oauth_codes.used_at IS NULL
+      AND users.deleted_at IS NULL`).bind(hash, now).first();
+  if (!row) return error('OAUTH_CODE_INVALID', 401);
+  await env.DB.prepare('UPDATE mobile_oauth_codes SET used_at = ? WHERE id = ?').bind(now, row.id).run();
+  return issueSession(env, row.user_id, row.email, 201, { 'X-Reptrio-Client': 'mobile' });
 }
 
 async function exchangeOAuthCode(request, config, provider, code) {
@@ -211,6 +243,18 @@ async function issueSession(env, id, email, status = 201, extraHeaders = {}) {
   return json({ user: { id, email }, ...(mobile ? { sessionToken: token, expiresAt: expires.toISOString() } : {}) }, status, { ...publicHeaders, 'Set-Cookie': [sessionCookie(token, expires), ...asArray(publicHeaders['Set-Cookie'])] });
 }
 
+async function issueMobileOAuthCode(env, userId, redirectUri, cookies = []) {
+  const code = randomToken(32);
+  const now = new Date();
+  const expires = new Date(now.getTime() + MOBILE_OAUTH_CODE_MINUTES * 60000);
+  await env.DB.prepare('INSERT INTO mobile_oauth_codes (id, user_id, code_hash, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').bind(crypto.randomUUID(), userId, await tokenDigest(code), now.toISOString(), expires.toISOString()).run();
+  const url = new URL(redirectUri);
+  url.searchParams.set('code', code);
+  const headers = new Headers({ Location: url.toString(), 'Cache-Control': 'no-store' });
+  cookies.forEach(value => headers.append('Set-Cookie', value));
+  return new Response(null, { status: 303, headers });
+}
+
 export async function currentUser(request, env) {
   const token = sessionToken(request); if (!token) return null;
   const row = await env.DB.prepare('SELECT users.id, users.email FROM auth_sessions JOIN users ON users.id = auth_sessions.user_id WHERE auth_sessions.token_hash = ? AND auth_sessions.expires_at > ? AND users.deleted_at IS NULL').bind(await tokenDigest(token), new Date().toISOString()).first();
@@ -254,14 +298,24 @@ function json(value, status = 200, headers = {}) {
   return new Response(JSON.stringify(value), { status, headers: responseHeaders });
 }
 function error(code, status, headers) { return json({ code }, status, headers); }
-function oauthErrorRedirect(request, code, cookies = []) {
-  const url = new URL('/', request.url);
+function oauthErrorRedirect(request, code, cookies = [], mobileRedirect = null) {
+  const url = new URL(mobileRedirect || '/', request.url);
   url.searchParams.set('auth_error', code);
   const headers = new Headers({ Location: url.toString(), 'Cache-Control': 'no-store' });
   cookies.forEach(value => headers.append('Set-Cookie', value));
   return new Response(null, { status: 303, headers });
 }
 function oauthRedirectUri(request, provider) { return new URL(`/api/auth/oauth/${provider}/callback`, request.url).toString(); }
+function mobileRedirectUri(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    return url.protocol === 'reptrio:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
 function oauthConfig(env, provider) {
   if (provider === 'google') return {
     provider,
