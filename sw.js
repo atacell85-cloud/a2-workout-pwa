@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'a2-workout-v65-import-normalize-2026-08-25';
+const CACHE_VERSION = 'a2-workout-v66-english-youtube-2026-08-26';
 const APP_SHELL = [
   './',
   './index.html',
   './recovery.html',
   './styles.css',
-  './app.js?v=import-normalize-v1',
+  './app.js?v=english-youtube-v1',
   './storage.js',
   './exercise-service.js',
   './program-service.js',
@@ -15,7 +15,7 @@ const APP_SHELL = [
   './openai-import-parser.js',
   './auth-service.js',
   './sync-service.js',
-  './youtube-service.js?v=turkish-youtube-search-v1',
+  './youtube-service.js?v=english-youtube-search-v1',
   './data/public-programs.js',
   './data/exercises.v1.json',
   './manifest.webmanifest',
