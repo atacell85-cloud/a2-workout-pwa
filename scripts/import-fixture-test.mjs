@@ -2,8 +2,9 @@ import http from 'node:http';
 import { createReadStream, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { extname, join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
+import { getChromePath } from './chrome-path.mjs';
 
-const root = resolve('.'); const port = 8091; const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'; const userDataDir = join(root, '.tmp-fixture-chrome');
+const root = resolve('.'); const port = 8091; const chromePath = getChromePath(); const userDataDir = join(root, '.tmp-fixture-chrome');
 if (existsSync(userDataDir)) rmSync(userDataDir, { recursive: true, force: true }); mkdirSync(userDataDir, { recursive: true });
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json' };
 const server = http.createServer((request, response) => { const path = join(root, new URL(request.url, `http://localhost:${port}`).pathname === '/' ? 'index.html' : new URL(request.url, `http://localhost:${port}`).pathname); if (!path.startsWith(root) || !existsSync(path)) return response.writeHead(404).end(); response.writeHead(200, { 'Content-Type': mime[extname(path)] || 'application/octet-stream' }); createReadStream(path).pipe(response); });

@@ -3,11 +3,12 @@ import { createReadStream, existsSync, mkdirSync, mkdtempSync, rmSync } from 'no
 import { extname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawn } from 'node:child_process';
+import { getChromePath } from './chrome-path.mjs';
 
 const root = resolve('.');
 const port = 8090;
 const cdpPort = Number(process.env.SMOKE_CDP_PORT || 9200 + Math.floor(Math.random() * 500));
-const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const chromePath = getChromePath();
 const userDataDir = process.env.SMOKE_USER_DATA_DIR || mkdtempSync(join(tmpdir(), 'a2-smoke-chrome-'));
 
 const mime = {

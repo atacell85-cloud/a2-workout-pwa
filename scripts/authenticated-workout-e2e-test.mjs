@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
+import { getChromePath } from './chrome-path.mjs';
 
 const base = process.env.A2_PILOT_BASE_URL || 'https://a2-workout.antrenmankocu.workers.dev';
 const root = resolve('.');
@@ -9,7 +10,7 @@ const artifacts = join(root, 'tests', 'artifacts');
 const port = 9234;
 const password = 'WorkoutE2E!2026';
 const email = `workout-${Date.now()}@example.test`;
-const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const chromePath = getChromePath();
 
 if (existsSync(profile)) rmSync(profile, { recursive: true, force: true });
 mkdirSync(profile, { recursive: true });

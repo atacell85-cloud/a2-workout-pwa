@@ -1,11 +1,12 @@
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
+import { getChromePath } from './chrome-path.mjs';
 
 const base = process.env.A2_PILOT_BASE_URL || 'https://a2-workout.antrenmankocu.workers.dev';
 const root = resolve('.');
 const profile = join(root, `.tmp-account-pilot-${Date.now()}`);
-const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const chromePath = getChromePath();
 const cdpPort = 9231;
 const stamp = Date.now();
 const password = 'PilotTest!2026';

@@ -2,6 +2,7 @@ import http from 'node:http';
 import { createReadStream, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { extname, join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
+import { getChromePath } from './chrome-path.mjs';
 
 try { process.loadEnvFile('.env'); } catch {}
 const mockImport = process.env.A2_IMPORT_E2E_MOCK === '1';
@@ -12,7 +13,7 @@ const port = 8092;
 const externalBaseUrl = process.env.A2_E2E_BASE_URL || null;
 const appUrl = externalBaseUrl || `http://localhost:${port}`;
 const cdpPort = 9226;
-const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const chromePath = getChromePath();
 const profile = join(root, `.tmp-ui-e2e-${Date.now()}`);
 const artifacts = join(root, 'tests', 'artifacts');
 const fixture = join(root, 'tests', 'fixtures', 'sample-workout.pdf');
