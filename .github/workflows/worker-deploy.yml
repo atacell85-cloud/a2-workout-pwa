@@ -1,0 +1,28 @@
+name: Worker Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy Cloudflare Worker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Test
+        run: npm test
+      - name: Build assets
+        run: npm run cf:build
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: deploy
