@@ -16,7 +16,7 @@ if (existsSync(profile)) rmSync(profile, { recursive: true, force: true });
 mkdirSync(profile, { recursive: true });
 mkdirSync(artifacts, { recursive: true });
 
-const chrome = spawn(chromePath, ['--headless=new', '--disable-gpu', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+const chrome = spawn(chromePath, ['--headless=new', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
 let cdp;
 let step = 'start';
 

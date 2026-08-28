@@ -39,7 +39,7 @@ const server = externalBaseUrl ? null : http.createServer((request, response) =>
 if (server) await new Promise(resolveServer => server.listen(port, resolveServer));
 
 const proxy = externalBaseUrl ? null : spawn('node', ['scripts/import-proxy-server.mjs'], { cwd: root, windowsHide: true, stdio: 'ignore' });
-const chrome = spawn(chromePath, ['--headless=new', '--disable-gpu', '--no-first-run', `--remote-debugging-port=${cdpPort}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+const chrome = spawn(chromePath, ['--headless=new', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--no-first-run', `--remote-debugging-port=${cdpPort}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
 
 let cdp;
 try {

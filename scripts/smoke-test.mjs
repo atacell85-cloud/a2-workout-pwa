@@ -39,6 +39,8 @@ await new Promise(resolveServer => server.listen(port, resolveServer));
 const chrome = spawn(chromePath, [
   '--headless=new',
   '--disable-gpu',
+  '--no-sandbox',
+  '--disable-dev-shm-usage',
   '--no-first-run',
   `--remote-debugging-port=${cdpPort}`,
   `--user-data-dir=${userDataDir}`,
@@ -234,7 +236,7 @@ async function scenario() {
 }
 
 async function waitForWsUrl() {
-  for (let i = 0; i < 50; i += 1) {
+  for (let i = 0; i < 150; i += 1) {
     try {
       const response = await fetch(`http://127.0.0.1:${cdpPort}/json/list`);
       const targets = await response.json();

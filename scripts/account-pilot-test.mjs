@@ -14,7 +14,7 @@ const emailA = `ui-a-${stamp}@example.test`;
 const emailB = `ui-b-${stamp}@example.test`;
 
 mkdirSync(profile, { recursive: true });
-const chrome = spawn(chromePath, ['--headless=new', '--disable-gpu', '--no-first-run', `--remote-debugging-port=${cdpPort}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+const chrome = spawn(chromePath, ['--headless=new', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--no-first-run', `--remote-debugging-port=${cdpPort}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
 
 let cdp;
 let stage = 'startup';

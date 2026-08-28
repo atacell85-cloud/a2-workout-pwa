@@ -13,7 +13,7 @@ const chromePath = getChromePath();
 
 if (existsSync(profile)) rmSync(profile, { recursive: true, force: true });
 mkdirSync(profile, { recursive: true });
-const chrome = spawn(chromePath, ['--headless=new', '--disable-gpu', '--no-first-run', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+const chrome = spawn(chromePath, ['--headless=new', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--no-first-run', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
 let cdp; let stage = 'launch';
 try {
   cdp = await connect(await ws());
