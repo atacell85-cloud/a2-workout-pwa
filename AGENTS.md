@@ -36,6 +36,7 @@ Bu yüzden:
 - YouTube aramaları İngilizce olmalı.
 - AI import yalnızca program günleri, hareket sırası, set/tekrar ve açıkça anlaşılan ek alanları çıkarmalı; notları programa gereksiz doldurmamalı.
 - Local parser ana kullanıcı akışı olarak geri getirilmemeli.
+- Apple login backend akışı hazırdır; canlıda aktif olması için Cloudflare secret olarak `APPLE_OAUTH_CLIENT_ID`, `APPLE_OAUTH_TEAM_ID`, `APPLE_OAUTH_KEY_ID`, `APPLE_OAUTH_PRIVATE_KEY` gerekir.
 
 ## Kontrol komutları
 
@@ -83,3 +84,4 @@ npx wrangler d1 execute a2-workout-pilot --remote --file .\migrations\<file>.sql
 - Reptrio domain yönlendirmesi ve kalıcı production URL hâlâ tamamlanmalı.
 - GitHub Actions bilgisayarsız deploy için `CLOUDFLARE_API_TOKEN` secret bekler.
 - Apple login, Apple Developer/App Store Connect yapılandırması sonrası ele alınmalı.
+- OAuth sağlayıcı readiness endpoint'i: `/api/auth/providers`. Mobil uygulama Apple/Google buton davranışını bu endpoint'e göre ayarlamalı.

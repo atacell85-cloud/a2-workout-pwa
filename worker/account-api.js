@@ -10,6 +10,7 @@ const MOBILE_OAUTH_CODE_MINUTES = 5;
 const PBKDF2_ITERATIONS = 100_000;
 
 export async function handleAccountRequest(request, env, pathname) {
+  if (pathname === '/api/auth/providers') return authProviders(request, env);
   if (pathname === '/api/auth/oauth/mobile/exchange') return mobileOAuthExchange(request, env);
   const oauthMatch = pathname.match(/^\/api\/auth\/oauth\/(google|apple)\/(start|callback)$/);
   if (oauthMatch) return oauth(request, env, oauthMatch[1], oauthMatch[2]);
@@ -21,6 +22,16 @@ export async function handleAccountRequest(request, env, pathname) {
   if (pathname === '/api/sync/pull') return pull(request, env);
   if (pathname === '/api/sync/push') return push(request, env);
   return null;
+}
+
+async function authProviders(request, env) {
+  if (request.method !== 'GET') return error('METHOD_NOT_ALLOWED', 405, { Allow: 'GET' });
+  return json({
+    providers: {
+      google: oauthConfig(env, 'google').ready,
+      apple: oauthConfig(env, 'apple').ready,
+    },
+  });
 }
 
 async function oauth(request, env, provider, action) {

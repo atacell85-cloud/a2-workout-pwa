@@ -6,6 +6,16 @@ const baseEnv = {
 };
 
 const health = await worker.fetch(new Request('https://a2.example/api/health'), baseEnv);
+const providersMissing = await worker.fetch(new Request('https://a2.example/api/auth/providers'), baseEnv);
+const providersReady = await worker.fetch(new Request('https://a2.example/api/auth/providers'), {
+  ...baseEnv,
+  GOOGLE_OAUTH_CLIENT_ID: 'google-client',
+  GOOGLE_OAUTH_CLIENT_SECRET: 'google-secret',
+  APPLE_OAUTH_CLIENT_ID: 'com.reptrio.signin',
+  APPLE_OAUTH_TEAM_ID: 'TEAM123456',
+  APPLE_OAUTH_KEY_ID: 'KEY1234567',
+  APPLE_OAUTH_PRIVATE_KEY: '-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAChRANCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n-----END PRIVATE KEY-----'
+});
 const staticAsset = await worker.fetch(new Request('https://a2.example/'), baseEnv);
 const invalidMethod = await worker.fetch(new Request('https://a2.example/api/import/parse'), baseEnv);
 const invalidContentType = await worker.fetch(new Request('https://a2.example/api/import/parse', { method: 'POST', body: '{}' }), baseEnv);
@@ -20,6 +30,8 @@ globalThis.fetch = originalFetch;
 const googleOauthUnconfigured = await worker.fetch(new Request('https://a2.example/api/auth/oauth/google/start'), baseEnv);
 const appleOauthUnconfigured = await worker.fetch(new Request('https://a2.example/api/auth/oauth/apple/start'), baseEnv);
 const youtubeOkBody = await youtubeOk.json();
+const providersMissingBody = await providersMissing.json();
+const providersReadyBody = await providersReady.json();
 const mobileDb = mockAccountDb();
 const mobileRegister = await worker.fetch(new Request('https://a2.example/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Reptrio-Client': 'mobile' }, body: JSON.stringify({ email: 'mobile@example.test', password: 'password123' }) }), { ...baseEnv, DB: mobileDb });
 const mobileRegisterBody = await mobileRegister.json();
@@ -94,8 +106,8 @@ const importNormalizationOk = normalizedImport.program.description === null
   && normalizedImport.unparsedContent.length === 0;
 
 const result = {
-  ok: health.ok && staticAsset.ok && invalidMethod.status === 405 && invalidContentType.status === 415 && missingSecret.status === 503 && oversized.status === 413 && limited.status === 429 && youtubeMissingSecret.status === 503 && youtubeOk.ok && youtubeOkBody.videos?.[0]?.videoId === 'abc123' && googleOauthUnconfigured.status === 303 && appleOauthUnconfigured.status === 303 && importNormalizationOk && mobileRegister.ok && Boolean(mobileRegisterBody.sessionToken) && mobileMe.ok && mobileMeBody.user?.email === 'mobile@example.test',
-  health: await health.json(), staticAsset: staticAsset.headers.get('content-type'), invalidMethod: invalidMethod.status, invalidContentType: invalidContentType.status, missingSecret: (await missingSecret.json()).code, oversized: (await oversized.json()).code, limited: (await limited.json()).code, youtubeMissingSecret: (await youtubeMissingSecret.json()).code, youtubeOk: youtubeOkBody.videos?.length || 0, googleOauthUnconfigured: googleOauthUnconfigured.headers.get('location'), appleOauthUnconfigured: appleOauthUnconfigured.headers.get('location'), importNormalizationOk, mobileTokenAuthOk: Boolean(mobileRegisterBody.sessionToken) && mobileMeBody.user?.email === 'mobile@example.test'
+  ok: health.ok && providersMissingBody.providers?.google === false && providersMissingBody.providers?.apple === false && providersReadyBody.providers?.google === true && providersReadyBody.providers?.apple === true && staticAsset.ok && invalidMethod.status === 405 && invalidContentType.status === 415 && missingSecret.status === 503 && oversized.status === 413 && limited.status === 429 && youtubeMissingSecret.status === 503 && youtubeOk.ok && youtubeOkBody.videos?.[0]?.videoId === 'abc123' && googleOauthUnconfigured.status === 303 && appleOauthUnconfigured.status === 303 && importNormalizationOk && mobileRegister.ok && Boolean(mobileRegisterBody.sessionToken) && mobileMe.ok && mobileMeBody.user?.email === 'mobile@example.test',
+  health: await health.json(), providersMissing: providersMissingBody.providers, providersReady: providersReadyBody.providers, staticAsset: staticAsset.headers.get('content-type'), invalidMethod: invalidMethod.status, invalidContentType: invalidContentType.status, missingSecret: (await missingSecret.json()).code, oversized: (await oversized.json()).code, limited: (await limited.json()).code, youtubeMissingSecret: (await youtubeMissingSecret.json()).code, youtubeOk: youtubeOkBody.videos?.length || 0, googleOauthUnconfigured: googleOauthUnconfigured.headers.get('location'), appleOauthUnconfigured: appleOauthUnconfigured.headers.get('location'), importNormalizationOk, mobileTokenAuthOk: Boolean(mobileRegisterBody.sessionToken) && mobileMeBody.user?.email === 'mobile@example.test'
 };
 console.log(JSON.stringify(result, null, 2));
 if (!result.ok) process.exitCode = 1;
