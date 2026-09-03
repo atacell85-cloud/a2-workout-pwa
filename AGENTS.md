@@ -71,6 +71,7 @@ npx wrangler d1 execute a2-workout-pilot --remote --file .\migrations\<file>.sql
 
 - `worker/index.js`: Worker ana router, import jobs, YouTube proxy
 - `worker/account-api.js`: auth, sync, OAuth, mobile token auth
+- `APPLE_LOGIN_SETUP.md`: Apple Sign in yapılandırma ve Cloudflare secret rehberi
 - `openai-import-parser.js`: AI import schema prompt
 - `youtube-service.js`: PWA YouTube arama servisi
 - `app.js`: PWA UI
