@@ -41,7 +41,7 @@ Bu yüzden:
 - YouTube aramaları İngilizce olmalı.
 - AI import yalnızca program günleri, hareket sırası, set/tekrar ve açıkça anlaşılan ek alanları çıkarmalı; notları programa gereksiz doldurmamalı.
 - Local parser ana kullanıcı akışı olarak geri getirilmemeli.
-- Apple login backend akışı hazırdır; canlıda aktif olması için Cloudflare secret olarak `APPLE_OAUTH_CLIENT_ID`, `APPLE_OAUTH_TEAM_ID`, `APPLE_OAUTH_KEY_ID`, `APPLE_OAUTH_PRIVATE_KEY` gerekir.
+- Google ve Apple login backend akışları canlıda hazırdır. Cloudflare secret setinde Google ve Apple OAuth secret'ları tanımlıdır; mobil uygulama `/api/auth/providers` sonucuna göre butonları açar.
 
 ## Kontrol komutları
 
@@ -91,5 +91,8 @@ npx wrangler d1 execute a2-workout-pilot --remote --file .\migrations\<file>.sql
   - Web/PWA: `https://app.reptrio.com`
   - API/backend: `https://api.reptrio.com`
 - GitHub Actions bilgisayarsız deploy için `CLOUDFLARE_API_TOKEN` secret bekler.
-- Apple login, Apple Developer/App Store Connect yapılandırması sonrası ele alınmalı.
-- OAuth sağlayıcı readiness endpoint'i: `/api/auth/providers`. Mobil uygulama Apple/Google buton davranışını bu endpoint'e göre ayarlamalı.
+- Apple login için Services ID `com.reptrio.web.signin`, domain `api.reptrio.com` ve return URL `https://api.reptrio.com/api/auth/oauth/apple/callback` olarak yapılandırıldı.
+- Google login için OAuth client Reptrio origin/callback ile yapılandırıldı:
+  - Origin: `https://app.reptrio.com`
+  - Callback: `https://api.reptrio.com/api/auth/oauth/google/callback`
+- OAuth sağlayıcı readiness endpoint'i: `/api/auth/providers`. Canlıda `google: true`, `apple: true` dönmelidir.

@@ -1,24 +1,25 @@
 # Reptrio Apple login setup
 
-Apple login backend kodu hazırdır. Canlıda aktif olması için Apple Developer tarafında Sign in with Apple yapılandırması ve Cloudflare Worker secret'ları gerekir.
+Apple login backend kodu ve canlı yapılandırması hazırdır. Apple Developer tarafında Sign in with Apple yapılandırıldı ve Cloudflare Worker secret'ları yüklendi.
 
 ## Apple Developer tarafı
 
-1. App ID `com.reptrio.mobile` için **Sign in with Apple** capability açık olmalı.
-2. Bir Services ID oluşturulmalı. Önerilen identifier:
+1. App ID `com.reptrio.mobile` için **Sign in with Apple** capability açık.
+2. Services ID:
 
    `com.reptrio.web.signin`
 
-3. Services ID içinde Sign in with Apple etkinleştirilmeli ve primary App ID olarak `com.reptrio.mobile` seçilmeli.
-4. Return URL olarak şu adres eklenmeli:
+3. Services ID içinde Sign in with Apple etkin ve primary App ID olarak `com.reptrio.mobile` seçili.
+4. Domain ve Return URL:
 
+   `api.reptrio.com`
    `https://api.reptrio.com/api/auth/oauth/apple/callback`
 
-5. Sign in with Apple için private key oluşturulmalı ve `.p8` dosyası yalnız güvenli yerde saklanmalı.
+5. Sign in with Apple private key oluşturuldu. `.p8` dosyası yerelde `C:\Users\selcu\OneDrive\Desktop\Reptrio\Secrets\Apple` altında saklanır ve repoya yazılmaz.
 
 ## Cloudflare Worker secret'ları
 
-Secret değerleri terminale veya repoya yazılmamalı. `wrangler secret put` ile girilmeli:
+Secret değerleri terminale veya repoya yazılmamalı. Değiştirmek gerekirse `wrangler secret put` ile girilmeli:
 
 ```powershell
 npx wrangler secret put APPLE_OAUTH_CLIENT_ID
@@ -36,12 +37,18 @@ Beklenen değerler:
 
 ## Doğrulama
 
-Canlı Worker deploy edildikten ve secret'lar girildikten sonra:
+Canlı doğrulama:
 
 ```powershell
 npx wrangler secret list
 ```
 
-Listede Apple secret isimleri görünmelidir. Değerler görünmez.
+Listede Apple secret isimleri görünmelidir. Değerler görünmez. Ayrıca:
 
-Mobil uygulama `/api/auth/providers` endpoint'ini okuyarak Apple'ın hazır olup olmadığını anlar. Apple secret'ları eksikken buton kullanıcıyı kör OAuth hatasına sokmaz; secret'lar tamamlandığında Apple giriş yolu aktifleşir.
+```powershell
+Invoke-RestMethod https://api.reptrio.com/api/auth/providers
+```
+
+sonucu `google: true` ve `apple: true` dönmelidir.
+
+Mobil uygulama `/api/auth/providers` endpoint'ini okuyarak Apple'ın hazır olup olmadığını anlar.

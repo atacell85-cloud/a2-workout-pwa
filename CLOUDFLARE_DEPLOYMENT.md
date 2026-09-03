@@ -16,12 +16,12 @@
 
 ## Google and Apple login
 
-OAuth login is enabled by code, but each provider must be configured in its own developer console and then stored as Cloudflare secrets. Use these redirect URLs:
+OAuth login is enabled by code. Google and Apple are configured for the Reptrio production API domain. Use these redirect URLs:
 
 - Google: `https://api.reptrio.com/api/auth/oauth/google/callback`
 - Apple: `https://api.reptrio.com/api/auth/oauth/apple/callback`
 
-Required Cloudflare secrets:
+Required Cloudflare secrets currently present in production:
 
 - `GOOGLE_OAUTH_CLIENT_ID`
 - `GOOGLE_OAUTH_CLIENT_SECRET`
