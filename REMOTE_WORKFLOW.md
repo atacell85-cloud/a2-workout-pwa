@@ -3,7 +3,8 @@
 Bu repo GitHub ve Cloudflare merkezli çalışır:
 
 - Kod kaynağı: https://github.com/atacell85-cloud/a2-workout-pwa
-- Canlı Worker/PWA: https://a2-workout.antrenmankocu.workers.dev
+- Canlı Web/PWA: https://app.reptrio.com
+- Canlı API/backend: https://api.reptrio.com
 - Manuel deploy: GitHub Actions > Worker Deploy > Run workflow
 
 ## Telefondayken deploy başlatma

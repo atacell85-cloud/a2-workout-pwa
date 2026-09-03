@@ -14,7 +14,7 @@
     "test:pilot-accounts": "node scripts/account-pilot-test.mjs",
     "test:pilot-builder": "node scripts/program-builder-sprint1-e2e.mjs",
     "test:pilot-workout": "node scripts/authenticated-workout-e2e-test.mjs",
-    "test:pilot-import-mock": "node -e \"process.env.A2_IMPORT_E2E_MOCK='1'; process.env.A2_E2E_BASE_URL='https://a2-workout.antrenmankocu.workers.dev'; import('./scripts/import-ui-e2e-test.mjs')\""
+    "test:pilot-import-mock": "node -e \"process.env.A2_IMPORT_E2E_MOCK='1'; process.env.A2_E2E_BASE_URL='https://app.reptrio.com'; import('./scripts/import-ui-e2e-test.mjs')\""
   },
   "devDependencies": {
     "wrangler": "^4.36.0"

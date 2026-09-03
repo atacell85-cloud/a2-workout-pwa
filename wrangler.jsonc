@@ -4,6 +4,16 @@
   "main": "worker/index.js",
   "compatibility_date": "2026-08-15",
   "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "app.reptrio.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "api.reptrio.com",
+      "custom_domain": true
+    }
+  ],
   "assets": {
     "directory": "./.cloudflare-assets",
     "binding": "ASSETS",

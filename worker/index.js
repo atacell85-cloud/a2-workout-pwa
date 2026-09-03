@@ -28,7 +28,7 @@ export default {
 
 async function health(request, env) {
   if (request.method !== 'GET') return apiError('METHOD_NOT_ALLOWED', 405, { Allow: 'GET' });
-  return json({ ok: true, service: 'a2-workout', aiImportConfigured: Boolean(env.OPENAI_API_KEY), youtubeConfigured: Boolean(env.YOUTUBE_API_KEY) });
+  return json({ ok: true, service: 'reptrio', aiImportConfigured: Boolean(env.OPENAI_API_KEY), youtubeConfigured: Boolean(env.YOUTUBE_API_KEY) });
 }
 
 function runtimeConfig(request) {
@@ -174,7 +174,7 @@ async function searchYouTube(request, env, url) {
   try {
     const endpoint = new URL(YOUTUBE_SEARCH_URL);
     Object.entries({ key: env.YOUTUBE_API_KEY, q: query, part: 'snippet', type: 'video', videoEmbeddable: 'true', safeSearch: 'strict', maxResults: '5', relevanceLanguage: 'en' }).forEach(([key, value]) => endpoint.searchParams.set(key, value));
-    const response = await fetch(endpoint, { headers: { Referer: 'https://a2-workout.antrenmankocu.workers.dev/' } });
+    const response = await fetch(endpoint, { headers: { Referer: 'https://app.reptrio.com/' } });
     if (!response.ok) throw coded(`YOUTUBE_${response.status}`);
     const payload = await response.json();
     const videos = (payload.items || []).slice(0, 5).map(item => ({

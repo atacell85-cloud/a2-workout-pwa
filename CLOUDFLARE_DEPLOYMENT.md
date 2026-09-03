@@ -6,7 +6,7 @@
 2. Authenticate interactively: `npx wrangler login`.
 3. Add the production secret without placing it in source control: `npx wrangler secret put OPENAI_API_KEY`.
 4. Review non-secret defaults in `wrangler.jsonc`, then deploy with `npm run cf:deploy`.
-5. Wrangler prints the `https://a2-workout.<account>.workers.dev` pilot URL. The same Worker serves the PWA and `/api/import/parse`.
+5. The same Worker serves the PWA and API. Production URLs are `https://app.reptrio.com` and `https://api.reptrio.com`; the workers.dev URL remains a legacy fallback.
 
 ## Configuration
 
@@ -18,8 +18,8 @@
 
 OAuth login is enabled by code, but each provider must be configured in its own developer console and then stored as Cloudflare secrets. Use these redirect URLs:
 
-- Google: `https://a2-workout.antrenmankocu.workers.dev/api/auth/oauth/google/callback`
-- Apple: `https://a2-workout.antrenmankocu.workers.dev/api/auth/oauth/apple/callback`
+- Google: `https://api.reptrio.com/api/auth/oauth/google/callback`
+- Apple: `https://api.reptrio.com/api/auth/oauth/apple/callback`
 
 Required Cloudflare secrets:
 
@@ -34,9 +34,9 @@ Store secrets with `npx wrangler secret put <NAME>`. Do not place these values i
 
 ## Operations
 
-- Health check: `https://<worker>.workers.dev/api/health`
+- Health check: `https://api.reptrio.com/api/health`
 - Tail safe metadata logs: `npx wrangler tail a2-workout`
 - Roll back: `npx wrangler rollback`
-- Add a custom hostname in Workers & Pages > `a2-workout` > Settings > Domains and Routes. No application code changes are required.
+- Custom hostnames are configured as Worker custom domains in `wrangler.jsonc`: `app.reptrio.com` and `api.reptrio.com`.
 
 Do not upload `.env`, `.dev.vars`, API keys, or imported document contents. Worker logs contain request metadata only, never keys or document bodies.

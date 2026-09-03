@@ -4,8 +4,10 @@ Bu repo Reptrio web/PWA ve Cloudflare Worker backend uygulamasıdır.
 
 ## Ürün durumu
 
-- Eski proje adı AKS/A2 idi; ürün markası Reptrio’ya dönüyor.
-- Canlı Worker/PWA: `https://a2-workout.antrenmankocu.workers.dev`
+- Eski proje adı AKS/A2 idi; ürün markası Reptrio’dur.
+- Canlı Web/PWA: `https://app.reptrio.com`
+- Canlı API/backend: `https://api.reptrio.com`
+- Eski Worker URL `https://a2-workout.antrenmankocu.workers.dev` yalnızca legacy fallback olarak tutulur.
 - GitHub repo: `https://github.com/atacell85-cloud/a2-workout-pwa`
 - Native mobile repo: `https://github.com/atacell85-cloud/reptrio-mobile`
 - D1 database: `a2-workout-pilot`
@@ -82,7 +84,9 @@ npx wrangler d1 execute a2-workout-pilot --remote --file .\migrations\<file>.sql
 
 ## Güncel eksikler / dikkat noktaları
 
-- Reptrio domain yönlendirmesi ve kalıcı production URL hâlâ tamamlanmalı.
+- Reptrio production domainleri Cloudflare Worker custom domain olarak bağlıdır:
+  - Web/PWA: `https://app.reptrio.com`
+  - API/backend: `https://api.reptrio.com`
 - GitHub Actions bilgisayarsız deploy için `CLOUDFLARE_API_TOKEN` secret bekler.
 - Apple login, Apple Developer/App Store Connect yapılandırması sonrası ele alınmalı.
 - OAuth sağlayıcı readiness endpoint'i: `/api/auth/providers`. Mobil uygulama Apple/Google buton davranışını bu endpoint'e göre ayarlamalı.

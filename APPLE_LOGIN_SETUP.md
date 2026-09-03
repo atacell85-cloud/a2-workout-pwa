@@ -12,7 +12,7 @@ Apple login backend kodu hazırdır. Canlıda aktif olması için Apple Develope
 3. Services ID içinde Sign in with Apple etkinleştirilmeli ve primary App ID olarak `com.reptrio.mobile` seçilmeli.
 4. Return URL olarak şu adres eklenmeli:
 
-   `https://a2-workout.antrenmankocu.workers.dev/api/auth/oauth/apple/callback`
+   `https://api.reptrio.com/api/auth/oauth/apple/callback`
 
 5. Sign in with Apple için private key oluşturulmalı ve `.p8` dosyası yalnız güvenli yerde saklanmalı.
 
@@ -45,4 +45,3 @@ npx wrangler secret list
 Listede Apple secret isimleri görünmelidir. Değerler görünmez.
 
 Mobil uygulama `/api/auth/providers` endpoint'ini okuyarak Apple'ın hazır olup olmadığını anlar. Apple secret'ları eksikken buton kullanıcıyı kör OAuth hatasına sokmaz; secret'lar tamamlandığında Apple giriş yolu aktifleşir.
-
