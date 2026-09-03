@@ -2,6 +2,8 @@
 
 Bu repo Reptrio web/PWA ve Cloudflare Worker backend uygulamasıdır.
 
+Yerel ana yol: `C:\Users\selcu\OneDrive\Desktop\Reptrio\Backend`
+
 ## Ürün durumu
 
 - Eski proje adı AKS/A2 idi; ürün markası Reptrio’dur.
@@ -9,6 +11,7 @@ Bu repo Reptrio web/PWA ve Cloudflare Worker backend uygulamasıdır.
 - Canlı API/backend: `https://api.reptrio.com`
 - Eski Worker URL `https://a2-workout.antrenmankocu.workers.dev` yalnızca legacy fallback olarak tutulur.
 - GitHub repo: `https://github.com/atacell85-cloud/a2-workout-pwa`
+- Hedef repo adı: `reptrio-backend` (ayrı ve kontrollü bir GitHub rename adımı olarak ele alınmalı)
 - Native mobile repo: `https://github.com/atacell85-cloud/reptrio-mobile`
 - D1 database: `a2-workout-pilot`
 - Import jobs queue: `a2-import-jobs`
