@@ -10,8 +10,8 @@ Yerel ana yol: `C:\Users\selcu\OneDrive\Desktop\Reptrio\Backend`
 - Canlı Web/PWA: `https://app.reptrio.com`
 - Canlı API/backend: `https://api.reptrio.com`
 - Eski Worker URL `https://a2-workout.antrenmankocu.workers.dev` yalnızca legacy fallback olarak tutulur.
-- GitHub repo: `https://github.com/atacell85-cloud/a2-workout-pwa`
-- Hedef repo adı: `reptrio-backend` (ayrı ve kontrollü bir GitHub rename adımı olarak ele alınmalı)
+- GitHub repo: `https://github.com/atacell85-cloud/reptrio-backend`
+- Eski repo adı `a2-workout-pwa` idi; GitHub repo adı Reptrio mimarisine uygun şekilde `reptrio-backend` olarak güncellendi.
 - Native mobile repo: `https://github.com/atacell85-cloud/reptrio-mobile`
 - D1 database: `a2-workout-pilot`
 - Import jobs queue: `a2-import-jobs`

@@ -2,7 +2,7 @@
 
 Bu repo GitHub ve Cloudflare merkezli çalışır:
 
-- Kod kaynağı: https://github.com/atacell85-cloud/a2-workout-pwa
+- Kod kaynağı: https://github.com/atacell85-cloud/reptrio-backend
 - Canlı Web/PWA: https://app.reptrio.com
 - Canlı API/backend: https://api.reptrio.com
 - Manuel deploy: GitHub Actions > Worker Deploy > Run workflow
@@ -10,7 +10,7 @@ Bu repo GitHub ve Cloudflare merkezli çalışır:
 ## Telefondayken deploy başlatma
 
 1. GitHub mobil uygulamasını veya tarayıcıyı aç.
-2. `atacell85-cloud/a2-workout-pwa` reposuna gir.
+2. `atacell85-cloud/reptrio-backend` reposuna gir.
 3. `Actions` sekmesini aç.
 4. `Worker Deploy` workflow'unu seç.
 5. `Run workflow` de.
